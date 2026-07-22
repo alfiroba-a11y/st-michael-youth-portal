@@ -51,7 +51,6 @@ function readData() {
 }
 
 function writeData(data) {
-    // Persistent backup write strategy to prevent data loss
     const backupFile = DATA_FILE + '.bak';
     if (fs.existsSync(DATA_FILE)) {
         fs.copyFileSync(DATA_FILE, backupFile);
@@ -61,7 +60,7 @@ function writeData(data) {
 
 let activeSessions = {};
 
-// Routes (Hidden Admin Route: No links pointing to /admin anywhere publicly)
+// Routes with secret protected admin link
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
@@ -92,7 +91,6 @@ app.post('/api/youth/register', (req, res) => {
         return res.json({ success: false, message: 'Name and password are required.' });
     }
     const data = readData();
-    // Check if member already exists in pending or members to prevent data overwrite loss
     const exists = [...data.members, ...data.pending].some(m => m.name && m.name.trim().toLowerCase() === name.trim().toLowerCase());
     if (exists) {
         return res.json({ success: false, message: 'A registration with this name already exists.' });
@@ -244,7 +242,6 @@ app.post('/api/admin/delete-event', (req, res) => {
     res.json({ success: true });
 });
 
-// PDF Data Export Endpoint
 app.get('/api/admin/export-pdf', (req, res) => {
     const data = readData();
     let htmlContent = `
