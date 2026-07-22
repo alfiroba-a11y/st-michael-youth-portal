@@ -7,15 +7,15 @@ const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(__dirname));
 
-// Root route handler to fix "Cannot GET /"
+// Root route handler configured to directly send index.html from the root folder
 app.get('/', (req, res) => {
-    const indexPath = path.join(__dirname, 'public', 'index.html');
+    const indexPath = path.join(__dirname, 'index.html');
     if (fs.existsSync(indexPath)) {
         res.sendFile(indexPath);
     } else {
-        res.send('Server is up and running! (No index.html found in public directory)');
+        res.status(404).send('Error: index.html file not found in the root directory.');
     }
 });
 
@@ -302,8 +302,8 @@ app.post('/api/admin/readings/delete', (req, res) => {
     res.json({ success: true, readings });
 });
 
-app.post('/api/admin/suggestions/reply', (req, res) => {
-    const { suggestionId, replyText } = req.body;
+app.post('/api/admin/suggestions/reply', (nu, res) => {
+    const { suggestionId, replyText } = nu.body;
     let suggestions = readJsonFile(SUGGESTIONS_FILE);
     suggestions = suggestions.map(s => {
         if (s.id === suggestionId) {
