@@ -1,12 +1,13 @@
 {
-  "name": "st-michael-youth-portal",
-  "version": "2.1.0",
+  "name": "stmichael-youth-portal",
+  "version": "1.0.0",
   "description": "St. Michael Kasaini Youth Portal",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
+    "body-parser": "^1.20.2",
     "express": "^4.19.2"
   }
 }

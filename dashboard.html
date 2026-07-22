@@ -5,233 +5,124 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Youth Dashboard - St. Michael Kasaini</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root { --church-navy: #1b365d; --church-gold: #d4af37; --church-bg: #f9f8f6; }
-        body { background-color: var(--church-bg); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .navbar { background-color: var(--church-navy) !important; border-bottom: 3px solid var(--church-gold); }
-        .card { border: none; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        .wing-box { background: #ffffff; border-left: 4px solid var(--church-gold); border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); margin-bottom: 15px; padding: 15px; }
-    </style>
 </head>
-<body>
+<body class="bg-light">
+    <script>
+        const currentUserName = localStorage.getItem('youthName');
+        if (!currentUserName) {
+            window.location.href = '/login';
+        }
+    </script>
 
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container">
-            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/">
-                <i class="fa-solid fa-cross text-warning"></i> St. Michael Kasaini Youth Dashboard
-            </a>
-            <div class="navbar-nav ms-auto align-items-center flex-row gap-3">
-                <span class="text-light small" id="welcomeUser">Welcome, Member</span>
-                <button id="logoutBtn" class="btn btn-outline-warning btn-sm fw-bold">Sign Out</button>
-            </div>
-        </div>
+    <nav class="navbar navbar-dark bg-dark px-4">
+        <a class="navbar-brand" href="#">St. Michael Kasaini Youth Dashboard</a>
+        <button class="btn btn-outline-light btn-sm" onclick="logout()">Sign Out</button>
     </nav>
 
-    <div class="container my-5">
-        <div class="row">
-            <!-- Directory & Events Section -->
-            <div class="col-lg-8">
-                <!-- Grouped Wings Directory Box -->
-                <div class="card p-4 bg-white">
-                    <h3 class="fw-bold text-primary mb-3"><i class="fa-solid fa-users text-warning me-2"></i>Approved Youth Directory by Wings</h3>
-                    <p class="text-muted small">Registered youth members categorized by their respective wings/groups, complete with unique IDs and masked contacts.</p>
-                    <div id="wingsDirectoryContent">
-                        <p class="text-muted">Loading directory wings...</p>
-                    </div>
-                </div>
+    <div class="container py-4">
+        <div class="alert alert-success">Welcome back, <span id="welcomeName"></span>!</div>
 
-                <!-- Events & Countdowns -->
-                <div class="card p-4 bg-white mt-4">
-                    <h3 class="fw-bold text-primary mb-3"><i class="fa-solid fa-calendar-days text-warning me-2"></i>Events & Countdowns</h3>
-                    <div id="eventsContent">
-                        <p class="text-muted">Loading events...</p>
-                    </div>
-                </div>
+        <!-- Daily Scripture Section -->
+        <div class="card shadow-sm p-4 mb-4">
+            <h3 class="text-primary mb-3">Daily Scripture & Holy Mass Readings</h3>
+            <p id="scriptureText">Loading spiritual readings...</p>
+        </div>
+
+        <!-- Holy Rosary Section with Separated Interactive Mysteries -->
+        <div class="card shadow-sm p-4 mb-4">
+            <h3 class="text-primary mb-3">The Holy Rosary: Step-by-Step Guide & Mysteries</h3>
+            <p class="text-muted small">HOW TO PRAY THE ROSARY: 1. Make the Sign of the Cross and recite the Apostles’ Creed. 2. Pray 1 Our Father on the first large bead. 3. Pray 3 Hail Marys on the next three small beads for Faith, Hope, and Charity. 4. Pray 1 Glory Be. 5. Announce the mystery, pray 1 Our Father, 10 Hail Marys, 1 Glory Be, and the Fatima Prayer per decade.</p>
+            
+            <div class="btn-group w-100 mb-3" role="group">
+                <button type="button" class="btn btn-outline-primary active" onclick="showMystery('joyful', event)">Joyful (Mon & Sat)</button>
+                <button type="button" class="btn btn-outline-primary" onclick="showMystery('sorrowful', event)">Sorrowful (Tue & Fri)</button>
+                <button type="button" class="btn btn-outline-primary" onclick="showMystery('glorious', event)">Glorious (Wed & Sun)</button>
+                <button type="button" class="btn btn-outline-primary" onclick="showMystery('luminous', event)">Luminous (Thu)</button>
             </div>
 
-            <!-- Suggestion Box Section -->
-            <div class="col-lg-4">
-                <div class="card p-4 bg-white">
-                    <h4 class="fw-bold text-success mb-3"><i class="fa-solid fa-lightbulb text-warning me-2"></i>Event Suggestion Box</h4>
-                    <p class="text-muted small">Have an idea for an upcoming youth activity or spiritual event? Submit it directly to the administrative dashboard.</p>
-                    <div id="suggestionAlert" class="alert d-none small" role="alert"></div>
-                    <form id="suggestionForm">
-                        <div class="mb-3">
-                            <label for="suggestionTitle" class="form-label fw-bold small">Event Idea Title</label>
-                            <input type="text" class="form-control form-control-sm" id="suggestionTitle" required placeholder="e.g., Youth Charity Hike">
-                        </div>
-                        <div class="mb-3">
-                            <label for="suggestionDesc" class="form-label fw-bold small">Description & Details</label>
-                            <textarea class="form-control form-control-sm" id="suggestionDesc" rows="3" required placeholder="Share brief details about your idea..."></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-success btn-sm w-100 fw-bold" style="background-color: #2e7d32;">Submit to Admin</button>
-                    </form>
-                </div>
+            <div id="joyfulContent" class="mystery-pane">
+                <h5 class="text-success">Joyful Mysteries</h5>
+                <ul>
+                    <li><strong>1st The Annunciation:</strong> The angel Gabriel announces to Mary that she will conceive the Son of God.</li>
+                    <li><strong>2nd The Visitation:</strong> Mary visits her cousin Elizabeth, who proclaims her blessed.</li>
+                    <li><strong>3rd The Nativity:</strong> Jesus is born in Bethlehem in a humble manger.</li>
+                    <li><strong>4th The Presentation:</strong> The infant Jesus is presented in the Temple in Jerusalem.</li>
+                    <li><strong>5th The Finding in the Temple:</strong> The young Jesus is found discussing the law with teachers in the Temple.</li>
+                </ul>
+            </div>
+
+            <div id="sorrowfulContent" class="mystery-pane d-none">
+                <h5 class="text-danger">Sorrowful Mysteries</h5>
+                <ul>
+                    <li><strong>1st The Agony in the Garden:</strong> Jesus prays in Gethsemane anticipating His passion.</li>
+                    <li><strong>2nd The Scourging at the Pillar:</strong> Jesus is cruelly whipped by Roman soldiers.</li>
+                    <li><strong>3rd The Crowning with Thorns:</strong> Soldiers mock Jesus, pressing a crown of thorns onto His head.</li>
+                    <li><strong>4th The Carrying of the Cross:</strong> Jesus carries His heavy cross up to Mount Calvary.</li>
+                    <li><strong>5th The Crucifixion:</strong> Jesus is nailed to the cross and dies for our sins.</li>
+                </ul>
+            </div>
+
+            <div id="gloriousContent" class="mystery-pane d-none">
+                <h5 class="text-dark">Glorious Mysteries</h5>
+                <ul>
+                    <li><strong>1st The Resurrection:</strong> Jesus rises triumphantly from the dead on the third day.</li>
+                    <li><strong>2nd The Ascension:</strong> Jesus ascends bodily into Heaven before His disciples.</li>
+                    <li><strong>3rd The Descent of the Holy Spirit:</strong> The Holy Spirit descends upon Mary and the Apostles as tongues of fire.</li>
+                    <li><strong>4th The Assumption:</strong> The Blessed Virgin Mary is taken body and soul into heavenly glory.</li>
+                    <li><strong>5th The Coronation of Mary:</strong> Mary is crowned Queen of Heaven and Earth.</li>
+                </ul>
+            </div>
+
+            <div id="luminousContent" class="mystery-pane d-none">
+                <h5 class="text-info">Luminous Mysteries (Mysteries of Light)</h5>
+                <ul>
+                    <li><strong>1st The Baptism in the Jordan:</strong> The Holy Spirit descends on Jesus as the Father proclaims Him His beloved Son.</li>
+                    <li><strong>2nd The Wedding at Cana:</strong> Christ performs His first public miracle at Mary's request.</li>
+                    <li><strong>3rd The Proclamation of the Kingdom:</strong> Jesus calls all people to conversion and forgiveness of sins.</li>
+                    <li><strong>4th The Transfiguration:</strong> Jesus is transfigured in glory before Peter, James, and John.</li>
+                    <li><strong>5th The Institution of the Eucharist:</strong> Jesus offers His Body and Blood at the Last Supper.</li>
+                </ul>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Session Verification
-        const currentUserName = localStorage.getItem('youthName');
-        if (!currentUserName) {
-            window.location.href = '/login';
-        } else {
-            document.getElementById('welcomeUser').textContent = `Welcome, ${currentUserName}`;
-        }
+        document.getElementById('welcomeName').textContent = currentUserName;
 
-        // Helper to mask middle 3 digits of a phone number (e.g. 0712345678 -> 071***5678)
-        function maskPhone(phone) {
-            if (!phone || phone.length < 7) return phone || 'N/A';
-            const start = phone.slice(0, 3);
-            const end = phone.slice(-4);
-            return `${start}***${end}`;
-        }
-
-        // Helper to calculate exact days to an event date
-        function getEventCountdown(dateString) {
-            if (!dateString) return '<span class="text-muted">Date TBD</span>';
-            const eventDate = new Date(dateString);
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-            eventDate.setHours(0, 0, 0, 0);
-
-            const diffTime = eventDate - today;
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-            if (diffDays > 0) {
-                return `<span class="badge bg-primary">In ${diffDays} day${diffDays === 1 ? '' : 's'} (${dateString})</span>`;
-            } else if (diffDays === 0) {
-                return `<span class="badge bg-success">Happening Today! (${dateString})</span>`;
-            } else {
-                return `<span class="badge bg-secondary">Past Event (${dateString})</span>`;
-            }
-        }
-
-        // Fetch Dashboard Data and group members by wings/groups
-        async function loadDashboardData() {
+        async function loadData() {
             try {
                 const res = await fetch('/api/youth/directory');
                 const data = await res.json();
-                if (data.success) {
-                    const dirContainer = document.getElementById('wingsDirectoryContent');
-                    
-                    if (data.members && data.members.length > 0) {
-                        // Group members by their group/wing field
-                        const wingsMap = {};
-                        data.members.forEach((m, index) => {
-                            const wingName = m.group || 'General Wing';
-                            if (!wingsMap[wingName]) {
-                                wingsMap[wingName] = [];
-                            }
-                            wingsMap[wingName].push({ ...m, globalIndex: index + 1 });
-                        });
-
-                        let wingsHtml = '';
-                        for (const [wing, members] of Object.entries(wingsMap)) {
-                            wingsHtml += `
-                                <div class="wing-box">
-                                    <h5 class="fw-bold text-secondary mb-3"><i class="fa-solid fa-layer-group me-2 text-warning"></i>${wing} Wing</h5>
-                                    <ol class="list-group list-group-numbered mb-0">
-                            `;
-                            
-                            members.forEach(m => {
-                                const uniqueId = `K${m.globalIndex}`;
-                                const maskedContact = maskPhone(m.phone);
-                                wingsHtml += `
-                                    <li class="list-group-item d-flex justify-content-between align-items-start py-2 border-0 bg-transparent">
-                                        <div class="ms-2 me-auto">
-                                            <div class="fw-bold text-dark">${m.name} <span class="badge bg-light text-dark border ms-1 font-monospace small">${uniqueId}</span></div>
-                                            <small class="text-muted">Jumuiya: ${m.jumuiya || 'N/A'}</small><br>
-                                            <small class="text-success"><i class="fa-solid fa-phone me-1"></i>Contact: ${maskedContact}</small>
-                                        </div>
-                                        <span class="badge bg-success rounded-pill align-self-center">Approved</span>
-                                    </li>
-                                `;
-                            });
-
-                            wingsHtml += `
-                                    </ol>
-                                </div>
-                            `;
-                        }
-                        dirContainer.innerHTML = wingsHtml;
-                    } else {
-                        dirContainer.innerHTML = '<p class="text-muted">No approved members listed in wings yet.</p>';
-                    }
-
-                    // Events & Countdown Section
-                    const evContainer = document.getElementById('eventsContent');
-                    if (data.events && data.events.length > 0) {
-                        let html = '<div class="list-group">';
-                        data.events.forEach(ev => {
-                            const badgeHtml = getEventCountdown(ev.date);
-                            html += `<div class="list-group-item list-group-item-action mb-2 rounded border">
-                                <div class="d-flex w-100 justify-content-between align-items-center mb-1">
-                                    <h6 class="fw-bold text-dark mb-0">${ev.title}</h6>
-                                    <div>${badgeHtml}</div>
-                                </div>
-                                <p class="mb-1 small text-muted">${ev.description || ''}</p>
-                            </div>`;
-                        });
-                        html += '</div>';
-                        evContainer.innerHTML = html;
-                    } else {
-                        evContainer.innerHTML = '<p class="text-muted">No events available right now.</p>';
-                    }
+                if(data.success && data.readings) {
+                    const r = data.readings;
+                    document.getElementById('scriptureText').innerHTML = `
+                        <strong>${r.title || 'Readings'}</strong><br>
+                        <em>First Reading:</em> ${r.first || ''}<br>
+                        <em>Psalm:</em> ${r.psalm || ''}<br>
+                        <em>Second Reading:</em> ${r.second || ''}<br>
+                        <em>Gospel:</em> ${r.gospel || ''}
+                    `;
                 }
-            } catch (err) {
-                console.error('Failed to load dashboard data', err);
-            }
+            } catch(e) {}
+        }
+        loadData();
+
+        function showMystery(type, evt) {
+            document.querySelectorAll('.mystery-pane').forEach(el => el.classList.add('d-none'));
+            document.getElementById(type + 'Content').classList.remove('d-none');
+            document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
+            evt.currentTarget.classList.add('active');
         }
 
-        loadDashboardData();
-
-        // Suggestion Box Form Submission Handler (Linked directly to Admin endpoint)
-        document.getElementById('suggestionForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const alertBox = document.getElementById('suggestionAlert');
-            const title = document.getElementById('suggestionTitle').value.trim();
-            const description = document.getElementById('suggestionDesc').value.trim();
-
-            try {
-                const res = await fetch('/api/youth/suggestions', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title, description, submittedBy: currentUserName })
-                });
-                const data = await res.json();
-
-                alertBox.textContent = data.message || 'Suggestion successfully routed to the admin dashboard!';
-                alertBox.classList.remove('d-none');
-                alertBox.className = data.success ? 'alert alert-success small' : 'alert alert-danger small';
-
-                if (data.success) {
-                    e.target.reset();
-                }
-            } catch (err) {
-                alertBox.className = 'alert alert-danger small';
-                alertBox.textContent = 'Failed to submit suggestion to admin. Please check your connection.';
-                alertBox.classList.remove('d-none');
-            }
-        });
-
-        // Logout Handler
-        document.getElementById('logoutBtn').addEventListener('click', async () => {
-            try {
-                await fetch('/api/youth/logout', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: currentUserName })
-                });
-            } catch (err) {
-                // proceed with local cleanup
-            }
+        async function logout() {
+            await fetch('/api/youth/logout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: currentUserName })
+            });
             localStorage.removeItem('youthName');
             window.location.href = '/login';
-        });
+        }
     </script>
 </body>
 </html>
