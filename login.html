@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - St. Michael Kasaini</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --church-navy: #1b365d; }
+        body { background-color: #f0f2f5; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .auth-card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); width: 100%; max-width: 400px; }
+    </style>
+</head>
+<body>
+    <div class="auth-card">
+        <div class="text-center mb-4">
+            <a href="/" class="text-decoration-none fw-bold text-dark fs-5"><i class="fa-solid fa-cross text-warning me-2"></i>St. Michael Kasaini</a>
+            <h4 class="fw-bold text-primary mt-2">Member Sign In</h4>
+            <p class="text-muted small">Enter your credentials to access your portal</p>
+        </div>
+
+        <div id="loginAlert" class="alert d-none small p-2" role="alert"></div>
+
+        <form id="loginForm">
+            <div class="mb-3">
+                <label class="form-label fw-bold small">Phone Number or Username</label>
+                <input type="text" class="form-control" id="loginPhone" required placeholder="e.g. 0712345678 or admin">
+            </div>
+            <div class="mb-3">
+                <label class="form-label fw-bold small">Password</label>
+                <input type="password" class="form-control" id="loginPassword" required placeholder="••••••••">
+            </div>
+            <button type="submit" class="btn btn-primary w-100 fw-bold py-2" style="background-color: var(--church-navy);">Sign In</button>
+        </form>
+
+        <div class="text-center mt-3">
+            <span class="small text-muted">Don't have an account? <a href="/register" class="fw-bold text-primary text-decoration-none">Sign up</a></span>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const alertBox = document.getElementById('loginAlert');
+            const phone = document.getElementById('loginPhone').value.trim();
+            const password = document.getElementById('loginPassword').value.trim();
+
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phone, password })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    localStorage.setItem('youthName', data.name);
+                    if (data.role === 'admin') {
+                        window.location.href = '/admin.html';
+                    } else {
+                        window.location.href = '/dashboard.html';
+                    }
+                } else {
+                    alertBox.textContent = data.message || 'Login failed.';
+                    alertBox.className = 'alert alert-danger small p-2';
+                    alertBox.classList.remove('d-none');
+                }
+            } catch (err) {
+                alertBox.textContent = 'Connection error. Please try again.';
+                alertBox.className = 'alert alert-danger small p-2';
+                alertBox.classList.remove('d-none');
+            }
+        });
+    </script>
+</body>
+</html>
