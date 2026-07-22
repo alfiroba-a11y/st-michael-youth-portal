@@ -1,86 +1,94 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
+<!DOCTYPE html><html lang="en"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sign In & Registration - St. Michael Kasaini Youth</title>
+    <title>Member Access - St. Michael Kasaini Youth</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
-    <nav class="navbar navbar-dark bg-dark px-4">
+</head><body class="bg-light d-flex flex-column min-vh-100">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
         <a class="navbar-brand" href="/">✝ St. Michael Kasaini Youth</a>
-        <a href="/" class="btn btn-outline-light btn-sm">Home</a>
+        <div class="ms-auto">
+            <a href="/" class="btn btn-outline-light btn-sm">Home</a>
+        </div>
     </nav>
 
-    <div class="container py-5">
-        <div class="row justify-content-center">
-            <div class="col-md-5 mb-4">
-                <div class="card shadow-sm p-4">
-                    <h3 class="mb-3 text-primary">Member Sign In</h3>
-                    <div id="loginAlert" class="alert d-none" role="alert"></div>
-                    <form id="loginForm">
+    <div class="container my-auto py-5" style="max-width: 450px;">
+        <div class="card shadow-sm p-4">
+            <ul class="nav nav-pills nav-fill mb-3" id="authTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="signin-tab" data-bs-toggle="pill" data-bs-target="#signin" type="button" role="tab">Sign In</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="signup-tab" data-bs-toggle="pill" data-bs-target="#signup" type="button" role="tab">Sign Up</button>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="authTabsContent">
+                <!-- Sign In Form -->
+                <div class="tab-pane fade show active" id="signin" role="tabpanel">
+                    <h4 class="mb-3 text-primary">Member Sign In</h4>
+                    <div id="signinAlert" class="alert d-none" role="alert"></div>
+                    <form id="signinForm">
                         <div class="mb-3">
                             <label class="form-label">Full Name</label>
-                            <input type="text" class="form-control" id="loginName" required>
+                            <input type="text" id="loginName" class="form-control" required placeholder="Enter your full name">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Password</label>
-                            <input type="password" class="form-control" id="loginPass" required>
+                            <input type="password" id="loginPass" class="form-control" required placeholder="Enter your password">
                         </div>
                         <button type="submit" class="btn btn-primary w-100">Sign In to Dashboard</button>
                     </form>
                 </div>
-            </div>
 
-            <div class="col-md-7">
-                <div class="card shadow-sm p-4">
-                    <h3 class="mb-3 text-success">Create Account (Sign Up)</h3>
-                    <p class="text-muted small">Requires approval and KES 100 fee with Treasurer Samuel Mutunga.</p>
-                    <div id="registerAlert" class="alert d-none" role="alert"></div>
-                    <form id="registerForm">
-                        <div class="row">
-                            <div class="mb-3 col-md-6">
-                                <label class="form-label">Full Name</label>
-                                <input type="text" class="form-control" id="regName" required>
-                            </div>
-                            <div class="mb-3 col-md-6">
-                                <label class="form-label">Phone Number</label>
-                                <input type="text" class="form-control" id="regPhone" required>
-                            </div>
-                        </div>
-                        <div class="row">
-                            <div class="mb-3 col-md-6">
-                                <label class="form-label">Jumuiya</label>
-                                <input type="text" class="form-control" id="regJumuiya" required>
-                            </div>
-                            <div class="mb-3 col-md-6">
-                                <label class="form-label">Group</label>
-                                <select class="form-select" id="regGroup">
-                                    <option value="Youth General">Youth General</option>
-                                    <option value="Choir">Choir</option>
-                                    <option value="Liturgy">Liturgy</option>
-                                    <option value="Projects">Projects</option>
-                                </select>
-                            </div>
+                <!-- Sign Up Form -->
+                <div class="tab-pane fade" id="signup" role="tabpanel">
+                    <h4 class="mb-3 text-success">Create Youth Account</h4>
+                    <div id="signupAlert" class="alert d-none" role="alert"></div>
+                    <form id="signupForm">
+                        <div class="mb-3">
+                            <label class="form-label">Full Name</label>
+                            <input type="text" id="regName" class="form-control" required placeholder="Your full name">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Password</label>
-                            <input type="password" class="form-control" id="regPass" required>
+                            <label class="form-label">Phone Number</label>
+                            <input type="text" id="regPhone" class="form-control" placeholder="e.g. 0712345678">
                         </div>
-                        <button type="submit" class="btn btn-success w-100">Submit Registration (KES 100 Paid)</button>
+                        <div class="mb-3">
+                            <label class="form-label">Jumuiya / Community</label>
+                            <input type="text" id="regJumuiya" class="form-control" placeholder="e.g. St. Kizito">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Youth Group / Choir</label>
+                            <input type="text" id="regGroup" class="form-control" placeholder="e.g. Youth Choir / General">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Create Password</label>
+                            <input type="password" id="regPass" class="form-control" required placeholder="Secure password">
+                        </div>
+                        <button type="submit" class="btn btn-success w-100">Submit Registration</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Copyright and Management Footer -->
+    <footer class="text-center py-3 mt-auto text-muted small border-top bg-white">
+        &copy; 2026 St. Michael Kasaini Youth Portal. Created and managed by Robert Wambua. All rights reserved.
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        // Sign In Handler
+        document.getElementById('signinForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('loginName').value.trim();
             const pass = document.getElementById('loginPass').value;
-            const alertBox = document.getElementById('loginAlert');
-            alertBox.classList.add('d-none');
+            const alertBox = document.getElementById('signinAlert');
+
+            alertBox.className = 'alert alert-info small';
+            alertBox.textContent = 'Verifying credentials...';
+            alertBox.classList.remove('d-none');
 
             try {
                 const res = await fetch('/api/youth/login', {
@@ -89,48 +97,53 @@
                     body: JSON.stringify({ name, pass })
                 });
                 const data = await res.json();
-                if(data.success) {
-                    localStorage.setItem('youthName', data.name);
-                    window.location.href = '/dashboard';
+
+                if (data.success) {
+                    alertBox.className = 'alert alert-success small';
+                    alertBox.textContent = 'Login successful! Redirecting...';
+                    localStorage.setItem('youth_user', data.name);
+                    setTimeout(() => {
+                        window.location.href = '/dashboard';
+                    }, 800);
                 } else {
-                    alertBox.textContent = data.message;
                     alertBox.className = 'alert alert-danger small';
-                    alertBox.classList.remove('d-none');
+                    alertBox.textContent = data.message || 'Login failed.';
                 }
             } catch (err) {
-                alertBox.textContent = 'Connection error.';
                 alertBox.className = 'alert alert-danger small';
-                alertBox.classList.remove('d-none');
+                alertBox.textContent = 'Connection error. Please try again.';
             }
         });
 
-        document.getElementById('registerForm').addEventListener('submit', async (e) => {
+        // Sign Up Handler
+        document.getElementById('signupForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const alertBox = document.getElementById('registerAlert');
-            const payload = {
-                name: document.getElementById('regName').value.trim(),
-                phone: document.getElementById('regPhone').value.trim(),
-                jumuiya: document.getElementById('regJumuiya').value.trim(),
-                group: document.getElementById('regGroup').value,
-                pass: document.getElementById('regPass').value
-            };
+            const name = document.getElementById('regName').value.trim();
+            const phone = document.getElementById('regPhone').value.trim();
+            const jumuiya = document.getElementById('regJumuiya').value.trim();
+            const group = document.getElementById('regGroup').value.trim();
+            const pass = document.getElementById('regPass').value;
+            const alertBox = document.getElementById('signupAlert');
+
             try {
                 const res = await fetch('/api/youth/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ name, phone, jumuiya, group, pass })
                 });
                 const data = await res.json();
+
                 alertBox.textContent = data.message;
                 alertBox.className = data.success ? 'alert alert-success small' : 'alert alert-danger small';
                 alertBox.classList.remove('d-none');
-                if (data.success) e.target.reset();
+
+                if (data.success) {
+                    document.getElementById('signupForm').reset();
+                }
             } catch (err) {
-                alertBox.textContent = 'Registration failed.';
+                alertBox.textContent = 'Registration error. Please check connection.';
                 alertBox.className = 'alert alert-danger small';
                 alertBox.classList.remove('d-none');
             }
         });
-    </script>
-</body>
-</html>
+    </script></body></html>
