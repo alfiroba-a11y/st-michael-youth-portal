@@ -3,104 +3,479 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>St. Michael Kasaini Youth Portal</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <title>St. Michael Kasaini Catholic Church Youth Portal</title>
     <style>
-        :root { --church-navy: #1b365d; --church-gold: #d4af37; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; color: #333; }
-        .hero-section { background: linear-gradient(135deg, var(--church-navy) 0%, #0d1b2a 100%); color: white; padding: 60px 20px; text-align: center; }
-        .card { border: none; box-shadow: 0 4px 15px rgba(0,0,0,0.08); border-radius: 12px; }
-        .spiritual-card { border-left: 4px solid var(--church-gold); background: #fff; margin-bottom: 15px; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        :root {
+            --primary: #1b4d3e;
+            --primary-light: #2e7d32;
+            --accent: #d4af37;
+            --bg-color: #f4f7f6;
+            --text-color: #333333;
+            --white: #ffffff;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--primary-light));
+            color: var(--white);
+            padding: 2rem 1rem;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        header h1 {
+            font-size: 2rem;
+            margin-bottom: 0.5krem;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            background: var(--white);
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+
+        .tab-btn.active, .tab-btn:hover {
+            background: var(--primary);
+            color: var(--white);
+            transform: translateY(-2px);
+        }
+
+        .section-content {
+            display: none;
+            background: var(--white);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            margin-bottom: 2rem;
+        }
+
+        .section-content.active {
+            display: block;
+        }
+
+        h2 {
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 0.5rem;
+        }
+
+        /* Forms & Inputs */
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        input, select, textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 1rem;
+        }
+
+        button.submit-btn {
+            background: var(--primary-light);
+            color: var(--white);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button.submit-btn:hover {
+            background: var(--primary);
+        }
+
+        /* Cards Layout */
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: #fafafa;
+            border-left: 5px solid var(--accent);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .card h3 {
+            color: var(--primary);
+            margin-bottom: 0.75rem;
+        }
+
+        /* Rosary Horizontal Steps Layout */
+        .rosary-steps {
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+            padding: 1rem 0;
+        }
+
+        .rosary-step-card {
+            min-width: 250px;
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 1rem;
+            flex-shrink: 0;
+        }
+
+        .rosary-step-card h4 {
+            color: var(--primary-light);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Way of the Cross Horizontal Cards */
+        .stations-container {
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+            padding: 1rem 0;
+        }
+
+        .station-card {
+            min-width: 280px;
+            background: #fff;
+            border: 2px solid var(--accent);
+            border-radius: 8px;
+            padding: 1rem;
+            flex-shrink: 0;
+        }
+
+        .station-card h4 {
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Utility */
+        .hidden { display: none !important; }
+        .alert { padding: 1rem; margin-bottom: 1rem; border-radius: 6px; }
+        .alert-success { background: #d4edda; color: #155724; }
+        .alert-error { background: #f8d7da; color: #721c24; }
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: var(--church-navy);">
-        <div class="container">
-            <a class="navbar-brand fw-bold" href="/"><i class="fa-solid fa-cross text-warning me-2"></i>St. Michael Kasaini</a>
-            <div class="ms-auto d-flex gap-2">
-                <a href="/login" class="btn btn-outline-light btn-sm px-3">Sign in</a>
-                <a href="/register" class="btn btn-warning btn-sm px-3 fw-bold text-dark">Sign up</a>
-            </div>
-        </div>
-    </nav>
 
-    <div class="hero-section">
-        <div class="container">
-            <h1 class="display-5 fw-bold mb-3">Welcome to St. Michael Youth Community</h1>
-            <p class="lead mb-4">Connecting youth in faith, fellowship, scripture, rosary devotion, and service.</p>
-            <div class="d-flex justify-content-center gap-3">
-                <a href="/login" class="btn btn-warning btn-lg px-4 fw-bold text-dark">Member Portal</a>
-                <a href="/register" class="btn btn-outline-light btn-lg px-4">Create Account</a>
-            </div>
-        </div>
-    </div>
+    <header>
+        <h1>St. Michael Kasaini Catholic Church</h1>
+        <p>Youth Portal & Liturgical Center</p>
+    </header>
 
-    <!-- Spiritual Feed Section (Readings, Prayers, Rosary, Way of the Cross, Songs) -->
-    <div class="container my-5">
-        <div class="text-center mb-4">
-            <h2 class="fw-bold text-primary"><i class="fa-solid fa-book-bible text-warning me-2"></i>Daily Spiritual Nourishment & Devotions</h2>
-            <p class="text-muted">Explore our community Bible readings, Holy Rosary reflections, Way of the Cross, prayers, and hymns.</p>
+    <div class="container">
+        <!-- Navigation Tabs -->
+        <div class="nav-tabs">
+            <button class="tab-btn active" onclick="switchTab('dashboard')">Dashboard</button>
+            <button class="tab-btn" onclick="switchTab('sunday-readings')">Sunday Readings</button>
+            <button class="tab-btn" onclick="switchTab('daily-verses')">Daily Verses</button>
+            <button class="tab-btn" onclick="switchTab('rosary')">Holy Rosary</button>
+            <button class="tab-btn" onclick="switchTab('way-of-cross')">Way of the Cross</button>
+            <button class="tab-btn" onclick="switchTab('prayers')">Prayers & Hymns</button>
+            <button class="tab-btn" onclick="switchTab('auth')">Login / Register</button>
+            <button class="tab-btn" onclick="switchTab('admin')">Admin Portal</button>
         </div>
-        <div class="row justify-content-center">
-            <div class="col-lg-10" id="homepageReadingsContainer">
-                <div class="text-center text-muted py-3">Loading spiritual content...</div>
-            </div>
-        </div>
-    </div>
 
-    <div class="container mb-5">
-        <div class="row g-4">
-            <div class="col-md-4">
-                <div class="card p-4 h-100 text-center">
-                    <div class="text-primary mb-3"><i class="fa-solid fa-users fa-2x"></i></div>
-                    <h4 class="fw-bold">Active Fellowship</h4>
-                    <p class="text-muted small">Join dynamic prayer groups, YCA, YSC, and parish activities.</p>
+        <!-- 1. DASHBOARD -->
+        <div id="dashboard" class="section-content active">
+            <h2>Welcome to St. Michael Youth Portal</h2>
+            <p>Your digital sanctuary for community interaction, spiritual nourishment, and church engagement. Use the tabs above to navigate through daily scripture, rosary guides, stations of the cross, and official group management.</p>
+            <div class="card-grid" style="margin-top: 2rem;">
+                <div class="card">
+                    <h3>Active Youth Mass</h3>
+                    <p>Date: August 2, 2026</p>
+                    <p>Special animation by youth choir and liturgical dancers.</p>
+                </div>
+                <div class="card">
+                    <h3>Retreat & Prayer Day</h3>
+                    <p>Date: August 15, 2026</p>
+                    <p>A day of intensive prayer, reflection, and spiritual growth.</p>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card p-4 h-100 text-center">
-                    <div class="text-primary mb-3"><i class="fa-solid fa-book-open fa-2x"></i></div>
-                    <h4 class="fw-bold">Spiritual Nourishment</h4>
-                    <p class="text-muted small">Access daily reflections, rosaries, hymns, and board announcements.</p>
+        </div>
+
+        <!-- 2. SUNDAY READINGS -->
+        <div id="sunday-readings" class="section-content">
+            <h2>Sunday Liturgy & Holy Mass Readings</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h3>First Reading</h3>
+                    <p>Exodus 16:2-4, 12-15 — The Lord feeds His people with bread from heaven in the wilderness.</p>
+                </div>
+                <div class="card">
+                    <h3>Responsorial Psalm</h3>
+                    <p>Psalm 78:3-4, 23-24, 25, 54 — "The Lord gave them bread from heaven."</p>
+                </div>
+                <div class="card">
+                    <h3>Second Reading</h3>
+                    <p>Ephesians 4:17, 20-24 — Put on the new self, created in God’s righteousness and holiness.</p>
+                </div>
+                <div class="card">
+                    <h3>Gospel Reading</h3>
+                    <p>John 6:24-35 — "I am the bread of life; whoever comes to me shall never hunger, and whoever believes in me shall never thirst."</p>
                 </div>
             </div>
-            <div class="col-md-4">
-                <div class="card p-4 h-100 text-center">
-                    <div class="text-primary mb-3"><i class="fa-solid fa-hands-holding-child fa-2x"></i></div>
-                    <h4 class="fw-bold">Community Outreach</h4>
-                    <p class="text-muted small">Engage in charity works and community development programs.</p>
+        </div>
+
+        <!-- 3. DAILY VERSES (WITH RECYCLE BUTTON) -->
+        <div id="daily-verses" class="section-content">
+            <h2>Daily Scripture Verses</h2>
+            <div class="card" style="text-align: center; padding: 2rem;">
+                <p id="verse-display" style="font-size: 1.25rem; font-style: italic; margin-bottom: 1.5rem; color: var(--primary);">
+                    “Trust in the Lord with all your heart and lean not on your understanding; in all your ways submit to him, and he will make your paths straight.” (Proverbs 3:5-6)
+                </p>
+                <button class="submit-btn" onclick="cycleVerse()">🔄 Recycle / Next Verse</button>
+            </div>
+        </div>
+
+        <!-- 4. HOLY ROSARY (SEPARATED MYSTERIES HORIZONTALLY) -->
+        <div id="rosary" class="section-content">
+            <h2>The Holy Rosary & Separated Mysteries</h2>
+            <p style="margin-bottom: 1rem;">Swipe or scroll horizontally through the distinct mysteries:</p>
+            
+            <h3 style="color: var(--primary-light); margin-top: 1rem;">Joyful Mysteries (Monday & Saturday)</h3>
+            <div class="rosary-steps">
+                <div class="rosary-step-card"><h4>1. The Annunciation</h4><p>The Angel Gabriel announces to Mary that she will conceive the Son of God.</p></div>
+                <div class="rosary-step-card"><h4>2. The Visitation</h4><p>Mary visits her cousin Elizabeth, who proclaims her blessed among women.</p></div>
+                <div class="rosary-step-card"><h4>3. The Nativity</h4><p>Jesus is born in a humble manger in Bethlehem.</p></div>
+                <div class="rosary-step-card"><h4>4. The Presentation</h4><p>The infant Jesus is presented in the Temple by Mary and Joseph.</p></div>
+                <div class="rosary-step-card"><h4>5. Finding in the Temple</h4><p>The 12-year-old Jesus is found discussing matters with the teachers.</p></div>
+            </div>
+
+            <h3 style="color: var(--primary-light); margin-top: 1.5rem;">Sorrowful Mysteries (Tuesday & Friday)</h3>
+            <div class="rosary-steps">
+                <div class="rosary-step-card"><h4>1. Agony in the Garden</h4><p>Jesus sweats blood while praying in Gethsemane.</p></div>
+                <div class="rosary-step-card"><h4>2. Scourging at the Pillar</h4><p>Jesus is cruelly whipped by Roman soldiers.</p></div>
+                <div class="rosary-step-card"><h4>3. Crowning with Thorns</h4><p>A crown of sharp thorns is pressed onto the head of Jesus.</p></div>
+                <div class="rosary-step-card"><h4>4. Carrying of the Cross</h4><p>Jesus shoulders the heavy cross to Calvary.</p></div>
+                <div class="rosary-step-card"><h4>5. The Crucifixion</h4><p>Jesus dies on the cross for the salvation of humanity.</p></div>
+            </div>
+        </div>
+
+        <!-- 5. WAY OF THE CROSS (HORIZONTAL OFFICIAL CARDS) -->
+        <div id="way-of-cross" class="section-content">
+            <h2>Way of the Cross (14 Stations)</h2>
+            <p style="margin-bottom: 1rem;">Official sequential meditation stations arranged horizontally:</p>
+            <div class="stations-container">
+                <div class="station-card"><h4>Station 1</h4><p>Jesus is condemned to death.</p></div>
+                <div class="station-card"><h4>Station 2</h4><p>Jesus takes up His cross.</p></div>
+                <div class="station-card"><h4>Station 3</h4><p>Jesus falls the first time.</p></div>
+                <div class="station-card"><h4>Station 4</h4><p>Jesus meets His afflicted Mother.</p></div>
+                <div class="station-card"><h4>Station 5</h4><p>Simon of Cyrene helps carry the cross.</p></div>
+                <div class="station-card"><h4>Station 6</h4><p>Veronica wipes the face of Jesus.</p></div>
+                <div class="station-card"><h4>Station 7</h4><p>Jesus falls the second time.</p></div>
+                <div class="station-card"><h4>Station 8</h4><p>Jesus meets the women of Jerusalem.</p></div>
+                <div class="station-card"><h4>Station 9</h4><p>Jesus falls the third time.</p></div>
+                <div class="station-card"><h4>Station 10</h4><p>Jesus is stripped of garments.</p></div>
+                <div class="station-card"><h4>Station 11</h4><p>Jesus is nailed to the cross.</p></div>
+                <div class="station-card"><h4>Station 12</h4><p>Jesus dies on the cross.</p></div>
+                <div class="station-card"><h4>Station 13</h4><p>Jesus is taken down from the cross.</p></div>
+                <div class="station-card"><h4>Station 14</h4><p>Jesus is laid in the tomb.</p></div>
+            </div>
+        </div>
+
+        <!-- 6. PRAYERS & HYMNS -->
+        <div id="prayers" class="section-content">
+            <h2>Catholic Prayers & Hymns</h2>
+            <div class="card-grid">
+                <div class="card">
+                    <h3>Tumshangilie Bwana (Hymn)</h3>
+                    <p>Tumshangilie Bwana, mwamba wa wokovu wetu. Twendake mbele yake kwa shukrani, tumwimbie kwa furaha!</p>
                 </div>
+                <div class="card">
+                    <h3>Prayer to St. Michael</h3>
+                    <p>Saint Michael the Archangel, defend us in battle. Be our protection against the wickedness and snares of the devil...</p>
+                </div>
+                <div class="card">
+                    <h3>Youth Consecration Prayer</h3>
+                    <p>Lord Jesus, accept our youthful energy, our dreams, and our talents. Guide our footsteps away from temptation and fill our hearts with charity and purity. Amen.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. LOGIN / REGISTER -->
+        <div id="auth" class="section-content">
+            <h2>Member Authentication Portal</h2>
+            <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 280px; background: #fafafa; padding: 1.5rem; border-radius: 8px;">
+                    <h3 style="margin-bottom: 1rem; color: var(--primary);">Login</h3>
+                    <form onsubmit="handleLogin(event)">
+                        <div class="form-group">
+                            <label>Phone Number or 'admin'</label>
+                            <input type="text" id="login-phone" required placeholder="e.g. 0712345678">
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" id="login-password" required placeholder="********">
+                        </div>
+                        <button type="submit" class="submit-btn">Login Now</button>
+                    </form>
+                </div>
+
+                <div style="flex: 1; min-width: 280px; background: #fafafa; padding: 1.5rem; border-radius: 8px;">
+                    <h3 style="margin-bottom: 1rem; color: var(--primary);">Register Member</h3>
+                    <form onsubmit="handleRegister(event)">
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" id="reg-name" required placeholder="Your Full Name">
+                        </div>
+                        <div class="form-group">
+                            <label>Phone Number</label>
+                            <input type="text" id="reg-phone" required placeholder="07xxxxxxxx">
+                        </div>
+                        <div class="form-group">
+                            <label>Password</label>
+                            <input type="password" id="reg-password" required placeholder="Choose a password">
+                        </div>
+                        <div class="form-group">
+                            <label>Group / Choir</label>
+                            <select id="reg-group">
+                                <option value="General">General Youth</option>
+                                <option value="Choir">Youth Choir</option>
+                                <option value="Dancers">Liturgical Dancers</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="submit-btn">Register Account</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- 8. ADMIN PORTAL -->
+        <div id="admin" class="section-content">
+            <h2>Administrative Control Center</h2>
+            <div id="admin-login-box">
+                <p style="margin-bottom: 1rem;">Please log in using admin credentials to manage registrations and database elements.</p>
+                <button class="submit-btn" onclick="quickAdminAccess()">Simulate Admin Session</button>
+            </div>
+            <div id="admin-dashboard-box" class="hidden">
+                <div class="alert alert-success">Admin Access Granted: Full management privileges active. Registration approval queue and member records accessible.</div>
+                <h3 style="margin-top: 1.5rem; color: var(--primary);">Member Directory</h3>
+                <p>Total Registered Members: <span id="admin-member-count">0</span></p>
             </div>
         </div>
     </div>
 
     <script>
-        async function loadHomepageReadings() {
-            try {
-                const res = await fetch('/api/youth/directory');
-                const data = await res.json();
-                if (data.success && data.readings) {
-                    const container = document.getElementById('homepageReadingsContainer');
-                    let html = '';
-                    data.readings.forEach(r => {
-                        html += `
-                            <div class="spiritual-card">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <h4 class="fw-bold text-primary mb-0">${r.title}</h4>
-                                    <span class="badge bg-secondary text-white" style="font-size:0.75rem;">${r.category || 'Spiritual'}</span>
-                                </div>
-                                <p class="text-dark mb-0" style="line-height: 1.6; font-size: 0.95rem;">${r.content}</p>
-                            </div>
-                        `;
-                    });
-                    container.innerHTML = html;
-                }
-            } catch (err) {
-                console.error('Failed to load spiritual readings', err);
+        // Tab Management Logic
+        function switchTab(tabId) {
+            document.querySelectorAll('.section-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+        }
+
+        // Daily Verse Recycling Logic
+        const versesPool = [
+            '“Trust in the Lord with all your heart and lean not on your understanding; in all your ways submit to him, and he will make your paths straight.” (Proverbs 3:5-6)',
+            '“I can do all things through Christ who strengthens me.” (Philippians 4:13)',
+            '“The Lord is my shepherd; I shall not want.” (Psalm 23:1)',
+            '“Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.” (Joshua 1:9)',
+            '“And we know that in all things God works for the good of those who love him, who have been called according to his purpose.” (Romans 8:28)'
+        ];
+        let currentVerseIndex = 0;
+        function cycleVerse() {
+            currentVerseIndex = (currentVerseIndex + 1) % versesPool.length;
+            document.getElementById('verse-display').innerText = versesPool[currentVerseIndex];
+        }
+
+        // Authentication & Client Data Simulation Logic
+        let localUsers = [];
+
+        function handleRegister(e) {
+            e.preventDefault();
+            const name = document.getElementById('reg-name').value;
+            const phone = document.getElementById('reg-phone').value;
+            const password = document.getElementById('reg-password').value;
+            const group = document.getElementById('reg-group').value;
+
+            if(!name || !phone || !password) {
+                alert('Please fill in all required fields.');
+                return;
+            }
+
+            localUsers.push({ name, phone, password, group });
+            alert('Registration successful! You can now log in.');
+            document.getElementById('reg-name').value = '';
+            document.getElementById('reg-phone').value = '';
+            document.getElementById('reg-password').value = '';
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const phone = document.getElementById('login-phone').value;
+            const password = document.getElementById('login-password').value;
+
+            if(phone === 'admin' && password === 'admin2026') {
+                alert('Admin login successful!');
+                quickAdminAccess();
+                return;
+            }
+
+            const found = localUsers.find(u => u.phone === phone && u.password === password);
+            if(found) {
+                alert(`Welcome back, ${found.name} (${found.group})!`);
+            } else {
+                alert('Invalid phone number or password, or please register first.');
             }
         }
-        loadHomepageReadings();
+
+        function quickAdminAccess() {
+            document.getElementById('admin-login-box').classList.add('hidden');
+            document.getElementById('admin-dashboard-box').classList.remove('hidden');
+            document.getElementById('admin-member-count').innerText = localUsers.length;
+        }
     </script>
 </body>
 </html>
