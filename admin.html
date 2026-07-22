@@ -3,347 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Portal - St. Michael Kasaini</title>
+    <title>Officials Portal - St. Michael Kasaini Youth</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        :root { --church-navy: #1b365d; }
-        body { background-color: #f8f9fa; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        .sidebar { background-color: var(--church-navy); color: white; min-height: 100vh; padding: 20px; }
-        .sidebar .nav-link { color: rgba(255,255,255,0.8); margin-bottom: 5px; border-radius: 6px; }
-        .sidebar .nav-link:hover, .sidebar .nav-link.active { background-color: rgba(255,255,255,0.15); color: white; }
-        .card { border: none; box-shadow: 0 4px 12px rgba(0,0,0,0.05); border-radius: 10px; }
-    </style>
 </head>
-<body>
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-            <div class="col-md-3 col-lg-2 sidebar d-flex flex-column justify-content-between">
-                <div>
-                    <h4 class="fw-bold mb-4"><i class="fa-solid fa-cross text-warning me-2"></i>Admin Portal</h4>
-                    <ul class="nav nav-pills flex-column">
-                        <li class="nav-item"><a href="#membersSection" class="nav-link active" data-bs-toggle="tab"><i class="fa-solid fa-users me-2"></i>Members & PDF</a></li>
-                        <li class="nav-item"><a href="#pendingSection" class="nav-link" data-bs-toggle="tab"><i class="fa-solid fa-user-clock me-2"></i>Approval Queue</a></li>
-                        <li class="nav-item"><a href="#readingsSection" class="nav-link" data-bs-toggle="tab"><i class="fa-solid fa-book-bible me-2"></i>Readings & Devotions</a></li>
-                        <li class="nav-item"><a href="#commsSection" class="nav-link" data-bs-toggle="tab"><i class="fa-solid fa-comments me-2"></i>Help / Messages</a></li>
-                        <li class="nav-item"><a href="#onlineSection" class="nav-link" data-bs-toggle="tab"><i class="fa-solid fa-signal me-2"></i>Online Status</a></li>
-                    </ul>
+<body class="bg-light">
+    <div id="loginSection" class="container py-5" style="max-width: 400px;">
+        <div class="card shadow-sm p-4">
+            <h3 class="mb-3 text-danger">Officials / Admin Login</h3>
+            <div id="adminAlert" class="alert d-none" role="alert"></div>
+            <form id="adminLoginForm">
+                <div class="mb-3">
+                    <label class="form-label">Username</label>
+                    <input type="text" id="adminUser" class="form-control" required value="admin">
                 </div>
-                <div>
-                    <a href="/" class="btn btn-outline-light btn-sm w-100"><i class="fa-solid fa-right-from-bracket me-2"></i>Exit Admin</a>
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="adminPass" class="form-control" required value="admin123">
                 </div>
-            </div>
-
-            <!-- Main Content -->
-            <div class="col-md-9 col-lg-10 p-4">
-                <div class="tab-content">
-                    
-                    <!-- Members & PDF Export -->
-                    <div class="tab-pane fade show active" id="membersSection">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h3 class="fw-bold text-primary">Registered Youth Directory</h3>
-                            <button class="btn btn-danger fw-bold" onclick="downloadPDF()"><i class="fa-solid fa-file-pdf me-2"></i>Download List (PDF)</button>
-                        </div>
-                        <div class="card p-3">
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle">
-                                    <thead class="table-dark" style="background-color: var(--church-navy);">
-                                        <tr>
-                                            <th>#</th>
-                                            <th>Name</th>
-                                            <th>Phone</th>
-                                            <th>Group</th>
-                                            <th>Added By</th>
-                                            <th>Action</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="adminMembersTable">
-                                        <tr><td colspan="6" class="text-center text-muted">Loading members...</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Pending Approvals -->
-                    <div class="tab-pane fade" id="pendingSection">
-                        <h3 class="fw-bold text-primary mb-4">Pending Member Approvals</h3>
-                        <div class="card p-3">
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle">
-                                    <thead class="table-dark">
-                                        <tr>
-                                            <th>Name</th>
-                                            <th>Phone</th>
-                                            <th>Group</th>
-                                            <th>Added By</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="adminPendingTable">
-                                        <tr><td colspan="5" class="text-center text-muted">No pending approvals.</td></tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Church Readings & Devotions (Admin Only Edit/Delete) -->
-                    <div class="tab-pane fade" id="readingsSection">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h3 class="fw-bold text-primary">Church Readings, Rosaries & Devotions</h3>
-                            <button class="btn btn-primary fw-bold" data-bs-toggle="modal" data-bs-target="#readingModal" onclick="prepareNewReading()"><i class="fa-solid fa-plus me-2"></i>Add Devotion / Reading</button>
-                        </div>
-                        <div class="row g-3" id="adminReadingsContainer">
-                            <p class="text-muted">Loading readings...</p>
-                        </div>
-                    </div>
-
-                    <!-- Help / Comms Center -->
-                    <div class="tab-pane fade" id="commsSection">
-                        <h3 class="fw-bold text-primary mb-4">User Help & Suggestion Center</h3>
-                        <div id="adminSuggestionsContainer" class="d-flex flex-column gap-3">
-                            <p class="text-muted">Loading messages...</p>
-                        </div>
-                    </div>
-
-                    <!-- Online Status Tracker -->
-                    <div class="tab-pane fade" id="onlineSection">
-                        <h3 class="fw-bold text-primary mb-4">Real-Time Online Active Users</h3>
-                        <div class="card p-4">
-                            <ul id="adminOnlineList" class="list-group list-group-flush">
-                                <li class="list-group-item text-muted">Checking active sessions...</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                </div>
+                <button type="submit" class="btn btn-danger w-100">Login to Officials Portal</button>
+            </form>
+            <div class="mt-3 text-center">
+                <a href="/" class="text-decoration-none small">Back to Home</a>
             </div>
         </div>
     </div>
 
-    <!-- Reading Modal -->
-    <div class="modal fade" id="readingModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="fw-bold text-primary" id="readingModalTitle">Add Reading</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+    <div id="dashboardSection" class="container py-4 d-none">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Officials Control Panel</h2>
+            <button class="btn btn-outline-secondary btn-sm" onclick="location.reload()">Logout</button>
+        </div>
+
+        <!-- Upload Readings Section -->
+        <div class="card shadow-sm p-4 mb-4">
+            <h4 class="text-primary mb-3">Upload Sunday Holy Mass Readings</h4>
+            <div id="readingAlert" class="alert d-none"></div>
+            <form id="readingForm">
+                <div class="mb-3">
+                    <label class="form-label">Readings Title / Date</label>
+                    <input type="text" id="readTitle" class="form-control" placeholder="e.g. Sunday Mass Readings">
                 </div>
-                <div class="modal-body">
-                    <form id="readingForm">
-                        <input type="hidden" id="readingId">
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Title</label>
-                            <input type="text" class="form-control" id="readingTitleInput" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Category</label>
-                            <select class="form-select" id="readingCategoryInput">
-                                <option value="Bible Reading">Bible Reading</option>
-                                <option value="Rosary">Rosary</option>
-                                <option value="Way of the Cross">Way of the Cross</option>
-                                <option value="Prayer">Prayer</option>
-                                <option value="Song">Song</option>
-                            </select>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label fw-bold">Content</label>
-                            <textarea class="form-control" id="readingContentInput" rows="5" required></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-primary w-100 fw-bold">Save Devotion</button>
-                    </form>
+                <div class="mb-3">
+                    <label class="form-label">First Reading</label>
+                    <textarea id="readFirst" class="form-control" rows="2"></textarea>
                 </div>
-            </div>
+                <div class="mb-3">
+                    <label class="form-label">Responsorial Psalm</label>
+                    <textarea id="readPsalm" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Second Reading</label>
+                    <textarea id="readSecond" class="form-control" rows="2"></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Gospel</label>
+                    <textarea id="readGospel" class="form-control" rows="2"></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Update Sunday Readings</button>
+            </form>
+        </div>
+
+        <div class="card shadow-sm p-4 mb-4">
+            <h4>Pending Registrations</h4>
+            <div id="pendingList" class="table-responsive">Loading...</div>
+        </div>
+
+        <div class="card shadow-sm p-4">
+            <h4>Approved Members</h4>
+            <div id="memberList" class="table-responsive">Loading...</div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        let globalData = {};
+        document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const username = document.getElementById('adminUser').value;
+            const password = document.getElementById('adminPass').value;
+            const alertBox = document.getElementById('adminAlert');
+
+            const res = await fetch('/api/admin/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                document.getElementById('loginSection').classList.add('d-none');
+                document.getElementById('dashboardSection').classList.remove('d-none');
+                loadAdminData();
+            } else {
+                alertBox.textContent = 'Invalid credentials (default: admin / admin123)';
+                alertBox.classList.remove('d-none');
+                alertBox.className = 'alert alert-danger small';
+            }
+        });
 
         async function loadAdminData() {
-            try {
-                const res = await fetch('/api/admin/data');
-                globalData = await res.json();
-
-                const membersTable = document.getElementById('adminMembersTable');
-                if (globalData.members && globalData.members.length > 0) {
-                    let html = '';
-                    globalData.members.forEach((m, idx) => {
-                        html += `<tr>
-                            <td>${idx + 1}</td>
-                            <td class="fw-bold">${m.name}</td>
-                            <td>${m.phone}</td>
-                            <td><span class="badge bg-secondary">${m.group || 'General'}</span></td>
-                            <td>${m.registeredBy || 'Self'}</td>
-                            <td><button class="btn btn-sm btn-outline-danger" onclick="deleteMember('${m.id}')"><i class="fa-solid fa-trash"></i></button></td>
-                        </tr>`;
-                    });
-                    membersTable.innerHTML = html;
-                } else {
-                    membersTable.innerHTML = `<tr><td colspan="6" class="text-center text-muted">No members recorded.</td></tr>`;
+            const res = await fetch('/api/admin/data');
+            const data = await res.json();
+            if (data.success) {
+                if (data.readings) {
+                    document.getElementById('readTitle').value = data.readings.title || '';
+                    document.getElementById('readFirst').value = data.readings.first || '';
+                    document.getElementById('readPsalm').value = data.readings.psalm || '';
+                    document.getElementById('readSecond').value = data.readings.second || '';
+                    document.getElementById('readGospel').value = data.readings.gospel || '';
                 }
 
-                const pendingTable = document.getElementById('adminPendingTable');
-                if (globalData.pending && globalData.pending.length > 0) {
-                    let html = '';
-                    globalData.pending.forEach(p => {
-                        html += `<tr>
-                            <td class="fw-bold">${p.name}</td>
-                            <td>${p.phone}</td>
-                            <td><span class="badge bg-secondary">${p.group || 'General'}</span></td>
-                            <td>${p.registeredBy || 'Peer'}</td>
-                            <td>
-                                <button class="btn btn-sm btn-success me-1" onclick="approvePending('${p.id}')">Approve</button>
-                                <button class="btn btn-sm btn-danger" onclick="rejectPending('${p.id}')">Reject</button>
-                            </td>
-                        </tr>`;
-                    });
-                    pendingTable.innerHTML = html;
-                } else {
-                    pendingTable.innerHTML = `<tr><td colspan="5" class="text-center text-muted">No pending approvals.</td></tr>`;
-                }
+                // Render Pending
+                let pHtml = '<table class="table"><thead><tr><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Action</th></tr></thead><tbody>';
+                if (data.pending.length === 0) pHtml += '<tr><td colspan="4" class="text-muted">No pending registrations.</td></tr>';
+                data.pending.forEach(p => {
+                    pHtml += `<tr><td>${p.name}</td><td>${p.phone}</td><td>${p.jumuiya}</td><td><button class="btn btn-success btn-sm" onclick="approveUser('${p.id}')">Approve</button></td></tr>`;
+                });
+                pHtml += '</tbody></table>';
+                document.getElementById('pendingList').innerHTML = pHtml;
 
-                const readingsContainer = document.getElementById('adminReadingsContainer');
-                if (globalData.readings && globalData.readings.length > 0) {
-                    let html = '';
-                    globalData.readings.forEach(r => {
-                        html += `<div class="col-md-6">
-                            <div class="card p-3 h-100">
-                                <div class="d-flex justify-content-between align-items-center mb-2">
-                                    <h5 class="fw-bold text-primary mb-0">${r.title}</h5>
-                                    <span class="badge bg-dark">${r.category || 'Spiritual'}</span>
-                                </div>
-                                <p class="text-muted small mb-3">${r.content}</p>
-                                <div class="mt-auto d-flex gap-2">
-                                    <button class="btn btn-sm btn-outline-primary" onclick="editReading('${r.id}', '${encodeURIComponent(r.title)}', '${encodeURIComponent(r.category)}', '${encodeURIComponent(r.content)}')">Edit</button>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteReading('${r.id}')">Delete</button>
-                                </div>
-                            </div>
-                        </div>`;
-                    });
-                    readingsContainer.innerHTML = html;
-                } else {
-                    readingsContainer.innerHTML = `<p class="text-muted">No readings found.</p>`;
-                }
-
-                const commsContainer = document.getElementById('adminSuggestionsContainer');
-                if (globalData.suggestions && globalData.suggestions.length > 0) {
-                    let html = '';
-                    globalData.suggestions.forEach(s => {
-                        let repliesHtml = '';
-                        if (s.replies && s.replies.length > 0) {
-                            s.replies.forEach(rep => {
-                                repliesHtml += `<div class="bg-light p-2 rounded mb-1 small"><strong>${rep.sender}:</strong> ${rep.text}</div>`;
-                            });
-                        }
-                        html += `<div class="card p-3">
-                            <div class="d-flex justify-content-between">
-                                <h5 class="fw-bold text-dark mb-1">${s.title}</h5>
-                                <span class="badge bg-info text-dark">From: ${s.submittedBy}</span>
-                            </div>
-                            <p class="text-muted small mb-2">${s.description}</p>
-                            <div class="mb-2">${repliesHtml}</div>
-                            <div class="input-group input-group-sm">
-                                <input type="text" class="form-control" id="replyText_${s.id}" placeholder="Type reply...">
-                                <button class="btn btn-success" onclick="sendReply('${s.id}')">Reply</button>
-                            </div>
-                        </div>`;
-                    });
-                    commsContainer.innerHTML = html;
-                } else {
-                    commsContainer.innerHTML = `<p class="text-muted">No support messages.</p>`;
-                }
-
-                const onlineList = document.getElementById('adminOnlineList');
-                if (globalData.onlineUsers && globalData.onlineUsers.length > 0) {
-                    let onlineHtml = '';
-                    globalData.onlineUsers.forEach(u => {
-                        onlineHtml += `<li class="list-group-item d-flex align-items-center gap-2"><span class="badge bg-success rounded-circle" style="width:10px;height:10px;"></span><strong>${u}</strong> is currently online</li>`;
-                    });
-                    onlineList.innerHTML = onlineHtml;
-                } else {
-                    onlineList.innerHTML = `<li class="list-group-item text-muted">No active users currently online.</li>`;
-                }
-
-            } catch (err) { console.error(err); }
-        }
-
-        loadAdminData();
-        setInterval(loadAdminData, 10000);
-
-        async function approvePending(id) {
-            await fetch('/api/admin/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            loadAdminData();
-        }
-
-        async function rejectPending(id) {
-            await fetch('/api/admin/reject', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            loadAdminData();
-        }
-
-        async function deleteMember(id) {
-            if (confirm('Are you sure you want to delete this member? Their account will be removed so they can re-register.')) {
-                await fetch('/api/admin/delete-member', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                loadAdminData();
+                // Render Members
+                let mHtml = '<table class="table"><thead><tr><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Action</th></tr></thead><tbody>';
+                if (data.members.length === 0) mHtml += '<tr><td colspan="4" class="text-muted">No approved members yet.</td></tr>';
+                data.members.forEach(m => {
+                    mHtml += `<tr><td>${m.name}</td><td>${m.phone}</td><td>${m.jumuiya}</td><td><button class="btn btn-danger btn-sm" onclick="removeMember('${m.id}')">Remove</button></td></tr>`;
+                });
+                mHtml += '</tbody></table>';
+                document.getElementById('memberList').innerHTML = mHtml;
             }
-        }
-
-        function prepareNewReading() {
-            document.getElementById('readingId').value = '';
-            document.getElementById('readingTitleInput').value = '';
-            document.getElementById('readingContentInput').value = '';
-            document.getElementById('readingModalTitle').textContent = 'Add Reading / Devotion';
-        }
-
-        function editReading(id, title, category, content) {
-            document.getElementById('readingId').value = id;
-            document.getElementById('readingTitleInput').value = decodeURIComponent(title);
-            document.getElementById('readingCategoryInput').value = decodeURIComponent(category);
-            document.getElementById('readingContentInput').value = decodeURIComponent(content);
-            document.getElementById('readingModalTitle').textContent = 'Edit Reading / Devotion';
-            new bootstrap.Modal(document.getElementById('readingModal')).show();
         }
 
         document.getElementById('readingForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const id = document.getElementById('readingId').value;
-            const title = document.getElementById('readingTitleInput').value;
-            const category = document.getElementById('readingCategoryInput').value;
-            const content = document.getElementById('readingContentInput').value;
-
-            await fetch('/api/admin/readings', {
+            const payload = {
+                title: document.getElementById('readTitle').value,
+                first: document.getElementById('readFirst').value,
+                psalm: document.getElementById('readPsalm').value,
+                second: document.getElementById('readSecond').value,
+                gospel: document.getElementById('readGospel').value
+            };
+            const res = await fetch('/api/admin/update-readings', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id, title, category, content })
+                body: JSON.stringify(payload)
             });
-
-            bootstrap.Modal.getInstance(document.getElementById('readingModal')).hide();
-            loadAdminData();
+            const data = await res.json();
+            const alertBox = document.getElementById('readingAlert');
+            if(data.success) {
+                alertBox.textContent = 'Readings updated successfully!';
+                alertBox.className = 'alert alert-success small';
+                alertBox.classList.remove('d-none');
+            }
         });
 
-        async function deleteReading(id) {
-            if (confirm('Delete this reading?')) {
-                await fetch('/api/admin/readings/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                loadAdminData();
-            }
-        }
-
-        async function sendReply(suggestionId) {
-            const text = document.getElementById(`replyText_${suggestionId}`).value.trim();
-            if (!text) return;
-            await fetch('/api/admin/suggestions/reply', {
+        async function approveUser(id) {
+            await fetch('/api/admin/approve', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ suggestionId, replyText: text })
+                body: JSON.stringify({ id })
             });
             loadAdminData();
         }
 
-        function downloadPDF() {
-            window.print();
+        async function removeMember(id) {
+            await fetch('/api/admin/remove-member', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
+            loadAdminData();
         }
     </script>
 </body>

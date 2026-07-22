@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Youth Dashboard - St. Michael Kasaini</title>
+    <title>Youth Dashboard - St. Michael Kasaini Youth</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
@@ -15,17 +15,19 @@
     </script>
 
     <nav class="navbar navbar-dark bg-dark px-4">
-        <a class="navbar-brand" href="#">St. Michael Kasaini Youth Dashboard</a>
+        <a class="navbar-brand" href="/">St. Michael Kasaini Youth Dashboard</a>
         <button class="btn btn-outline-light btn-sm" onclick="logout()">Sign Out</button>
     </nav>
 
     <div class="container py-4">
         <div class="alert alert-success">Welcome back, <span id="welcomeName"></span>!</div>
 
-        <!-- Daily Scripture Section -->
+        <!-- Sunday Readings Section (Admin Uploaded) -->
         <div class="card shadow-sm p-4 mb-4">
-            <h3 class="text-primary mb-3">Daily Scripture & Holy Mass Readings</h3>
-            <p id="scriptureText">Loading spiritual readings...</p>
+            <h3 id="readingTitle" class="text-primary mb-3">Sunday Holy Mass Readings</h3>
+            <div id="readingsContent">
+                <p>Loading readings...</p>
+            </div>
         </div>
 
         <!-- Holy Rosary Section with Separated Interactive Mysteries -->
@@ -95,12 +97,24 @@
                 const data = await res.json();
                 if(data.success && data.readings) {
                     const r = data.readings;
-                    document.getElementById('scriptureText').innerHTML = `
-                        <strong>${r.title || 'Readings'}</strong><br>
-                        <em>First Reading:</em> ${r.first || ''}<br>
-                        <em>Psalm:</em> ${r.psalm || ''}<br>
-                        <em>Second Reading:</em> ${r.second || ''}<br>
-                        <em>Gospel:</em> ${r.gospel || ''}
+                    if(r.title) document.getElementById('readingTitle').textContent = r.title;
+                    document.getElementById('readingsContent').innerHTML = `
+                        <div class="mb-3">
+                            <h6 class="text-secondary fw-bold">First Reading</h6>
+                            <p>${r.first || 'No first reading provided yet.'}</p>
+                        </div>
+                        <div class="mb-3">
+                            <h6 class="text-secondary fw-bold">Responsorial Psalm</h6>
+                            <p>${r.psalm || 'No psalm provided yet.'}</p>
+                        </div>
+                        <div class="mb-3">
+                            <h6 class="text-secondary fw-bold">Second Reading</h6>
+                            <p>${r.second || 'No second reading provided yet.'}</p>
+                        </div>
+                        <div class="mb-3">
+                            <h6 class="text-secondary fw-bold">Gospel</h6>
+                            <p>${r.gospel || 'No gospel reading provided yet.'}</p>
+                        </div>
                     `;
                 }
             } catch(e) {}

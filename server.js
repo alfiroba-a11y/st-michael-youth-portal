@@ -21,11 +21,11 @@ function readData() {
                 events: [],
                 messages: [],
                 readings: {
-                    title: "Default Sunday Readings",
-                    first: "Reading 1 details...",
-                    psalm: "Psalm details...",
-                    second: "Reading 2 details...",
-                    gospel: "Gospel details..."
+                    title: "Sunday Holy Mass Readings",
+                    first: "First Reading details...",
+                    psalm: "Responsorial Psalm details...",
+                    second: "Second Reading details...",
+                    gospel: "Gospel Reading details..."
                 }
             };
             fs.writeFileSync(DATA_FILE, JSON.stringify(initialData, null, 2));
@@ -36,9 +36,18 @@ function readData() {
         if (!parsed.pending) parsed.pending = [];
         if (!parsed.events) parsed.events = [];
         if (!parsed.messages) parsed.messages = [];
+        if (!parsed.readings) {
+            parsed.readings = {
+                title: "Sunday Holy Mass Readings",
+                first: "First Reading details...",
+                psalm: "Responsorial Psalm details...",
+                second: "Second Reading details...",
+                gospel: "Gospel Reading details..."
+            };
+        }
         return parsed;
     } catch (err) {
-        return { members: [], pending: [], events: [], messages: [] };
+        return { members: [], pending: [], events: [], messages: [], readings: {} };
     }
 }
 
@@ -130,20 +139,6 @@ app.post('/api/youth/logout', (req, res) => {
     res.json({ success: true });
 });
 
-app.post('/api/youth/message', (req, res) => {
-    const { sender, message } = req.body;
-    const data = readData();
-    data.messages.push({
-        id: Date.now(),
-        sender,
-        message,
-        reply: '',
-        date: new Date().toLocaleString()
-    });
-    writeData(data);
-    res.json({ success: true });
-});
-
 // Admin API Endpoints
 app.post('/api/admin/login', (req, res) => {
     const { username, password } = req.body;
@@ -231,45 +226,10 @@ app.post('/api/admin/remove-member', (req, res) => {
     res.json({ success: true });
 });
 
-app.post('/api/admin/revoke-session', (req, res) => {
-    const { name } = req.body;
-    if (activeSessions[name]) {
-        delete activeSessions[name];
-    }
-    res.json({ success: true });
-});
-
 app.post('/api/admin/update-readings', (req, res) => {
     const data = readData();
     data.readings = req.body;
     writeData(data);
-    res.json({ success: true });
-});
-
-app.post('/api/admin/event', (req, res) => {
-    const data = readData();
-    const newEvent = { id: Date.now(), ...req.body };
-    data.events.push(newEvent);
-    writeData(data);
-    res.json({ success: true });
-});
-
-app.post('/api/admin/move-to-past', (req, res) => {
-    const { id } = req.body;
-    const data = readData();
-    data.events = data.events.filter(ev => ev.id !== id);
-    writeData(data);
-    res.json({ success: true });
-});
-
-app.post('/api/admin/reply', (req, res) => {
-    const { id, reply } = req.body;
-    const data = readData();
-    const msg = data.messages.find(m => m.id == id);
-    if (msg) {
-        msg.reply = reply;
-        writeData(data);
-    }
     res.json({ success: true });
 });
 
