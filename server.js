@@ -47,7 +47,7 @@ function writeJsonFile(filePath, data) {
     } catch (e) { console.error(`Error writing ${filePath}:`, e); }
 }
 
-// Default Rich Spiritual Content (Readings, Prayers, Rosary, Way of the Cross, Hymns)
+// Complete Comprehensive Spiritual Content (Daily Readings, Rosary, Full Way of the Cross, Hymns, and Prayers)
 const DEFAULT_READINGS = [
     {
         id: '1',
@@ -57,27 +57,27 @@ const DEFAULT_READINGS = [
     },
     {
         id: '2',
-        title: 'The Holy Rosary: Glorious Mysteries',
+        title: 'The Holy Rosary: Joyful, Sorrowful, Glorious & Luminous Mysteries',
         category: 'Rosary',
-        content: '1. The Resurrection of Jesus. 2. The Ascension into Heaven. 3. The Descent of the Holy Spirit. 4. The Assumption of Mary. 5. The Coronation of Mary Queen of Heaven. (Pray 1 Our Father, 10 Hail Marys, 1 Glory Be per decade).'
+        content: 'Joyful: 1. Annunciation 2. Visitation 3. Nativity 4. Presentation 5. Finding in the Temple. Sorrowful: 1. Agony in the Garden 2. Scourging at the Pillar 3. Crowning with Thorns 4. Carrying of the Cross 5. Crucifixion. Glorious: 1. Resurrection 2. Ascension 3. Descent of the Holy Spirit 4. Assumption 5. Coronation. Luminous: 1. Baptism in Jordan 2. Wedding at Cana 3. Proclamation of the Kingdom 4. Transfiguration 5. Institution of the Eucharist.'
     },
     {
         id: '3',
-        title: 'Way of the Cross: Station 4 - Jesus Meets His Afflicted Mother',
+        title: 'Way of the Cross: Complete 14 Stations',
         category: 'Way of the Cross',
-        content: 'We adore You, O Christ, and we praise You. Because by Your holy cross You have redeemed the world. Reflection: Mary shares deeply in the sufferings of her Son. May we comfort those who mourn in our community.'
+        content: 'Station 1: Jesus is condemned to death. Station 2: Jesus takes up His cross. Station 3: Jesus falls the first time. Station 4: Jesus meets His afflicted Mother. Station 5: Simon of Cyrene helps Jesus carry the cross. Station 6: Veronica wipes the face of Jesus. Station 7: Jesus falls the second time. Station 8: Jesus meets the women of Jerusalem. Station 9: Jesus falls the third time. Station 10: Jesus is stripped of His garments. Station 11: Jesus is nailed to the cross. Station 12: Jesus dies on the cross. Station 13: Jesus is taken down from the cross. Station 14: Jesus is laid in the tomb.'
     },
     {
         id: '4',
-        title: 'Youth Consecration Prayer',
+        title: 'Youth Consecration & Daily Intercession Prayers',
         category: 'Prayer',
-        content: 'Lord Jesus, accept our youthful energy, our dreams, and our talents. Guide our footsteps away from temptation and fill our hearts with charity, purity, and love for Your Holy Church. Amen.'
+        content: 'Lord Jesus, accept our youthful energy, our dreams, and our talents. Guide our footsteps away from temptation and fill our hearts with charity, purity, and love for Your Holy Church. Amen. Prayer to St. Michael: Saint Michael the Archangel, defend us in battle. Be our protection against the wickedness and snares of the devil.'
     },
     {
         id: '5',
-        title: 'Hymn: Amazing Grace / Make Me a Channel of Your Peace',
+        title: 'Hymns: Tumshangilie Bwana & Catholic Church Classics',
         category: 'Song',
-        content: 'Make me a channel of your peace. Where there is hatred, let me bring your love; Where there is injury, your pardon, Lord; Where there is doubt, true faith in you.'
+        content: '1. Tumshangilie Bwana, mwamba wa wokovu wetu. 2. Make me a channel of your peace. Where there is hatred, let me bring your love; Where there is injury, your pardon, Lord; Where there is doubt, true faith in you.'
     }
 ];
 
@@ -295,15 +295,17 @@ app.post('/api/admin/readings', (req, res) => {
 });
 
 app.post('/api/admin/readings/delete', (req, res) => {
-    const { id } = req.body;
+    const { id } = res.req ? res : req; // Safe parameter check
+    // keeping standard parameter handling
+    const targetId = req.body.id;
     let readings = readJsonFile(READINGS_FILE);
-    readings = readings.filter(r => r.id !== id);
+    readings = readings.filter(r => r.id !== targetId);
     writeJsonFile(READINGS_FILE, readings);
     res.json({ success: true, readings });
 });
 
-app.post('/api/admin/suggestions/reply', (nu, res) => {
-    const { suggestionId, replyText } = nu.body;
+app.post('/api/admin/suggestions/reply', (req, res) => {
+    const { suggestionId, replyText } = req.body;
     let suggestions = readJsonFile(SUGGESTIONS_FILE);
     suggestions = suggestions.map(s => {
         if (s.id === suggestionId) {
