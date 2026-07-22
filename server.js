@@ -51,21 +51,25 @@ function readData() {
 }
 
 function writeData(data) {
+    // Persistent backup write strategy to prevent data loss
+    const backupFile = DATA_FILE + '.bak';
+    if (fs.existsSync(DATA_FILE)) {
+        fs.copyFileSync(DATA_FILE, backupFile);
+    }
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 }
 
 let activeSessions = {};
 
-// Routes
+// Routes (Hidden Admin Route: No links pointing to /admin anywhere publicly)
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
-app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+app.get('/secret-admin-portal-kasaini-2026', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 
 // API Endpoints
 app.get('/api/youth/directory', (req, res) => {
     const data = readData();
-    // Strip passwords before sending member data public/dashboard view
     const safeMembers = data.members.map(m => ({
         customId: m.customId,
         name: m.name,
@@ -88,6 +92,12 @@ app.post('/api/youth/register', (req, res) => {
         return res.json({ success: false, message: 'Name and password are required.' });
     }
     const data = readData();
+    // Check if member already exists in pending or members to prevent data overwrite loss
+    const exists = [...data.members, ...data.pending].some(m => m.name && m.name.trim().toLowerCase() === name.trim().toLowerCase());
+    if (exists) {
+        return res.json({ success: false, message: 'A registration with this name already exists.' });
+    }
+
     const newReg = {
         id: Date.now().toString(),
         name: name.trim(),
@@ -232,6 +242,37 @@ app.post('/api/admin/delete-event', (req, res) => {
     data.events = data.events.filter(e => e.id !== id);
     writeData(data);
     res.json({ success: true });
+});
+
+// PDF Data Export Endpoint
+app.get('/api/admin/export-pdf', (req, res) => {
+    const data = readData();
+    let htmlContent = `
+        <html>
+        <head><title>St. Michael Kasaini Youth Directory Report</title>
+        <style>
+            body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
+            h1 { color: #0d6efd; text-align: center; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+            th { background-color: #f8f9fa; }
+        </style>
+        </head>
+        <body>
+            <h1>St. Michael Kasaini Youth Official Directory Report</h1>
+            <p>Generated on: ${new Date().toLocaleString()}</p>
+            <h3>Approved Members (${data.members.length})</h3>
+            <table>
+                <tr><th>ID</th><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th><th>Date Registered</th></tr>
+    `;
+    data.members.forEach(m => {
+        htmlContent += `<tr><td>${m.customId || ''}</td><td>${m.name}</td><td>${m.phone}</td><td>${m.jumuiya}</td><td>${m.group}</td><td>${m.date || ''}</td></tr>`;
+    });
+    htmlContent += `</table></body></html>`;
+
+    res.setHeader('Content-Type', 'text/html');
+    res.setHeader('Content-Disposition', 'attachment; filename=youth-members-report.html');
+    res.send(htmlContent);
 });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
