@@ -3,479 +3,519 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>St. Michael Kasaini Catholic Church Youth Portal</title>
+    <title>Youth Dashboard - St. Michael Kasaini</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root {
-            --primary: #1b4d3e;
-            --primary-light: #2e7d32;
-            --accent: #d4af37;
-            --bg-color: #f4f7f6;
-            --text-color: #333333;
-            --white: #ffffff;
-            --shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.6;
-        }
-
-        header {
-            background: linear-gradient(135deg, var(--primary), var(--primary-light));
-            color: var(--white);
-            padding: 2rem 1rem;
-            text-align: center;
-            box-shadow: var(--shadow);
-        }
-
-        header h1 {
-            font-size: 2rem;
-            margin-bottom: 0.5krem;
-        }
-
-        header p {
-            font-size: 1.1rem;
-            color: var(--accent);
-            font-weight: 600;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-
-        .nav-tabs {
+        :root { --church-navy: #1b365d; --church-gold: #d4af37; --church-bg: #ffffff; }
+        body { background-color: var(--church-bg); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #111; }
+        
+        /* Portal Header - Large Font */
+        .portal-header {
             display: flex;
-            justify-content: center;
-            gap: 1rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 18px;
+            border-bottom: 1px solid #f0f0f0;
         }
-
-        .tab-btn {
-            background: var(--white);
-            border: 2px solid var(--primary);
-            color: var(--primary);
-            padding: 0.75rem 1.5rem;
-            font-size: 1rem;
+        .portal-logo {
             font-weight: bold;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow);
+            font-size: 1.15rem;
+            color: var(--church-navy);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
         }
 
-        .tab-btn.active, .tab-btn:hover {
-            background: var(--primary);
-            color: var(--white);
-            transform: translateY(-2px);
+        /* Micro Toggles: Smaller Fonts & Removed Arrows */
+        .accordion-button {
+            padding: 6px 12px;
+            font-size: 0.72rem;
+            font-weight: 400;
+            color: #444;
+            background-color: #fff;
+            box-shadow: none !important;
         }
-
-        .section-content {
-            display: none;
-            background: var(--white);
-            padding: 2rem;
-            border-radius: 12px;
-            box-shadow: var(--shadow);
-            margin-bottom: 2rem;
+        .accordion-button::after {
+            display: none !important;
         }
-
-        .section-content.active {
-            display: block;
+        .accordion-button:not(.collapsed) {
+            background-color: #f8f9fa;
+            color: var(--church-navy);
+            font-weight: 500;
         }
-
-        h2 {
-            color: var(--primary);
-            margin-bottom: 1.5rem;
-            border-bottom: 2px solid var(--accent);
-            padding-bottom: 0.5rem;
-        }
-
-        /* Forms & Inputs */
-        .form-group {
-            margin-bottom: 1.25rem;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-        }
-
-        input, select, textarea {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-size: 1rem;
-        }
-
-        button.submit-btn {
-            background: var(--primary-light);
-            color: var(--white);
+        .accordion-item {
             border: none;
-            padding: 0.75rem 1.5rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .accordion-body {
+            font-size: 0.68rem;
+            color: #555;
+            background-color: #fafbfc;
+            padding: 8px 12px;
+            line-height: 1.35;
+        }
+
+        /* Footer Action Container: Normal/Larger Fonts for LOGIN, SIGN UP, HOME */
+        .footer-action-container {
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        .btn-outline-custom {
+            border: 2px solid var(--church-navy);
+            color: var(--church-navy);
+            border-radius: 50px;
+            font-weight: 600;
+            padding: 10px;
             font-size: 1rem;
-            font-weight: bold;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.3s;
+            text-align: center;
+            background: transparent;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .btn-outline-custom:hover {
+            background-color: #f0f4f8;
+            color: var(--church-navy);
+        }
+        .btn-solid-custom {
+            background: linear-gradient(135deg, #1b365d 0%, #0d1b2a 100%);
+            color: #fff;
+            border-radius: 50px;
+            font-weight: 600;
+            padding: 10px;
+            font-size: 1rem;
+            text-align: center;
+            border: none;
+            text-decoration: none;
+            box-shadow: 0 4px 10px rgba(27, 54, 93, 0.2);
+        }
+        .btn-solid-custom:hover {
+            color: #fff;
+            opacity: 0.95;
         }
 
-        button.submit-btn:hover {
-            background: var(--primary);
+        /* Spreadsheet Table Styling */
+        .excel-table {
+            border: 2px solid #b0bec5;
+            background-color: #ffffff;
         }
-
-        /* Cards Layout */
-        .card-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
+        .excel-table th {
+            background-color: #1b365d !important;
+            color: #ffffff !important;
+            text-align: center;
+            border: 1px solid #90a4ae !important;
+            font-size: 0.7rem;
+            vertical-align: middle;
         }
-
-        .card {
-            background: #fafafa;
-            border-left: 5px solid var(--accent);
-            padding: 1.5rem;
-            border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        .excel-table td {
+            border: 1px solid #cfd8dc !important;
+            vertical-align: middle;
+            font-size: 0.7rem;
+            padding: 4px 6px;
         }
-
-        .card h3 {
-            color: var(--primary);
-            margin-bottom: 0.75rem;
+        .excel-table tbody tr:nth-child(in) {
+            background-color: #f8f9fa;
         }
-
-        /* Rosary Horizontal Steps Layout */
-        .rosary-steps {
-            display: flex;
-            gap: 1rem;
-            overflow-x: auto;
-            padding: 1rem 0;
-        }
-
-        .rosary-step-card {
-            min-width: 250px;
-            background: #f9f9f9;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 1rem;
-            flex-shrink: 0;
-        }
-
-        .rosary-step-card h4 {
-            color: var(--primary-light);
-            margin-bottom: 0.5rem;
-        }
-
-        /* Way of the Cross Horizontal Cards */
-        .stations-container {
-            display: flex;
-            gap: 1rem;
-            overflow-x: auto;
-            padding: 1rem 0;
-        }
-
-        .station-card {
-            min-width: 280px;
-            background: #fff;
-            border: 2px solid var(--accent);
-            border-radius: 8px;
-            padding: 1rem;
-            flex-shrink: 0;
-        }
-
-        .station-card h4 {
-            color: var(--primary);
-            margin-bottom: 0.5rem;
-        }
-
-        /* Utility */
-        .hidden { display: none !important; }
-        .alert { padding: 1rem; margin-bottom: 1rem; border-radius: 6px; }
-        .alert-success { background: #d4edda; color: #155724; }
-        .alert-error { background: #f8d7da; color: #721c24; }
     </style>
 </head>
 <body>
 
-    <header>
-        <h1>St. Michael Kasaini Catholic Church</h1>
-        <p>Youth Portal & Liturgical Center</p>
-    </header>
-
-    <div class="container">
-        <!-- Navigation Tabs -->
-        <div class="nav-tabs">
-            <button class="tab-btn active" onclick="switchTab('dashboard')">Dashboard</button>
-            <button class="tab-btn" onclick="switchTab('sunday-readings')">Sunday Readings</button>
-            <button class="tab-btn" onclick="switchTab('daily-verses')">Daily Verses</button>
-            <button class="tab-btn" onclick="switchTab('rosary')">Holy Rosary</button>
-            <button class="tab-btn" onclick="switchTab('way-of-cross')">Way of the Cross</button>
-            <button class="tab-btn" onclick="switchTab('prayers')">Prayers & Hymns</button>
-            <button class="tab-btn" onclick="switchTab('auth')">Login / Register</button>
-            <button class="tab-btn" onclick="switchTab('admin')">Admin Portal</button>
-        </div>
-
-        <!-- 1. DASHBOARD -->
-        <div id="dashboard" class="section-content active">
-            <h2>Welcome to St. Michael Youth Portal</h2>
-            <p>Your digital sanctuary for community interaction, spiritual nourishment, and church engagement. Use the tabs above to navigate through daily scripture, rosary guides, stations of the cross, and official group management.</p>
-            <div class="card-grid" style="margin-top: 2rem;">
-                <div class="card">
-                    <h3>Active Youth Mass</h3>
-                    <p>Date: August 2, 2026</p>
-                    <p>Special animation by youth choir and liturgical dancers.</p>
-                </div>
-                <div class="card">
-                    <h3>Retreat & Prayer Day</h3>
-                    <p>Date: August 15, 2026</p>
-                    <p>A day of intensive prayer, reflection, and spiritual growth.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- 2. SUNDAY READINGS -->
-        <div id="sunday-readings" class="section-content">
-            <h2>Sunday Liturgy & Holy Mass Readings</h2>
-            <div class="card-grid">
-                <div class="card">
-                    <h3>First Reading</h3>
-                    <p>Exodus 16:2-4, 12-15 — The Lord feeds His people with bread from heaven in the wilderness.</p>
-                </div>
-                <div class="card">
-                    <h3>Responsorial Psalm</h3>
-                    <p>Psalm 78:3-4, 23-24, 25, 54 — "The Lord gave them bread from heaven."</p>
-                </div>
-                <div class="card">
-                    <h3>Second Reading</h3>
-                    <p>Ephesians 4:17, 20-24 — Put on the new self, created in God’s righteousness and holiness.</p>
-                </div>
-                <div class="card">
-                    <h3>Gospel Reading</h3>
-                    <p>John 6:24-35 — "I am the bread of life; whoever comes to me shall never hunger, and whoever believes in me shall never thirst."</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- 3. DAILY VERSES (WITH RECYCLE BUTTON) -->
-        <div id="daily-verses" class="section-content">
-            <h2>Daily Scripture Verses</h2>
-            <div class="card" style="text-align: center; padding: 2rem;">
-                <p id="verse-display" style="font-size: 1.25rem; font-style: italic; margin-bottom: 1.5rem; color: var(--primary);">
-                    “Trust in the Lord with all your heart and lean not on your understanding; in all your ways submit to him, and he will make your paths straight.” (Proverbs 3:5-6)
-                </p>
-                <button class="submit-btn" onclick="cycleVerse()">🔄 Recycle / Next Verse</button>
-            </div>
-        </div>
-
-        <!-- 4. HOLY ROSARY (SEPARATED MYSTERIES HORIZONTALLY) -->
-        <div id="rosary" class="section-content">
-            <h2>The Holy Rosary & Separated Mysteries</h2>
-            <p style="margin-bottom: 1rem;">Swipe or scroll horizontally through the distinct mysteries:</p>
-            
-            <h3 style="color: var(--primary-light); margin-top: 1rem;">Joyful Mysteries (Monday & Saturday)</h3>
-            <div class="rosary-steps">
-                <div class="rosary-step-card"><h4>1. The Annunciation</h4><p>The Angel Gabriel announces to Mary that she will conceive the Son of God.</p></div>
-                <div class="rosary-step-card"><h4>2. The Visitation</h4><p>Mary visits her cousin Elizabeth, who proclaims her blessed among women.</p></div>
-                <div class="rosary-step-card"><h4>3. The Nativity</h4><p>Jesus is born in a humble manger in Bethlehem.</p></div>
-                <div class="rosary-step-card"><h4>4. The Presentation</h4><p>The infant Jesus is presented in the Temple by Mary and Joseph.</p></div>
-                <div class="rosary-step-card"><h4>5. Finding in the Temple</h4><p>The 12-year-old Jesus is found discussing matters with the teachers.</p></div>
-            </div>
-
-            <h3 style="color: var(--primary-light); margin-top: 1.5rem;">Sorrowful Mysteries (Tuesday & Friday)</h3>
-            <div class="rosary-steps">
-                <div class="rosary-step-card"><h4>1. Agony in the Garden</h4><p>Jesus sweats blood while praying in Gethsemane.</p></div>
-                <div class="rosary-step-card"><h4>2. Scourging at the Pillar</h4><p>Jesus is cruelly whipped by Roman soldiers.</p></div>
-                <div class="rosary-step-card"><h4>3. Crowning with Thorns</h4><p>A crown of sharp thorns is pressed onto the head of Jesus.</p></div>
-                <div class="rosary-step-card"><h4>4. Carrying of the Cross</h4><p>Jesus shoulders the heavy cross to Calvary.</p></div>
-                <div class="rosary-step-card"><h4>5. The Crucifixion</h4><p>Jesus dies on the cross for the salvation of humanity.</p></div>
-            </div>
-        </div>
-
-        <!-- 5. WAY OF THE CROSS (HORIZONTAL OFFICIAL CARDS) -->
-        <div id="way-of-cross" class="section-content">
-            <h2>Way of the Cross (14 Stations)</h2>
-            <p style="margin-bottom: 1rem;">Official sequential meditation stations arranged horizontally:</p>
-            <div class="stations-container">
-                <div class="station-card"><h4>Station 1</h4><p>Jesus is condemned to death.</p></div>
-                <div class="station-card"><h4>Station 2</h4><p>Jesus takes up His cross.</p></div>
-                <div class="station-card"><h4>Station 3</h4><p>Jesus falls the first time.</p></div>
-                <div class="station-card"><h4>Station 4</h4><p>Jesus meets His afflicted Mother.</p></div>
-                <div class="station-card"><h4>Station 5</h4><p>Simon of Cyrene helps carry the cross.</p></div>
-                <div class="station-card"><h4>Station 6</h4><p>Veronica wipes the face of Jesus.</p></div>
-                <div class="station-card"><h4>Station 7</h4><p>Jesus falls the second time.</p></div>
-                <div class="station-card"><h4>Station 8</h4><p>Jesus meets the women of Jerusalem.</p></div>
-                <div class="station-card"><h4>Station 9</h4><p>Jesus falls the third time.</p></div>
-                <div class="station-card"><h4>Station 10</h4><p>Jesus is stripped of garments.</p></div>
-                <div class="station-card"><h4>Station 11</h4><p>Jesus is nailed to the cross.</p></div>
-                <div class="station-card"><h4>Station 12</h4><p>Jesus dies on the cross.</p></div>
-                <div class="station-card"><h4>Station 13</h4><p>Jesus is taken down from the cross.</p></div>
-                <div class="station-card"><h4>Station 14</h4><p>Jesus is laid in the tomb.</p></div>
-            </div>
-        </div>
-
-        <!-- 6. PRAYERS & HYMNS -->
-        <div id="prayers" class="section-content">
-            <h2>Catholic Prayers & Hymns</h2>
-            <div class="card-grid">
-                <div class="card">
-                    <h3>Tumshangilie Bwana (Hymn)</h3>
-                    <p>Tumshangilie Bwana, mwamba wa wokovu wetu. Twendake mbele yake kwa shukrani, tumwimbie kwa furaha!</p>
-                </div>
-                <div class="card">
-                    <h3>Prayer to St. Michael</h3>
-                    <p>Saint Michael the Archangel, defend us in battle. Be our protection against the wickedness and snares of the devil...</p>
-                </div>
-                <div class="card">
-                    <h3>Youth Consecration Prayer</h3>
-                    <p>Lord Jesus, accept our youthful energy, our dreams, and our talents. Guide our footsteps away from temptation and fill our hearts with charity and purity. Amen.</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- 7. LOGIN / REGISTER -->
-        <div id="auth" class="section-content">
-            <h2>Member Authentication Portal</h2>
-            <div style="display: flex; gap: 2rem; flex-wrap: wrap;">
-                <div style="flex: 1; min-width: 280px; background: #fafafa; padding: 1.5rem; border-radius: 8px;">
-                    <h3 style="margin-bottom: 1rem; color: var(--primary);">Login</h3>
-                    <form onsubmit="handleLogin(event)">
-                        <div class="form-group">
-                            <label>Phone Number or 'admin'</label>
-                            <input type="text" id="login-phone" required placeholder="e.g. 0712345678">
-                        </div>
-                        <div class="form-group">
-                            <label>Password</label>
-                            <input type="password" id="login-password" required placeholder="********">
-                        </div>
-                        <button type="submit" class="submit-btn">Login Now</button>
-                    </form>
-                </div>
-
-                <div style="flex: 1; min-width: 280px; background: #fafafa; padding: 1.5rem; border-radius: 8px;">
-                    <h3 style="margin-bottom: 1rem; color: var(--primary);">Register Member</h3>
-                    <form onsubmit="handleRegister(event)">
-                        <div class="form-group">
-                            <label>Full Name</label>
-                            <input type="text" id="reg-name" required placeholder="Your Full Name">
-                        </div>
-                        <div class="form-group">
-                            <label>Phone Number</label>
-                            <input type="text" id="reg-phone" required placeholder="07xxxxxxxx">
-                        </div>
-                        <div class="form-group">
-                            <label>Password</label>
-                            <input type="password" id="reg-password" required placeholder="Choose a password">
-                        </div>
-                        <div class="form-group">
-                            <label>Group / Choir</label>
-                            <select id="reg-group">
-                                <option value="General">General Youth</option>
-                                <option value="Choir">Youth Choir</option>
-                                <option value="Dancers">Liturgical Dancers</option>
-                            </select>
-                        </div>
-                        <button type="submit" class="submit-btn">Register Account</button>
-                    </form>
-                </div>
-            </div>
-        </div>
-
-        <!-- 8. ADMIN PORTAL -->
-        <div id="admin" class="section-content">
-            <h2>Administrative Control Center</h2>
-            <div id="admin-login-box">
-                <p style="margin-bottom: 1rem;">Please log in using admin credentials to manage registrations and database elements.</p>
-                <button class="submit-btn" onclick="quickAdminAccess()">Simulate Admin Session</button>
-            </div>
-            <div id="admin-dashboard-box" class="hidden">
-                <div class="alert alert-success">Admin Access Granted: Full management privileges active. Registration approval queue and member records accessible.</div>
-                <h3 style="margin-top: 1.5rem; color: var(--primary);">Member Directory</h3>
-                <p>Total Registered Members: <span id="admin-member-count">0</span></p>
-            </div>
+    <!-- Top Navigation Header (Large Font) -->
+    <div class="portal-header">
+        <a href="/" class="portal-logo">
+            <i class="fa-solid fa-cross text-warning"></i> St. Michael Kasaini
+        </a>
+        <div class="d-flex align-items-center gap-2">
+            <span class="text-muted" style="font-size: 0.85rem;" id="welcomeUser">Welcome</span>
+            <!-- Log out button returning to main home -->
+            <button class="btn btn-outline-danger btn-sm fw-bold px-2 py-1" id="logoutBtn" style="font-size: 0.75rem; display: none;">Log Out</button>
         </div>
     </div>
 
-    <script>
-        // Tab Management Logic
-        function switchTab(tabId) {
-            document.querySelectorAll('.section-content').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    <!-- Extremely Compact Expandable Menu Toggles (Micro fonts, no arrows) -->
+    <div class="container-fluid px-0">
+        <div class="accordion accordion-flush" id="portalMenuAccordion">
             
-            document.getElementById(tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
+            <!-- Home (Large/Normal Font requested for HOME) -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingHome">
+                    <button class="accordion-button collapsed text-primary fw-bold" type="button" onclick="window.location.href='/'" style="font-size: 1rem;">
+                        <i class="fa-solid fa-house me-2"></i> Home
+                    </button>
+                </h2>
+            </div>
+
+            <!-- Register a friend (First name only, 3 youth groups, no password needed) -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingRegister">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRegister" aria-expanded="false" aria-controls="collapseRegister">
+                        Register a friend
+                    </button>
+                </h2>
+                <div id="collapseRegister" class="accordion-collapse collapse" aria-labelledby="headingRegister" data-bs-parent="#portalMenuAccordion">
+                    <div class="accordion-body">
+                        <p class="text-muted mb-2" style="font-size: 0.68rem;">Add a friend to the pending list for admin approval (First name only). For personal registration, use <strong>Sign Up</strong> below.</p>
+                        <form id="friendRegisterForm">
+                            <div id="friendAlert" class="alert d-none p-1 mb-2" style="font-size: 0.65rem;" role="alert"></div>
+                            <div class="mb-1">
+                                <label class="form-label fw-bold mb-0" style="font-size: 0.65rem;">Friend's First Name</label>
+                                <input type="text" class="form-control form-control-sm py-0 px-1" id="friendName" required placeholder="First name only" style="font-size: 0.68rem; height: 24px;">
+                            </div>
+                            <div class="mb-1">
+                                <label class="form-label fw-bold mb-0" style="font-size: 0.65rem;">Friend's Phone Number</label>
+                                <input type="text" class="form-control form-control-sm py-0 px-1" id="friendPhone" required placeholder="07xxxxxxxx" style="font-size: 0.68rem; height: 24px;">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label fw-bold mb-0" style="font-size: 0.65rem;">Youth Group (YCA, YSC, or General)</label>
+                                <select class="form-select form-select-sm py-0 px-1" id="friendGroup" style="font-size: 0.68rem; height: 24px;">
+                                    <option value="General">General</option>
+                                    <option value="YCA">YCA</option>
+                                    <option value="YSC">YSC</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold py-0" style="font-size: 0.68rem; height: 22px;">Add Friend</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- About St. Michael youth -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingAbout">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAbout" aria-expanded="false" aria-controls="collapseAbout">
+                        About St. Michael youth
+                    </button>
+                </h2>
+                <div id="collapseAbout" class="accordion-collapse collapse" aria-labelledby="headingAbout" data-bs-parent="#portalMenuAccordion">
+                    <div class="accordion-body">
+                        St. Michael Catholic Church Youth is a vibrant, faith-filled community dedicated to empowering young people to grow spiritually, socially, and morally. Rooted in Catholic values and guided by the teachings of Christ, our ministry provides a welcoming space where youth can deepen their relationship with God through dynamic liturgies, engaging Bible studies, and meaningful fellowship.<br><br>
+                        We strive to nurture compassionate leaders by encouraging active participation in parish life, community outreach, and charitable service. Beyond spiritual growth, we host exciting social events, retreats, and talent showcases that foster lifelong friendships and a strong sense of belonging.<br><br>
+                        Whether you are looking to strengthen your faith, serve others, or simply connect with peers who share your values, St. Michael Youth is your spiritual home. Together, we walk the path of discipleship, inspiring one another to live out the Gospel with joy, courage, and unwavering love.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Registered youths -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingRegistered">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRegistered" aria-expanded="false" aria-controls="collapseRegistered">
+                        Registered youths
+                    </button>
+                </h2>
+                <div id="collapseRegistered" class="accordion-collapse collapse" aria-labelledby="headingRegistered" data-bs-parent="#portalMenuAccordion">
+                    <div class="accordion-body p-1">
+                        <div class="table-responsive">
+                            <table class="table excel-table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 8%;">No</th>
+                                        <th style="width: 12%;">ID</th>
+                                        <th style="width: 25%;">Name</th>
+                                        <th style="width: 22%;">Number</th>
+                                        <th style="width: 15%;">Group</th>
+                                        <th style="width: 18%;">Added By</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="excelTableBody">
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-1">Loading spreadsheet records...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upcoming and past events -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingEvents">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEvents" aria-expanded="false" aria-controls="collapseEvents">
+                        Upcoming and past events
+                    </button>
+                </h2>
+                <div id="collapseEvents" class="accordion-collapse collapse" aria-labelledby="headingEvents" data-bs-parent="#portalMenuAccordion">
+                    <div class="accordion-body" id="eventsContent">
+                        <p class="text-muted mb-0">Loading events...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Youth board -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingContact">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseContact" aria-expanded="false" aria-controls="collapseContact">
+                        Contact Youth board
+                    </button>
+                </h2>
+                <div id="collapseContact" class="accordion-collapse collapse" aria-labelledby="headingContact" data-bs-parent="#portalMenuAccordion">
+                    <div class="accordion-body">
+                        <h6 class="fw-bold text-primary mb-1" style="font-size: 0.7rem;"><i class="fa-solid fa-users-gear text-warning me-1"></i> Board Directory</h6>
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-1"><strong>Moderator (Alphonse):</strong> <span class="text-muted"><i class="fa-solid fa-phone text-success me-1"></i>0745225589</span></li>
+                            <li class="mb-1"><strong>V. Moderator (Eric):</strong> <span class="text-muted"><i class="fa-solid fa-phone text-success me-1"></i>0714826281</span></li>
+                            <li><strong>OG (Victor):</strong> <span class="text-muted"><i class="fa-solid fa-phone text-success me-1"></i>0754920679</span></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Message support & Password Reset trigger -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingSupport">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSupport" aria-expanded="false" aria-controls="collapseSupport">
+                        Message support
+                    </button>
+                </h2>
+                <div id="collapseSupport" class="accordion-collapse collapse" aria-labelledby="headingSupport" data-bs-parent="#portalMenuAccordion">
+                    <div class="accordion-body">
+                        <div id="suggestionAlert" class="alert d-none small mb-1 p-1" role="alert" style="font-size: 0.65rem;"></div>
+                        <form id="suggestionForm">
+                            <div class="mb-1">
+                                <label for="suggestionTitle" class="form-label fw-bold mb-0" style="font-size: 0.65rem;">Subject</label>
+                                <input type="text" class="form-control form-control-sm py-0 px-1" id="suggestionTitle" required placeholder="Issue title or inquiry" style="font-size: 0.68rem; height: 24px;">
+                            </div>
+                            <div class="mb-1">
+                                <label for="suggestionDesc" class="form-label fw-bold mb-0" style="font-size: 0.65rem;">Message details</label>
+                                <textarea class="form-control form-control-sm py-1 px-1" id="suggestionDesc" rows="2" required placeholder="Describe your issue or report for admin..." style="font-size: 0.68rem;"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success btn-sm w-100 fw-bold py-0 mb-1" style="background-color: #2e7d32; font-size: 0.68rem; height: 22px;">Forward to Admin Dashboard</button>
+                        </form>
+                        <!-- Password Reset Button -->
+                        <div class="mt-2 text-center border-top pt-1">
+                            <button type="button" id="resetPasswordBtn" class="btn btn-link text-danger p-0" style="font-size: 0.65rem; text-decoration: underline;">Reset Password</button>
+                            <div id="resetPasswordMsg" class="text-muted mt-1 d-none" style="font-size: 0.62rem;">Please message support for password reset.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Online Status Tracker Widget -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="headingOnline">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseOnline" aria-expanded="false" aria-controls="collapseOnline">
+                        Who is online
+                    </button>
+                </h2>
+                <div id="collapseOnline" class="accordion-collapse collapse" aria-labelledby="headingOnline" data-bs-parent="#portalMenuAccordion">
+                    <div class="accordion-body">
+                        <ul id="onlineUsersList" class="list-unstyled mb-0" style="font-size: 0.65rem;">
+                            <li class="text-muted">Checking active sessions...</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Main Container Content -->
+    <div class="container my-2">
+        <!-- Footer Action Buttons: Large fonts for LOGIN and SIGN UP options -->
+        <div class="footer-action-container col-lg-5 mx-auto">
+            <a href="/login" class="btn-outline-custom">Log in</a>
+            <a href="/register" class="btn-solid-custom">Sign up</a>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Session Check & Authentication UI Handling
+        const currentUserName = localStorage.getItem('youthName');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        if (!currentUserName) {
+            document.getElementById('welcomeUser').textContent = 'Account Access Required';
+            logoutBtn.style.display = 'none';
+        } else {
+            document.getElementById('welcomeUser').textContent = `Welcome, ${currentUserName}`;
+            logoutBtn.style.display = 'inline-block';
         }
 
-        // Daily Verse Recycling Logic
-        const versesPool = [
-            '“Trust in the Lord with all your heart and lean not on your understanding; in all your ways submit to him, and he will make your paths straight.” (Proverbs 3:5-6)',
-            '“I can do all things through Christ who strengthens me.” (Philippians 4:13)',
-            '“The Lord is my shepherd; I shall not want.” (Psalm 23:1)',
-            '“Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go.” (Joshua 1:9)',
-            '“And we know that in all things God works for the good of those who love him, who have been called according to his purpose.” (Romans 8:28)'
-        ];
-        let currentVerseIndex = 0;
-        function cycleVerse() {
-            currentVerseIndex = (currentVerseIndex + 1) % versesPool.length;
-            document.getElementById('verse-display').innerText = versesPool[currentVerseIndex];
+        // Helper to mask middle 3 digits of a phone number
+        function maskPhone(phone) {
+            if (!phone || phone.length < 7) return phone || 'N/A';
+            const start = phone.slice(0, 3);
+            const end = phone.slice(-4);
+            return `${start}***${end}`;
         }
 
-        // Authentication & Client Data Simulation Logic
-        let localUsers = [];
+        // Helper to calculate event countdowns
+        function getEventCountdown(dateString) {
+            if (!dateString) return '<span class="text-muted" style="font-size:0.65rem;">Date TBD</span>';
+            const eventDate = new Date(dateString);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            eventDate.setHours(0, 0, 0, 0);
 
-        function handleRegister(e) {
-            e.preventDefault();
-            const name = document.getElementById('reg-name').value;
-            const phone = document.getElementById('reg-phone').value;
-            const password = document.getElementById('reg-password').value;
-            const group = document.getElementById('reg-group').value;
+            const diffTime = eventDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-            if(!name || !phone || !password) {
-                alert('Please fill in all required fields.');
-                return;
-            }
-
-            localUsers.push({ name, phone, password, group });
-            alert('Registration successful! You can now log in.');
-            document.getElementById('reg-name').value = '';
-            document.getElementById('reg-phone').value = '';
-            document.getElementById('reg-password').value = '';
-        }
-
-        function handleLogin(e) {
-            e.preventDefault();
-            const phone = document.getElementById('login-phone').value;
-            const password = document.getElementById('login-password').value;
-
-            if(phone === 'admin' && password === 'admin2026') {
-                alert('Admin login successful!');
-                quickAdminAccess();
-                return;
-            }
-
-            const found = localUsers.find(u => u.phone === phone && u.password === password);
-            if(found) {
-                alert(`Welcome back, ${found.name} (${found.group})!`);
+            if (diffDays > 0) {
+                return `<span class="badge bg-primary" style="font-size:0.6rem;">In ${diffDays} day${diffDays === 1 ? '' : 's'} (${dateString})</span>`;
+            } else if (diffDays === 0) {
+                return `<span class="badge bg-success" style="font-size:0.6rem;">Today! (${dateString})</span>`;
             } else {
-                alert('Invalid phone number or password, or please register first.');
+                return `<span class="badge bg-secondary" style="font-size:0.6rem;">Past (${dateString})</span>`;
             }
         }
 
-        function quickAdminAccess() {
-            document.getElementById('admin-login-box').classList.add('hidden');
-            document.getElementById('admin-dashboard-box').classList.remove('hidden');
-            document.getElementById('admin-member-count').innerText = localUsers.length;
+        // Fetch Dashboard Directory, Online Users and Events
+        async function loadDashboardData() {
+            try {
+                const res = await fetch('/api/youth/directory');
+                const data = await res.json();
+                if (data.success) {
+                    const tableBody = document.getElementById('excelTableBody');
+                    
+                    if (data.members && data.members.length > 0) {
+                        let rowsHtml = '';
+                        data.members.forEach((m, index) => {
+                            const rowNo = index + 1;
+                            const uniqueId = `K${rowNo}`;
+                            const maskedContact = maskPhone(m.phone);
+                            const groupName = m.group || 'General';
+                            const addedBy = m.registeredBy || 'Self';
+
+                            rowsHtml += `
+                                <tr>
+                                    <td class="text-center fw-bold text-muted">${rowNo}</td>
+                                    <td class="text-center font-monospace fw-bold text-primary">${uniqueId}</td>
+                                    <td class="fw-semibold text-dark">${m.name}</td>
+                                    <td><i class="fa-solid fa-phone-alt text-success me-1 small"></i>${maskedContact}</td>
+                                    <td><span class="badge bg-light text-dark border" style="font-size:0.6rem;">${groupName}</span></td>
+                                    <td><span class="text-muted" style="font-size:0.6rem;">${addedBy}</span></td>
+                                </tr>
+                            `;
+                        });
+                        tableBody.innerHTML = rowsHtml;
+                    } else {
+                        tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-1">No approved members recorded yet.</td></tr>`;
+                    }
+
+                    // Render Online Users List
+                    const onlineList = document.getElementById('onlineUsersList');
+                    if (data.onlineUsers && data.onlineUsers.length > 0) {
+                        let onlineHtml = '';
+                        data.onlineUsers.forEach(user => {
+                            onlineHtml += `<li class="mb-1 d-flex align-items-center gap-1"><span class="badge bg-success p-1 rounded-circle" style="width:6px;height:6px;"></span> <span>${user}</span></li>`;
+                        });
+                        onlineList.innerHTML = onlineHtml;
+                    } else {
+                        onlineList.innerHTML = `<li class="text-muted">No active users online right now.</li>`;
+                    }
+
+                    // Events & Countdown Section
+                    const evContainer = document.getElementById('eventsContent');
+                    if (data.events && data.events.length > 0) {
+                        let html = '<div class="list-group list-group-flush">';
+                        data.events.forEach(ev => {
+                            const badgeHtml = getEventCountdown(ev.date);
+                            html += `<div class="list-group-item px-0 py-1 bg-transparent">
+                                <div class="d-flex w-100 justify-content-between align-items-center mb-0">
+                                    <h6 class="fw-bold text-dark mb-0" style="font-size: 0.7rem;">${ev.title}</h6>
+                                    <div>${badgeHtml}</div>
+                                </div>
+                                <p class="mb-0 text-muted" style="font-size: 0.65rem;">${ev.description || ''}</p>
+                            </div>`;
+                        });
+                        html += '</div>';
+                        evContainer.innerHTML = html;
+                    } else {
+                        evContainer.innerHTML = '<p class="text-muted mb-0" style="font-size: 0.68rem;">No events available right now.</p>';
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to load dashboard data', err);
+            }
         }
+
+        loadDashboardData();
+
+        // Register a Friend Form Submission Handler (First name only, says "added", routed to admin queue)
+        document.getElementById('friendRegisterForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const alertBox = document.getElementById('friendAlert');
+            const name = document.getElementById('friendName').value.trim();
+            const phone = document.getElementById('friendPhone').value.trim();
+            const group = document.getElementById('friendGroup').value;
+
+            try {
+                const res = await fetch('/api/youth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, phone, group, registeredBy: currentUserName || 'Peer Member' })
+                });
+                const data = await res.json();
+
+                alertBox.textContent = data.success ? 'Added! Awaiting admin approval.' : (data.message || 'Failed to add friend.');
+                alertBox.classList.remove('d-none');
+                alertBox.className = data.success ? 'alert alert-success p-1 mb-2' : 'alert alert-danger p-1 mb-2';
+
+                if (data.success) {
+                    e.target.reset();
+                    loadDashboardData();
+                }
+            } catch (err) {
+                alertBox.className = 'alert alert-danger p-1 mb-2';
+                alertBox.textContent = 'Failed to connect. Please try again.';
+                alertBox.classList.remove('d-none');
+            }
+        });
+
+        // Support Message Form Handler
+        document.getElementById('suggestionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const alertBox = document.getElementById('suggestionAlert');
+            const title = document.getElementById('suggestionTitle').value.trim();
+            const description = document.getElementById('suggestionDesc').value.trim();
+
+            try {
+                const res = await fetch('/api/youth/suggestions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title, description, submittedBy: currentUserName || 'Registered User' })
+                });
+                const data = await res.json();
+
+                alertBox.textContent = data.message || 'Support message successfully routed to admin dashboard!';
+                alertBox.classList.remove('d-none');
+                alertBox.className = data.success ? 'alert alert-success p-1 mb-1' : 'alert alert-danger p-1 mb-1';
+
+                if (data.success) {
+                    e.target.reset();
+                }
+            } catch (err) {
+                alertBox.className = 'alert alert-danger p-1 mb-1';
+                alertBox.textContent = 'Failed to forward message.';
+                alertBox.classList.remove('d-none');
+            }
+        });
+
+        // Password Reset Prompt Handler
+        document.getElementById('resetPasswordBtn').addEventListener('click', () => {
+            const resetMsg = document.getElementById('resetPasswordMsg');
+            resetMsg.classList.remove('d-none');
+        });
+
+        // Logout Handler taking user back to main home
+        document.getElementById('logoutBtn').addEventListener('click', async () => {
+            try {
+                await fetch('/api/youth/logout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: currentUserName })
+                });
+            } catch (err) {
+                // proceed with local cleanup
+            }
+            localStorage.removeItem('youthName');
+            window.location.href = '/';
+        });
     </script>
 </body>
 </html>

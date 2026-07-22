@@ -7,300 +7,189 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        :root { --church-navy: #1b365d; }
-        body { background-color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #111; }
-        .portal-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 18px; border-bottom: 1px solid #f0f0f0; }
-        .portal-logo { font-weight: bold; font-size: 1.15rem; color: var(--church-navy); display: flex; align-items: center; gap: 6px; text-decoration: none; }
-        .accordion-button { padding: 6px 12px; font-size: 0.72rem; font-weight: 400; color: #444; background-color: #fff; box-shadow: none !important; }
-        .accordion-button::after { display: none !important; }
-        .accordion-button:not(.collapsed) { background-color: #f8f9fa; color: var(--church-navy); font-weight: 500; }
-        .accordion-item { border: none; border-bottom: 1px solid #f0f0f0; }
-        .accordion-body { font-size: 0.68rem; color: #555; background-color: #fafbfc; padding: 8px 12px; line-height: 1.35; }
-        .footer-action-container { padding: 15px; display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
-        .btn-outline-custom { border: 2px solid var(--church-navy); color: var(--church-navy); border-radius: 50px; font-weight: 600; padding: 10px; font-size: 1rem; text-align: center; background: transparent; text-decoration: none; }
-        .btn-solid-custom { background: linear-gradient(135deg, #1b365d 0%, #0d1b2a 100%); color: #fff; border-radius: 50px; font-weight: 600; padding: 10px; font-size: 1rem; text-align: center; border: none; text-decoration: none; }
-        .excel-table { border: 2px solid #b0bec5; background-color: #ffffff; }
-        .excel-table th { background-color: #1b365d !important; color: #ffffff !important; text-align: center; border: 1px solid #90a4ae !important; font-size: 0.7rem; }
-        .excel-table td { border: 1px solid #cfd8dc !important; font-size: 0.7rem; padding: 4px 6px; }
+        :root { --church-navy: #1b365d; --church-gold: #d4af37; --church-bg: #f9f8f6; }
+        body { background-color: var(--church-bg); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .navbar { background-color: var(--church-navy) !important; border-bottom: 3px solid var(--church-gold); }
+        .card { border: none; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .wing-box { background: #ffffff; border-left: 4px solid var(--church-gold); border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); margin-bottom: 15px; padding: 15px; }
     </style>
 </head>
 <body>
-    <div class="portal-header">
-        <a href="/" class="portal-logo"><i class="fa-solid fa-cross text-warning"></i> St. Michael Kasaini</a>
-        <div class="d-flex align-items-center gap-2">
-            <span class="text-muted" style="font-size: 0.85rem;" id="welcomeUser">Welcome</span>
-            <button class="btn btn-outline-danger btn-sm fw-bold px-2 py-1" id="logoutBtn" style="font-size: 0.75rem; display: none;">Log Out</button>
+
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand fw-bold d-flex align-items-center gap-2" href="/">
+                <i class="fa-solid fa-cross text-warning"></i> St. Michael Kasaini Youth Dashboard
+            </a>
+            <div class="navbar-nav ms-auto align-items-center flex-row gap-3">
+                <span class="text-light small" id="welcomeUser">Welcome, Member</span>
+                <button id="logoutBtn" class="btn btn-outline-warning btn-sm fw-bold">Sign Out</button>
+            </div>
         </div>
-    </div>
+    </nav>
 
-    <div class="container-fluid px-0">
-        <div class="accordion accordion-flush" id="portalMenuAccordion">
-            
-            <div class="accordion-item">
-                <h2 class="accordion-header">
-                    <button class="accordion-button collapsed text-primary fw-bold" type="button" onclick="window.location.href='/'" style="font-size: 1rem;">
-                        <i class="fa-solid fa-house me-2"></i> Home
-                    </button>
-                </h2>
-            </div>
+    <div class="container my-5">
+        <div class="row">
+            <!-- Directory & Events Section -->
+            <div class="col-lg-8">
+                <!-- Grouped Wings Directory Box -->
+                <div class="card p-4 bg-white">
+                    <h3 class="fw-bold text-primary mb-3"><i class="fa-solid fa-users text-warning me-2"></i>Approved Youth Directory by Wings</h3>
+                    <p class="text-muted small">Registered youth members categorized by their respective wings/groups, complete with unique IDs and masked contacts.</p>
+                    <div id="wingsDirectoryContent">
+                        <p class="text-muted">Loading directory wings...</p>
+                    </div>
+                </div>
 
-            <!-- Daily Readings, Rosary, Way of the Cross & Prayers Menu Tab -->
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="headingReadings">
-                    <button class="accordion-button collapsed fw-bold text-success" type="button" data-bs-toggle="collapse" data-bs-target="#collapseReadings">
-                        <i class="fa-solid fa-book-bible me-1"></i> Scripture, Rosary & Prayers
-                    </button>
-                </h2>
-                <div id="collapseReadings" class="accordion-collapse collapse" data-bs-parent="#portalMenuAccordion">
-                    <div class="accordion-body" id="dashboardReadingsContainer">
-                        <p class="text-muted mb-0">Loading spiritual devotions...</p>
+                <!-- Events & Countdowns -->
+                <div class="card p-4 bg-white mt-4">
+                    <h3 class="fw-bold text-primary mb-3"><i class="fa-solid fa-calendar-days text-warning me-2"></i>Events & Countdowns</h3>
+                    <div id="eventsContent">
+                        <p class="text-muted">Loading events...</p>
                     </div>
                 </div>
             </div>
 
-            <!-- Register a friend -->
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="headingRegister">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRegister">Register a friend</button>
-                </h2>
-                <div id="collapseRegister" class="accordion-collapse collapse" data-bs-parent="#portalMenuAccordion">
-                    <div class="accordion-body">
-                        <p class="text-muted mb-2" style="font-size: 0.68rem;">Submit your friend's details for admin approval (First name only, no password needed).</p>
-                        <form id="friendRegisterForm">
-                            <div id="friendAlert" class="alert d-none p-1 mb-2" style="font-size: 0.65rem;" role="alert"></div>
-                            <div class="mb-1">
-                                <label class="form-label fw-bold mb-0" style="font-size: 0.65rem;">Friend's First Name</label>
-                                <input type="text" class="form-control form-control-sm" id="friendName" required placeholder="First name only" style="font-size: 0.68rem; height: 24px;">
-                            </div>
-                            <div class="mb-1">
-                                <label class="form-label fw-bold mb-0" style="font-size: 0.65rem;">Friend's Phone Number</label>
-                                <input type="text" class="form-control form-control-sm" id="friendPhone" required placeholder="07xxxxxxxx" style="font-size: 0.68rem; height: 24px;">
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label fw-bold mb-0" style="font-size: 0.65rem;">Youth Group</label>
-                                <select class="form-select form-select-sm" id="friendGroup" style="font-size: 0.68rem; height: 24px;">
-                                    <option value="General">General</option>
-                                    <option value="YCA">YCA</option>
-                                    <option value="YSC">YSC</option>
-                                </select>
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-sm w-100 fw-bold py-0" style="font-size: 0.68rem; height: 22px;">Submit for Admin Approval</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="headingAbout">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseAbout">About St. Michael youth</button>
-                </h2>
-                <div id="collapseAbout" class="accordion-collapse collapse" data-bs-parent="#portalMenuAccordion">
-                    <div class="accordion-body">
-                        St. Michael Catholic Church Youth is a vibrant, faith-filled community dedicated to empowering young people to grow spiritually, socially, and morally. Rooted in Catholic values and guided by Christ, we provide a welcoming space for fellowship and community service.
-                    </div>
-                </div>
-            </div>
-
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="headingRegistered">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseRegistered">Registered youths</button>
-                </h2>
-                <div id="collapseRegistered" class="accordion-collapse collapse" data-bs-parent="#portalMenuAccordion">
-                    <div class="accordion-body p-1">
-                        <div class="table-responsive">
-                            <table class="table excel-table mb-0">
-                                <thead>
-                                    <tr>
-                                        <th style="width: 8%;">No</th>
-                                        <th style="width: 12%;">ID</th>
-                                        <th style="width: 25%;">Name</th>
-                                        <th style="width: 22%;">Number</th>
-                                        <th style="width: 15%;">Group</th>
-                                        <th style="width: 18%;">Added By</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="excelTableBody">
-                                    <tr><td colspan="6" class="text-center text-muted py-1">Loading directory...</td></tr>
-                                </tbody>
-                            </table>
+            <!-- Suggestion Box Section -->
+            <div class="col-lg-4">
+                <div class="card p-4 bg-white">
+                    <h4 class="fw-bold text-success mb-3"><i class="fa-solid fa-lightbulb text-warning me-2"></i>Event Suggestion Box</h4>
+                    <p class="text-muted small">Have an idea for an upcoming youth activity or spiritual event? Submit it directly to the administrative dashboard.</p>
+                    <div id="suggestionAlert" class="alert d-none small" role="alert"></div>
+                    <form id="suggestionForm">
+                        <div class="mb-3">
+                            <label for="suggestionTitle" class="form-label fw-bold small">Event Idea Title</label>
+                            <input type="text" class="form-control form-control-sm" id="suggestionTitle" required placeholder="e.g., Youth Charity Hike">
                         </div>
-                    </div>
+                        <div class="mb-3">
+                            <label for="suggestionDesc" class="form-label fw-bold small">Description & Details</label>
+                            <textarea class="form-control form-control-sm" id="suggestionDesc" rows="3" required placeholder="Share brief details about your idea..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-success btn-sm w-100 fw-bold" style="background-color: #2e7d32;">Submit to Admin</button>
+                    </form>
                 </div>
             </div>
-
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="headingEvents">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseEvents">Upcoming and past events</button>
-                </h2>
-                <div id="collapseEvents" class="accordion-collapse collapse" data-bs-parent="#portalMenuAccordion">
-                    <div class="accordion-body" id="eventsContent">
-                        <p class="text-muted mb-0">Loading events...</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="headingContact">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseContact">Contact Youth board</button>
-                </h2>
-                <div id="collapseContact" class="accordion-collapse collapse" data-bs-parent="#portalMenuAccordion">
-                    <div class="accordion-body">
-                        <ul class="list-unstyled mb-0">
-                            <li class="mb-1"><strong>Moderator (Alphonse):</strong> <span class="text-muted">0745225589</span></li>
-                            <li class="mb-1"><strong>V. Moderator (Eric):</strong> <span class="text-muted">0714826281</span></li>
-                            <li><strong>OG (Victor):</strong> <span class="text-muted">0754920679</span></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Help / Suggestion Center -->
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="headingSupport">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSupport">Help & Suggestion Center</button>
-                </h2>
-                <div id="collapseSupport" class="accordion-collapse collapse" data-bs-parent="#portalMenuAccordion">
-                    <div class="accordion-body">
-                        <div id="suggestionAlert" class="alert d-none small mb-1 p-1" role="alert" style="font-size: 0.65rem;"></div>
-                        <form id="suggestionForm">
-                            <div class="mb-1">
-                                <label class="form-label fw-bold mb-0" style="font-size: 0.65rem;">Subject</label>
-                                <input type="text" class="form-control form-control-sm" id="suggestionTitle" required placeholder="Issue title or inquiry" style="font-size: 0.68rem; height: 24px;">
-                            </div>
-                            <div class="mb-1">
-                                <label class="form-label fw-bold mb-0" style="font-size: 0.65rem;">Message details</label>
-                                <textarea class="form-control form-control-sm" id="suggestionDesc" rows="2" required placeholder="Send a message to admin..." style="font-size: 0.68rem;"></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-success btn-sm w-100 fw-bold py-0" style="background-color: #2e7d32; font-size: 0.68rem; height: 22px;">Send to Admin</button>
-                        </form>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-
-    <div class="container my-2">
-        <div class="footer-action-container col-lg-5 mx-auto">
-            <a href="/login" class="btn-outline-custom">Log in</a>
-            <a href="/register" class="btn-solid-custom">Sign up</a>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Session Verification
         const currentUserName = localStorage.getItem('youthName');
-        const logoutBtn = document.getElementById('logoutBtn');
-
         if (!currentUserName) {
-            document.getElementById('welcomeUser').textContent = 'Account Required';
-            logoutBtn.style.display = 'none';
+            window.location.href = '/login';
         } else {
             document.getElementById('welcomeUser').textContent = `Welcome, ${currentUserName}`;
-            logoutBtn.style.display = 'inline-block';
-            
-            setInterval(() => {
-                fetch('/api/heartbeat', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name: currentUserName })
-                });
-            }, 15000);
         }
 
+        // Helper to mask middle 3 digits of a phone number (e.g. 0712345678 -> 071***5678)
         function maskPhone(phone) {
             if (!phone || phone.length < 7) return phone || 'N/A';
-            return `${phone.slice(0, 3)}***${phone.slice(-4)}`;
+            const start = phone.slice(0, 3);
+            const end = phone.slice(-4);
+            return `${start}***${end}`;
         }
 
+        // Helper to calculate exact days to an event date
+        function getEventCountdown(dateString) {
+            if (!dateString) return '<span class="text-muted">Date TBD</span>';
+            const eventDate = new Date(dateString);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            eventDate.setHours(0, 0, 0, 0);
+
+            const diffTime = eventDate - today;
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+            if (diffDays > 0) {
+                return `<span class="badge bg-primary">In ${diffDays} day${diffDays === 1 ? '' : 's'} (${dateString})</span>`;
+            } else if (diffDays === 0) {
+                return `<span class="badge bg-success">Happening Today! (${dateString})</span>`;
+            } else {
+                return `<span class="badge bg-secondary">Past Event (${dateString})</span>`;
+            }
+        }
+
+        // Fetch Dashboard Data and group members by wings/groups
         async function loadDashboardData() {
             try {
                 const res = await fetch('/api/youth/directory');
                 const data = await res.json();
                 if (data.success) {
-                    // Render Readings & Devotions
-                    const readingsContainer = document.getElementById('dashboardReadingsContainer');
-                    if (data.readings && data.readings.length > 0) {
-                        let rHtml = '';
-                        data.readings.forEach(r => {
-                            rHtml += `<div class="mb-2 pb-2 border-bottom">
-                                <span class="badge bg-primary text-white mb-1" style="font-size:0.6rem;">${r.category || 'Spiritual'}</span>
-                                <h6 class="fw-bold text-dark mb-1" style="font-size: 0.72rem;">${r.title}</h6>
-                                <p class="mb-0 text-muted" style="font-size: 0.65rem; line-height: 1.4;">${r.content}</p>
-                            </div>`;
-                        });
-                        readingsContainer.innerHTML = rHtml;
-                    } else {
-                        readingsContainer.innerHTML = `<p class="text-muted mb-0">No spiritual content available.</p>`;
-                    }
-
-                    // Render Members Table
-                    const tableBody = document.getElementById('excelTableBody');
+                    const dirContainer = document.getElementById('wingsDirectoryContent');
+                    
                     if (data.members && data.members.length > 0) {
-                        let rowsHtml = '';
+                        // Group members by their group/wing field
+                        const wingsMap = {};
                         data.members.forEach((m, index) => {
-                            rowsHtml += `
-                                <tr>
-                                    <td class="text-center fw-bold text-muted">${index + 1}</td>
-                                    <td class="text-center font-monospace fw-bold text-primary">K${index + 1}</td>
-                                    <td class="fw-semibold text-dark">${m.name}</td>
-                                    <td>${maskPhone(m.phone)}</td>
-                                    <td><span class="badge bg-light text-dark border" style="font-size:0.6rem;">${m.group || 'General'}</span></td>
-                                    <td><span class="text-muted" style="font-size:0.6rem;">${m.registeredBy || 'Self'}</span></td>
-                                </tr>
-                            `;
+                            const wingName = m.group || 'General Wing';
+                            if (!wingsMap[wingName]) {
+                                wingsMap[wingName] = [];
+                            }
+                            wingsMap[wingName].push({ ...m, globalIndex: index + 1 });
                         });
-                        tableBody.innerHTML = rowsHtml;
+
+                        let wingsHtml = '';
+                        for (const [wing, members] of Object.entries(wingsMap)) {
+                            wingsHtml += `
+                                <div class="wing-box">
+                                    <h5 class="fw-bold text-secondary mb-3"><i class="fa-solid fa-layer-group me-2 text-warning"></i>${wing} Wing</h5>
+                                    <ol class="list-group list-group-numbered mb-0">
+                            `;
+                            
+                            members.forEach(m => {
+                                const uniqueId = `K${m.globalIndex}`;
+                                const maskedContact = maskPhone(m.phone);
+                                wingsHtml += `
+                                    <li class="list-group-item d-flex justify-content-between align-items-start py-2 border-0 bg-transparent">
+                                        <div class="ms-2 me-auto">
+                                            <div class="fw-bold text-dark">${m.name} <span class="badge bg-light text-dark border ms-1 font-monospace small">${uniqueId}</span></div>
+                                            <small class="text-muted">Jumuiya: ${m.jumuiya || 'N/A'}</small><br>
+                                            <small class="text-success"><i class="fa-solid fa-phone me-1"></i>Contact: ${maskedContact}</small>
+                                        </div>
+                                        <span class="badge bg-success rounded-pill align-self-center">Approved</span>
+                                    </li>
+                                `;
+                            });
+
+                            wingsHtml += `
+                                    </ol>
+                                </div>
+                            `;
+                        }
+                        dirContainer.innerHTML = wingsHtml;
                     } else {
-                        tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-muted py-1">No members recorded yet.</td></tr>`;
+                        dirContainer.innerHTML = '<p class="text-muted">No approved members listed in wings yet.</p>';
                     }
 
-                    // Render Events
+                    // Events & Countdown Section
                     const evContainer = document.getElementById('eventsContent');
                     if (data.events && data.events.length > 0) {
-                        let html = '<div class="list-group list-group-flush">';
+                        let html = '<div class="list-group">';
                         data.events.forEach(ev => {
-                            html += `<div class="list-group-item px-0 py-1 bg-transparent">
-                                <h6 class="fw-bold text-dark mb-0" style="font-size: 0.7rem;">${ev.title} (${ev.date})</h6>
-                                <p class="mb-0 text-muted" style="font-size: 0.65rem;">${ev.description || ''}</p>
+                            const badgeHtml = getEventCountdown(ev.date);
+                            html += `<div class="list-group-item list-group-item-action mb-2 rounded border">
+                                <div class="d-flex w-100 justify-content-between align-items-center mb-1">
+                                    <h6 class="fw-bold text-dark mb-0">${ev.title}</h6>
+                                    <div>${badgeHtml}</div>
+                                </div>
+                                <p class="mb-1 small text-muted">${ev.description || ''}</p>
                             </div>`;
                         });
                         html += '</div>';
                         evContainer.innerHTML = html;
                     } else {
-                        evContainer.innerHTML = '<p class="text-muted mb-0" style="font-size: 0.68rem;">No events available.</p>';
+                        evContainer.innerHTML = '<p class="text-muted">No events available right now.</p>';
                     }
                 }
-            } catch (err) { console.error(err); }
+            } catch (err) {
+                console.error('Failed to load dashboard data', err);
+            }
         }
 
         loadDashboardData();
 
-        document.getElementById('friendRegisterForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const alertBox = document.getElementById('friendAlert');
-            const name = document.getElementById('friendName').value.trim();
-            const phone = document.getElementById('friendPhone').value.trim();
-            const group = document.getElementById('friendGroup').value;
-
-            try {
-                const res = await fetch('/api/youth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, phone, group, registeredBy: currentUserName || 'Peer' })
-                });
-                const data = await res.json();
-                alertBox.textContent = data.message;
-                alertBox.className = data.success ? 'alert alert-success p-1 mb-2' : 'alert alert-danger p-1 mb-2';
-                alertBox.classList.remove('d-none');
-                if (data.success) e.target.reset();
-            } catch (err) {
-                alertBox.className = 'alert alert-danger p-1 mb-2';
-                alertBox.textContent = 'Connection failed.';
-                alertBox.classList.remove('d-none');
-            }
-        });
-
+        // Suggestion Box Form Submission Handler (Linked directly to Admin endpoint)
         document.getElementById('suggestionForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const alertBox = document.getElementById('suggestionAlert');
@@ -311,28 +200,37 @@
                 const res = await fetch('/api/youth/suggestions', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ title, description, submittedBy: currentUserName || 'Member' })
+                    body: JSON.stringify({ title, description, submittedBy: currentUserName })
                 });
                 const data = await res.json();
-                alertBox.textContent = data.message;
-                alertBox.className = data.success ? 'alert alert-success p-1 mb-1' : 'alert alert-danger p-1 mb-1';
+
+                alertBox.textContent = data.message || 'Suggestion successfully routed to the admin dashboard!';
                 alertBox.classList.remove('d-none');
-                if (data.success) e.target.reset();
+                alertBox.className = data.success ? 'alert alert-success small' : 'alert alert-danger small';
+
+                if (data.success) {
+                    e.target.reset();
+                }
             } catch (err) {
-                alertBox.className = 'alert alert-danger p-1 mb-1';
-                alertBox.textContent = 'Failed to send.';
+                alertBox.className = 'alert alert-danger small';
+                alertBox.textContent = 'Failed to submit suggestion to admin. Please check your connection.';
                 alertBox.classList.remove('d-none');
             }
         });
 
+        // Logout Handler
         document.getElementById('logoutBtn').addEventListener('click', async () => {
-            await fetch('/api/youth/logout', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: currentUserName })
-            });
+            try {
+                await fetch('/api/youth/logout', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name: currentUserName })
+                });
+            } catch (err) {
+                // proceed with local cleanup
+            }
             localStorage.removeItem('youthName');
-            window.location.href = '/';
+            window.location.href = '/login';
         });
     </script>
 </body>
