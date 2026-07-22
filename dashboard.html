@@ -1,144 +1,148 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
+<!DOCTYPE html><html lang="en"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Youth Dashboard - St. Michael Kasaini Youth</title>
+    <title>Member Portal Dashboard - St. Michael Kasaini Youth</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light">
+</head><body class="bg-light">
     <script>
         const currentUserName = localStorage.getItem('youthName');
         if (!currentUserName) window.location.href = '/login';
     </script>
 
     <nav class="navbar navbar-dark bg-dark px-4">
-        <a class="navbar-brand" href="#">St. Michael Kasaini Youth Dashboard</a>
+        <a class="navbar-brand" href="#">St. Michael Kasaini Member Portal</a>
         <button class="btn btn-outline-light btn-sm" onclick="logout()">Sign Out</button>
     </nav>
 
     <div class="container py-4">
-        <div class="alert alert-success d-flex justify-content-between align-items-center">
-            <span>Welcome back, <strong id="welcomeName"></strong>!</span>
+        <div class="alert alert-success d-flex justify-content-between align-items-center mb-4">
+            <span>Welcome to your Member Portal, <strong id="welcomeName"></strong>!</span>
             <span id="announcementBanner" class="badge bg-warning text-dark px-3 py-2">Loading updates...</span>
         </div>
 
-        <!-- Horizontal Sunday Readings & Prayers Section -->
+        <!-- Upcoming & Past Events Section -->
         <div class="card shadow-sm p-4 mb-4">
-            <h3 id="readingTitle" class="text-primary mb-3">Sunday Holy Mass Readings</h3>
-            <div class="row g-3" id="readingsGrid">
-                <!-- Horizontally arranged columns -->
-                <div class="col-md-6 col-lg-3">
-                    <div class="p-3 border rounded bg-white h-100 shadow-sm">
-                        <h6 class="text-secondary fw-bold border-bottom pb-2">First Reading</h6>
-                        <p id="firstReading" class="small text-muted mb-0">Loading...</p>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-3">
-                    <div class="p-3 border rounded bg-white h-100 shadow-sm">
-                        <h6 class="text-secondary fw-bold border-bottom pb-2">Responsorial Psalm</h6>
-                        <p id="psalmReading" class="small text-muted mb-0">Loading...</p>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-3">
-                    <div class="p-3 border rounded bg-white h-100 shadow-sm">
-                        <h6 class="text-secondary fw-bold border-bottom pb-2">Second Reading</h6>
-                        <p id="secondReading" class="small text-muted mb-0">Loading...</p>
-                    </div>
-                </div>
-                <div class="col-md-6 col-lg-3">
-                    <div class="p-3 border rounded bg-white h-100 shadow-sm">
-                        <h6 class="text-secondary fw-bold border-bottom pb-2">Gospel</h6>
-                        <p id="gospelReading" class="small text-muted mb-0">Loading...</p>
-                    </div>
-                </div>
+            <h3 class="text-primary mb-3">📅 Upcoming & Past Station Events</h3>
+            <div class="row" id="eventsContainer">
+                <div class="text-muted">Loading events...</div>
             </div>
         </div>
 
-        <!-- Holy Rosary Section with Separated Interactive Mysteries -->
+        <!-- Registered Members Directory -->
         <div class="card shadow-sm p-4 mb-4">
-            <h3 class="text-primary mb-3">The Holy Rosary: Step-by-Step Guide & Mysteries</h3>
-            <p class="text-muted small">HOW TO PRAY THE ROSARY: 1. Make the Sign of the Cross & Apostles' Creed. 2. Pray 1 Our Father, 3 Hail Marys, 1 Glory Be. 3. Announce each mystery, 1 Our Father, 10 Hail Marys, 1 Glory Be, & Fatima Prayer.</p>
-            
-            <div class="btn-group w-100 mb-3" role="group">
-                <button type="button" class="btn btn-outline-primary active" onclick="showMystery('joyful', event)">Joyful (Mon & Sat)</button>
-                <button type="button" class="btn btn-outline-primary" onclick="showMystery('sorrowful', event)">Sorrowful (Tue & Fri)</button>
-                <button type="button" class="btn btn-outline-primary" onclick="showMystery('glorious', event)">Glorious (Wed & Sun)</button>
-                <button type="button" class="btn btn-outline-primary" onclick="showMystery('luminous', event)">Luminous (Thu)</button>
+            <h3 class="text-primary mb-3">👥 Registered Youth Members Directory</h3>
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped" id="membersDirectoryTable">
+                    <thead>
+                        <tr><th>No</th><th>ID</th><th>Name</th><th>Jumuiya</th><th>Group</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td colspan="5" class="text-muted">Loading directory...</td></tr>
+                    </tbody>
+                </table>
             </div>
+        </div>
 
-            <div id="joyfulContent" class="mystery-pane">
-                <h5 class="text-success">Joyful Mysteries</h5>
-                <ul>
-                    <li><strong>1st The Annunciation:</strong> Gabriel announces to Mary.</li>
-                    <li><strong>2nd The Visitation:</strong> Mary visits Elizabeth.</li>
-                    <li><strong>3rd The Nativity:</strong> Jesus is born in Bethlehem.</li>
-                    <li><strong>4th The Presentation:</strong> Jesus is presented in the Temple.</li>
-                    <li><strong>5th The Finding in the Temple:</strong> Jesus found among the teachers.</li>
-                </ul>
+        <!-- Chat / Message Admin Section -->
+        <div class="card shadow-sm p-4">
+            <h3 class="text-primary mb-3">💬 Message & Chat with Admin</h3>
+            <div id="chatBox" class="border rounded p-3 mb-3 bg-white" style="height: 250px; overflow-y: auto;">
+                <div class="text-muted small">Loading messages...</div>
             </div>
-
-            <div id="sorrowfulContent" class="mystery-pane d-none">
-                <h5 class="text-danger">Sorrowful Mysteries</h5>
-                <ul>
-                    <li><strong>1st The Agony in the Garden:</strong> Jesus prays in Gethsemane.</li>
-                    <li><strong>2nd The Scourging at the Pillar:</strong> Jesus is whipped.</li>
-                    <li><strong>3rd The Crowning with Thorns:</strong> Mocked with thorns.</li>
-                    <li><strong>4th The Carrying of the Cross:</strong> Carries heavy cross to Calvary.</li>
-                    <li><strong>5th The Crucifixion:</strong> Jesus dies on the cross.</li>
-                </ul>
-            </div>
-
-            <div id="gloriousContent" class="mystery-pane d-none">
-                <h5 class="text-dark">Glorious Mysteries</h5>
-                <ul>
-                    <li><strong>1st The Resurrection:</strong> Jesus rises triumphantly.</li>
-                    <li><strong>2nd The Ascension:</strong> Jesus ascends into Heaven.</li>
-                    <li><strong>3rd The Descent of the Holy Spirit:</strong> Pentecost fire.</li>
-                    <li><strong>4th The Assumption:</strong> Mary taken into heavenly glory.</li>
-                    <li><strong>5th The Coronation of Mary:</strong> Queen of Heaven.</li>
-                </ul>
-            </div>
-
-            <div id="luminousContent" class="mystery-pane d-none">
-                <h5 class="text-info">Luminous Mysteries</h5>
-                <ul>
-                    <li><strong>1st Baptism in the Jordan:</strong> Heavens open.</li>
-                    <li><strong>2nd Wedding at Cana:</strong> First public sign.</li>
-                    <li><strong>3rd Proclamation of the Kingdom:</strong> Call to conversion.</li>
-                    <li><strong>4th The Transfiguration:</strong> Transfigured in glory.</li>
-                    <li><strong>5th Institution of the Eucharist:</strong> Last Supper.</li>
-                </ul>
-            </div>
+            <form id="chatForm">
+                <div class="input-group">
+                    <input type="text" id="chatInput" class="form-control" placeholder="Type your message to the officials..." required>
+                    <button class="btn btn-primary" type="submit">Send Message</button>
+                </div>
+            </form>
         </div>
     </div>
 
     <script>
         document.getElementById('welcomeName').textContent = currentUserName;
 
-        async function loadData() {
+        async function loadDashboardData() {
             try {
                 const res = await fetch('/api/youth/directory');
                 const data = await res.json();
-                if(data.success && data.readings) {
-                    const r = data.readings;
-                    if(r.title) document.getElementById('readingTitle').textContent = r.title;
-                    document.getElementById('firstReading').textContent = r.first || 'No first reading provided.';
-                    document.getElementById('psalmReading').textContent = r.psalm || 'No psalm provided.';
-                    document.getElementById('secondReading').textContent = r.second || 'No second reading provided.';
-                    document.getElementById('gospelReading').textContent = r.gospel || 'No gospel provided.';
-                    if(r.announcement) document.getElementById('announcementBanner').textContent = r.announcement;
+                if(data.success) {
+                    // Announcements
+                    if(data.readings && data.readings.announcement) {
+                        document.getElementById('announcementBanner').textContent = data.readings.announcement;
+                    }
+
+                    // Events
+                    let eHtml = '';
+                    if (!data.events || data.events.length === 0) {
+                        eHtml = '<div class="text-muted">No events currently scheduled.</div>';
+                    } else {
+                        data.events.forEach(ev => {
+                            const badgeClass = ev.type === 'upcoming' ? 'bg-success' : 'bg-secondary';
+                            eHtml += `
+                                <div class="col-md-6 mb-3">
+                                    <div class="p-3 border rounded bg-white shadow-sm h-100">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h5 class="mb-0 text-dark">${ev.title}</h5>
+                                            <span class="badge ${badgeClass} text-uppercase small">${ev.type}</span>
+                                        </div>
+                                        <p class="text-muted small mb-1">📅 Date: ${ev.date}</p>
+                                        <p class="mb-0 small">${ev.description || ''}</p>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+                    document.getElementById('eventsContainer').innerHTML = eHtml;
+
+                    // Members Directory
+                    let mHtml = '';
+                    if (!data.members || data.members.length === 0) {
+                        mHtml = '<tr><td colspan="5" class="text-muted">No approved members found yet.</td></tr>';
+                    } else {
+                        data.members.forEach((m, idx) => {
+                            mHtml += `<tr><td>${idx + 1}</td><td><strong class="text-primary">${m.customId || 'N/A'}</strong></td><td>${m.name}</td><td>${m.jumuiya || '-'}</td><td>${m.group}</td></tr>`;
+                        });
+                    }
+                    document.getElementById('membersDirectoryTable').querySelector('tbody').innerHTML = mHtml;
+
+                    // Messages / Chat
+                    let msgHtml = '';
+                    if (!data.messages || data.messages.length === 0) {
+                        msgHtml = '<div class="text-muted small">No messages yet. Send a note to the admin below.</div>';
+                    } else {
+                        data.messages.forEach(msg => {
+                            const isMe = msg.sender === currentUserName;
+                            const alignClass = isMe ? 'text-end text-primary' : 'text-start text-dark';
+                            msgHtml += `
+                                <div class="mb-2 ${alignClass}">
+                                    <div class="small fw-bold">${msg.sender} <span class="text-muted fw-normal" style="font-size: 10px;">(${msg.time})</span></div>
+                                    <div class="d-inline-block p-2 rounded bg-light border text-start small text-dark" style="max-width: 80%;">${msg.text}</div>
+                                </div>
+                            `;
+                        });
+                    }
+                    const chatBox = document.getElementById('chatBox');
+                    chatBox.innerHTML = msgHtml;
+                    chatBox.scrollTop = chatBox.scrollHeight;
                 }
             } catch(e) {}
         }
-        loadData();
 
-        function showMystery(type, evt) {
-            document.querySelectorAll('.mystery-pane').forEach(el => el.classList.add('d-none'));
-            document.getElementById(type + 'Content').classList.remove('d-none');
-            document.querySelectorAll('.btn-group .btn').forEach(btn => btn.classList.remove('active'));
-            evt.currentTarget.classList.add('active');
-        }
+        loadDashboardData();
+        setInterval(loadDashboardData, 5000); // Poll every 5s for chat updates
+
+        document.getElementById('chatForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const text = document.getElementById('chatInput').value.trim();
+            if(!text) return;
+            await fetch('/api/youth/message', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ sender: currentUserName, text })
+            });
+            document.getElementById('chatInput').value = '';
+            loadDashboardData();
+        });
 
         async function logout() {
             await fetch('/api/youth/logout', {
@@ -149,6 +153,4 @@
             localStorage.removeItem('youthName');
             window.location.href = '/login';
         }
-    </script>
-</body>
-</html>
+    </script></body></html>

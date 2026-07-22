@@ -2,14 +2,12 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname)));
-
 const DATA_FILE = path.join(__dirname, 'data.json');
 
 function readData() {
@@ -18,7 +16,10 @@ function readData() {
             const initialData = {
                 members: [],
                 pending: [],
-                events: [],
+                events: [
+                    { id: '1', title: 'Sunday Holy Mass & Youth Fellowship', date: '2026-07-26', type: 'upcoming', description: 'Main service at St. Michael Kasaini Church.' },
+                    { id: '2', title: 'Way of the Cross & Stations Devotion', date: '2026-07-19', type: 'past', description: 'Successfully held with active youth participation.' }
+                ],
                 messages: [],
                 readings: {
                     title: "Sunday Holy Mass Readings & Updates",
@@ -64,7 +65,21 @@ app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html'))
 // API Endpoints
 app.get('/api/youth/directory', (req, res) => {
     const data = readData();
-    res.json({ success: true, members: data.members, events: data.events, readings: data.readings });
+    // Strip passwords before sending member data public/dashboard view
+    const safeMembers = data.members.map(m => ({
+        customId: m.customId,
+        name: m.name,
+        jumuiya: m.jumuiya,
+        group: m.group,
+        phone: m.phone
+    }));
+    res.json({ 
+        success: true, 
+        members: safeMembers, 
+        events: data.events, 
+        readings: data.readings,
+        messages: data.messages 
+    });
 });
 
 app.post('/api/youth/register', (req, res) => {
@@ -72,7 +87,6 @@ app.post('/api/youth/register', (req, res) => {
     if (!name || !pass) {
         return res.json({ success: false, message: 'Name and password are required.' });
     }
-    
     const data = readData();
     const newReg = {
         id: Date.now().toString(),
@@ -83,7 +97,6 @@ app.post('/api/youth/register', (req, res) => {
         pass,
         date: new Date().toLocaleDateString()
     };
-
     data.pending.push(newReg);
     writeData(data);
     res.json({ success: true, message: 'Registration submitted successfully! Please wait for official admin approval.' });
@@ -94,12 +107,10 @@ app.post('/api/youth/login', (req, res) => {
     if (!name || !pass) {
         return res.json({ success: false, message: 'Name and password are required.' });
     }
-    
     const data = readData();
     const cleanName = name.trim().toLowerCase();
 
     const member = (data.members || []).find(m => m.name && m.name.trim().toLowerCase() === cleanName);
-
     if (member) {
         if (member.pass === pass) {
             activeSessions[member.name] = { loginTime: new Date().toLocaleTimeString(), status: 'Online' };
@@ -123,6 +134,21 @@ app.post('/api/youth/logout', (req, res) => {
     res.json({ success: true });
 });
 
+app.post('/api/youth/message', (req, res) => {
+    const { sender, text } = req.body;
+    if (!sender || !text) return res.json({ success: false, message: 'Sender and message required.' });
+    const data = readData();
+    const newMsg = {
+        id: Date.now().toString(),
+        sender,
+        text,
+        time: new Date().toLocaleString()
+    };
+    data.messages.push(newMsg);
+    writeData(data);
+    res.json({ success: true });
+});
+
 // Admin API
 app.post('/api/admin/login', (req, res) => {
     const { username, password } = req.body;
@@ -140,6 +166,8 @@ app.get('/api/admin/data', (req, res) => {
         pending: data.pending,
         members: data.members,
         readings: data.readings,
+        events: data.events,
+        messages: data.messages,
         activeSessions
     });
 });
@@ -150,12 +178,9 @@ app.post('/api/admin/approve', (req, res) => {
     const index = data.pending.findIndex(p => p.id === id);
     if (index !== -1) {
         const approved = data.pending.splice(index, 1)[0];
-        
-        // Generate unique ID starting with K1, K2...
         const nextIdNum = data.members.length + 1;
         approved.customId = `K${nextIdNum}`;
         approved.status = 'Approved';
-        
         data.members.push(approved);
         writeData(data);
     }
@@ -189,6 +214,22 @@ app.post('/api/admin/revoke-session', (req, res) => {
 app.post('/api/admin/update-readings', (req, res) => {
     const data = readData();
     data.readings = req.body;
+    writeData(data);
+    res.json({ success: true });
+});
+
+app.post('/api/admin/add-event', (req, res) => {
+    const { title, date, type, description } = req.body;
+    const data = readData();
+    data.events.push({ id: Date.now().toString(), title, date, type, description });
+    writeData(data);
+    res.json({ success: true });
+});
+
+app.post('/api/admin/delete-event', (req, res) => {
+    const { id } = req.body;
+    const data = readData();
+    data.events = data.events.filter(e => e.id !== id);
     writeData(data);
     res.json({ success: true });
 });
