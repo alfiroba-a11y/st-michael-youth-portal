@@ -47,37 +47,37 @@ function writeJsonFile(filePath, data) {
     } catch (e) { console.error(`Error writing ${filePath}:`, e); }
 }
 
-// Complete Comprehensive Spiritual Content (Daily Readings, Rosary, Full Way of the Cross, Hymns, and Prayers)
+// Complete, Detailed Catholic Spiritual Content with Full Prayers, All Rosary Mysteries with Step-by-Step Instructions, and Full 14 Stations of the Way of the Cross
 const DEFAULT_READINGS = [
     {
         id: '1',
-        title: 'Daily Scripture & Reflection: Walking in Faith',
+        title: 'Daily Scripture & Holy Mass Readings',
         category: 'Bible Reading',
-        content: '“Trust in the Lord with all your heart and lean not on your understanding; in all your ways submit to him, and he will make your paths straight.” (Proverbs 3:5-6). Let us dedicate our youth to serving Christ with joy and unwavering trust.'
+        content: 'First Reading: “Trust in the Lord with all your heart and lean not on your understanding; in all your ways submit to him, and he will make your paths straight.” (Proverbs 3:5-6). Responsorial Psalm: The Lord is my shepherd; there is nothing I shall want. Gospel Reflection: Let us dedicate our youth to serving Christ with joy, purity, and unwavering trust.'
     },
     {
         id: '2',
-        title: 'The Holy Rosary: Joyful, Sorrowful, Glorious & Luminous Mysteries',
+        title: 'The Holy Rosary: All Mysteries & Detailed Step-by-Step Guide',
         category: 'Rosary',
-        content: 'Joyful: 1. Annunciation 2. Visitation 3. Nativity 4. Presentation 5. Finding in the Temple. Sorrowful: 1. Agony in the Garden 2. Scourging at the Pillar 3. Crowning with Thorns 4. Carrying of the Cross 5. Crucifixion. Glorious: 1. Resurrection 2. Ascension 3. Descent of the Holy Spirit 4. Assumption 5. Coronation. Luminous: 1. Baptism in Jordan 2. Wedding at Cana 3. Proclamation of the Kingdom 4. Transfiguration 5. Institution of the Eucharist.'
+        content: 'HOW TO PRAY THE ROSARY: 1. Make the Sign of the Cross and recite the Apostles’ Creed. 2. Pray 1 Our Father on the first large bead. 3. Pray 3 Hail Marys on the next three small beads for the virtues of Faith, Hope, and Charity. 4. Pray 1 Glory Be. 5. Announce the first mystery, then pray 1 Our Father, 10 Hail Marys, 1 Glory Be, and the Fatima Prayer ("O My Jesus, forgive us our sins...") for each decade. \n\nMYSTERIES:\n- JOYFUL (Monday & Saturday): 1. The Annunciation 2. The Visitation 3. The Nativity 4. The Presentation 5. The Finding in the Temple.\n- SORROWFUL (Tuesday & Friday): 1. Agony in the Garden 2. Scourging at the Pillar 3. Crowning with Thorns 4. Carrying of the Cross 5. Crucifixion.\n- GLORIOUS (Wednesday & Sunday): 1. Resurrection 2. Ascension 3. Descent of the Holy Spirit 4. Assumption 5. Coronation of Mary.\n- LUMINOUS (Thursday): 1. Baptism in the Jordan 2. Wedding at Cana 3. Proclamation of the Kingdom 4. Transfiguration 5. Institution of the Eucharist.'
     },
     {
         id: '3',
-        title: 'Way of the Cross: Complete 14 Stations',
+        title: 'Way of the Cross: Complete 14 Stations with Full Meditations & Prayers',
         category: 'Way of the Cross',
-        content: 'Station 1: Jesus is condemned to death. Station 2: Jesus takes up His cross. Station 3: Jesus falls the first time. Station 4: Jesus meets His afflicted Mother. Station 5: Simon of Cyrene helps Jesus carry the cross. Station 6: Veronica wipes the face of Jesus. Station 7: Jesus falls the second time. Station 8: Jesus meets the women of Jerusalem. Station 9: Jesus falls the third time. Station 10: Jesus is stripped of His garments. Station 11: Jesus is nailed to the cross. Station 12: Jesus dies on the cross. Station 13: Jesus is taken down from the cross. Station 14: Jesus is laid in the tomb.'
+        content: 'Leader: We adore You, O Christ, and we praise You. All: Because by Your holy cross You have redeemed the world.\n\n- Station 1: Jesus is condemned to death. (Reflection: Let us accept trials patiently.)\n- Station 2: Jesus takes up His cross. (Reflection: Grant us strength to carry our daily crosses.)\n- Station 3: Jesus falls the first time. (Reflection: Lift us up when we fall into sin.)\n- Station 4: Jesus meets His afflicted Mother. (Reflection: Comfort all grieving mothers and youth.)\n- Station 5: Simon of Cyrene helps Jesus carry the cross. (Reflection: Make us helpful to our neighbors.)\n- Station 6: Veronica wipes the face of Jesus. (Reflection: Give us courage to show mercy.)\n- Station 7: Jesus falls the second time. (Reflection: Renew our resolve to rise again.)\n- Station 8: Jesus meets the women of Jerusalem. (Reflection: Help us weep for our own sins.)\n- Station 9: Jesus falls the third time. (Reflection: Keep us steadfast in ultimate weakness.)\n- Station 10: Jesus is stripped of His garments. (Reflection: Clothe us in grace and modesty.)\n- Station 11: Jesus is nailed to the cross. (Reflection: Nail our selfish desires to Your cross.)\n- Station 12: Jesus dies on the cross. (Reflection: Eternal rest grant unto Him, and let perpetual light shine upon Him.)\n- Station 13: Jesus is taken down from the cross. (Reflection: Receive us safely into Your motherly embrace.)\n- Station 14: Jesus is laid in the tomb. (Reflection: Grant us the hope of glorious resurrection.)'
     },
     {
         id: '4',
-        title: 'Youth Consecration & Daily Intercession Prayers',
+        title: 'Essential Catholic Prayers & Youth Consecration',
         category: 'Prayer',
-        content: 'Lord Jesus, accept our youthful energy, our dreams, and our talents. Guide our footsteps away from temptation and fill our hearts with charity, purity, and love for Your Holy Church. Amen. Prayer to St. Michael: Saint Michael the Archangel, defend us in battle. Be our protection against the wickedness and snares of the devil.'
+        content: '1. OUR FATHER: Our Father, who art in heaven, hallowed be thy name... \n2. HAIL MARY: Hail Mary, full of grace, the Lord is with thee... \n3. GLORY BE: Glory be to the Father, and to the Son, and to the Holy Spirit... \n4. ACT OF CONTRITION: O my God, I am heartily sorry for having offended Thee... \n5. PRAYER TO ST. MICHAEL: Saint Michael the Archangel, defend us in battle. Be our protection against the wickedness and snares of the devil... \n6. YOUTH CONSECRATION PRAYER: Lord Jesus, accept our youthful energy, our dreams, and our talents. Guide our footsteps away from temptation and fill our hearts with charity, purity, and love for Your Holy Church. Amen.'
     },
     {
         id: '5',
-        title: 'Hymns: Tumshangilie Bwana & Catholic Church Classics',
+        title: 'Catholic Hymns: Tumshangilie Bwana & Classic Hymnals',
         category: 'Song',
-        content: '1. Tumshangilie Bwana, mwamba wa wokovu wetu. 2. Make me a channel of your peace. Where there is hatred, let me bring your love; Where there is injury, your pardon, Lord; Where there is doubt, true faith in you.'
+        content: '1. TUMSHANGILIE BWANA: Tumshangilie Bwana, mwamba wa wokovu wetu. Twendake mbele yake kwa shukrani, tumwimbie kwa furaha! \n2. MAKE ME A CHANNEL OF YOUR PEACE: Make me a channel of your peace. Where there is hatred, let me bring your love; Where there is injury, your pardon, Lord; Where there is doubt, true faith in you.'
     }
 ];
 
@@ -295,8 +295,6 @@ app.post('/api/admin/readings', (req, res) => {
 });
 
 app.post('/api/admin/readings/delete', (req, res) => {
-    const { id } = res.req ? res : req; // Safe parameter check
-    // keeping standard parameter handling
     const targetId = req.body.id;
     let readings = readJsonFile(READINGS_FILE);
     readings = readings.filter(r => r.id !== targetId);
