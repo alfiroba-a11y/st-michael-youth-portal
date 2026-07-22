@@ -21,11 +21,12 @@ function readData() {
                 events: [],
                 messages: [],
                 readings: {
-                    title: "Sunday Holy Mass Readings",
-                    first: "First Reading details...",
-                    psalm: "Responsorial Psalm details...",
-                    second: "Second Reading details...",
-                    gospel: "Gospel Reading details..."
+                    title: "Sunday Holy Mass Readings & Updates",
+                    first: "First Reading content...",
+                    psalm: "Responsorial Psalm content...",
+                    second: "Second Reading content...",
+                    gospel: "Gospel content...",
+                    announcement: "Welcome to St. Michael Kasaini Youth Portal."
                 }
             };
             fs.writeFileSync(DATA_FILE, JSON.stringify(initialData, null, 2));
@@ -38,11 +39,8 @@ function readData() {
         if (!parsed.messages) parsed.messages = [];
         if (!parsed.readings) {
             parsed.readings = {
-                title: "Sunday Holy Mass Readings",
-                first: "First Reading details...",
-                psalm: "Responsorial Psalm details...",
-                second: "Second Reading details...",
-                gospel: "Gospel Reading details..."
+                title: "Sunday Holy Mass Readings & Updates",
+                first: "", psalm: "", second: "", gospel: "", announcement: ""
             };
         }
         return parsed;
@@ -57,22 +55,11 @@ function writeData(data) {
 
 let activeSessions = {};
 
-// Routes for serving pages
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, 'login.html'));
-});
-
-app.get('/dashboard', (req, res) => {
-    res.sendFile(path.join(__dirname, 'dashboard.html'));
-});
-
-app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'admin.html'));
-});
+// Routes
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
+app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 
 // API Endpoints
 app.get('/api/youth/directory', (req, res) => {
@@ -81,7 +68,7 @@ app.get('/api/youth/directory', (req, res) => {
 });
 
 app.post('/api/youth/register', (req, res) => {
-    const { name, phone, jumuiya, group, pass, addedBy } = req.body;
+    const { name, phone, jumuiya, group, pass } = req.body;
     if (!name || !pass) {
         return res.json({ success: false, message: 'Name and password are required.' });
     }
@@ -92,9 +79,8 @@ app.post('/api/youth/register', (req, res) => {
         name: name.trim(),
         phone: phone || '',
         jumuiya: jumuiya || '',
-        group: group || '',
+        group: group || 'Youth General',
         pass,
-        addedBy: addedBy || 'Self Registration (KES 100 Paid)',
         date: new Date().toLocaleDateString()
     };
 
@@ -133,13 +119,11 @@ app.post('/api/youth/login', (req, res) => {
 
 app.post('/api/youth/logout', (req, res) => {
     const { name } = req.body;
-    if (name && activeSessions[name]) {
-        delete activeSessions[name];
-    }
+    if (name && activeSessions[name]) delete activeSessions[name];
     res.json({ success: true });
 });
 
-// Admin API Endpoints
+// Admin API
 app.post('/api/admin/login', (req, res) => {
     const { username, password } = req.body;
     if (username === 'admin' && password === 'admin123') {
@@ -155,8 +139,6 @@ app.get('/api/admin/data', (req, res) => {
         success: true,
         pending: data.pending,
         members: data.members,
-        events: data.events,
-        messages: data.messages,
         readings: data.readings,
         activeSessions
     });
@@ -168,7 +150,12 @@ app.post('/api/admin/approve', (req, res) => {
     const index = data.pending.findIndex(p => p.id === id);
     if (index !== -1) {
         const approved = data.pending.splice(index, 1)[0];
+        
+        // Generate unique ID starting with K1, K2...
+        const nextIdNum = data.members.length + 1;
+        approved.customId = `K${nextIdNum}`;
         approved.status = 'Approved';
+        
         data.members.push(approved);
         writeData(data);
     }
@@ -183,46 +170,19 @@ app.post('/api/admin/reject', (req, res) => {
     res.json({ success: true });
 });
 
-app.post('/api/admin/add-member', (req, res) => {
-    const { name, phone, jumuiya, group, pass, addedBy } = req.body;
-    if (!name || !pass) {
-        return res.json({ success: false, message: 'Name and password are required.' });
-    }
-    
-    const data = readData();
-    if (!data.members) data.members = [];
-    
-    const exists = data.members.some(m => m.name.trim().toLowerCase() === name.trim().toLowerCase());
-    if (exists) {
-        return res.json({ success: false, message: 'A member with this name already exists.' });
-    }
-
-    const newMember = {
-        id: Date.now().toString(),
-        name: name.trim(),
-        phone: phone || '',
-        jumuiya: jumuiya || '',
-        group: group || '',
-        pass,
-        addedBy: addedBy || 'Admin / Official Dashboard',
-        status: 'Approved',
-        date: new Date().toLocaleDateString()
-    };
-
-    data.members.push(newMember);
-    writeData(data);
-    res.json({ success: true, message: 'Member added successfully!' });
-});
-
 app.post('/api/admin/remove-member', (req, res) => {
     const { id } = req.body;
     const data = readData();
     const member = data.members.find(m => m.id === id);
-    if (member && activeSessions[member.name]) {
-        delete activeSessions[member.name];
-    }
+    if (member && activeSessions[member.name]) delete activeSessions[member.name];
     data.members = data.members.filter(m => m.id !== id);
     writeData(data);
+    res.json({ success: true });
+});
+
+app.post('/api/admin/revoke-session', (req, res) => {
+    const { name } = req.body;
+    if (activeSessions[name]) delete activeSessions[name];
     res.json({ success: true });
 });
 
@@ -233,6 +193,4 @@ app.post('/api/admin/update-readings', (req, res) => {
     res.json({ success: true });
 });
 
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

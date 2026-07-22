@@ -9,7 +9,7 @@
 <body class="bg-light">
     <div id="loginSection" class="container py-5" style="max-width: 400px;">
         <div class="card shadow-sm p-4">
-            <h3 class="mb-3 text-danger">Officials / Admin Login</h3>
+            <h3 class="mb-3 text-danger">Officials Login</h3>
             <div id="adminAlert" class="alert d-none" role="alert"></div>
             <form id="adminLoginForm">
                 <div class="mb-3">
@@ -22,9 +22,7 @@
                 </div>
                 <button type="submit" class="btn btn-danger w-100">Login to Officials Portal</button>
             </form>
-            <div class="mt-3 text-center">
-                <a href="/" class="text-decoration-none small">Back to Home</a>
-            </div>
+            <div class="mt-3 text-center"><a href="/" class="text-decoration-none small">Back to Home</a></div>
         </div>
     </div>
 
@@ -34,43 +32,59 @@
             <button class="btn btn-outline-secondary btn-sm" onclick="location.reload()">Logout</button>
         </div>
 
-        <!-- Upload Readings Section -->
+        <!-- Upload Readings & Dashboard Updates -->
         <div class="card shadow-sm p-4 mb-4">
-            <h4 class="text-primary mb-3">Upload Sunday Holy Mass Readings</h4>
+            <h4 class="text-primary mb-3">Upload Readings & Dashboard Updates</h4>
             <div id="readingAlert" class="alert d-none"></div>
             <form id="readingForm">
                 <div class="mb-3">
-                    <label class="form-label">Readings Title / Date</label>
-                    <input type="text" id="readTitle" class="form-control" placeholder="e.g. Sunday Mass Readings">
+                    <label class="form-label">Readings Title</label>
+                    <input type="text" id="readTitle" class="form-control">
+                </div>
+                <div class="row">
+                    <div class="mb-3 col-md-6">
+                        <label class="form-label">First Reading</label>
+                        <textarea id="readFirst" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3 col-md-6">
+                        <label class="form-label">Responsorial Psalm</label>
+                        <textarea id="readPsalm" class="form-control" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="mb-3 col-md-6">
+                        <label class="form-label">Second Reading</label>
+                        <textarea id="readSecond" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="mb-3 col-md-6">
+                        <label class="form-label">Gospel</label>
+                        <textarea id="readGospel" class="form-control" rows="2"></textarea>
+                    </div>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">First Reading</label>
-                    <textarea id="readFirst" class="form-control" rows="2"></textarea>
+                    <label class="form-label">Dashboard Announcement Banner</label>
+                    <input type="text" id="readAnnouncement" class="form-control" placeholder="e.g. Next practice on Saturday at 4 PM">
                 </div>
-                <div class="mb-3">
-                    <label class="form-label">Responsorial Psalm</label>
-                    <textarea id="readPsalm" class="form-control" rows="2"></textarea>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Second Reading</label>
-                    <textarea id="readSecond" class="form-control" rows="2"></textarea>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Gospel</label>
-                    <textarea id="readGospel" class="form-control" rows="2"></textarea>
-                </div>
-                <button type="submit" class="btn btn-primary">Update Sunday Readings</button>
+                <button type="submit" class="btn btn-primary">Save & Push to User Dashboard</button>
             </form>
         </div>
 
+        <!-- Pending Registrations -->
         <div class="card shadow-sm p-4 mb-4">
-            <h4>Pending Registrations</h4>
+            <h4>Pending Registrations (Approve generates K1, K2...)</h4>
             <div id="pendingList" class="table-responsive">Loading...</div>
         </div>
 
-        <div class="card shadow-sm p-4">
-            <h4>Approved Members</h4>
+        <!-- Spreadsheet Style Approved Members List -->
+        <div class="card shadow-sm p-4 mb-4">
+            <h4>Registered Youth Directory</h4>
             <div id="memberList" class="table-responsive">Loading...</div>
+        </div>
+
+        <!-- Active Sessions / Revoke Access -->
+        <div class="card shadow-sm p-4">
+            <h4>Active User Sessions & Access Control</h4>
+            <div id="sessionList" class="table-responsive">Loading...</div>
         </div>
     </div>
 
@@ -93,9 +107,9 @@
                 document.getElementById('dashboardSection').classList.remove('d-none');
                 loadAdminData();
             } else {
-                alertBox.textContent = 'Invalid credentials (default: admin / admin123)';
-                alertBox.classList.remove('d-none');
+                alertBox.textContent = 'Invalid credentials';
                 alertBox.className = 'alert alert-danger small';
+                alertBox.classList.remove('d-none');
             }
         });
 
@@ -109,25 +123,37 @@
                     document.getElementById('readPsalm').value = data.readings.psalm || '';
                     document.getElementById('readSecond').value = data.readings.second || '';
                     document.getElementById('readGospel').value = data.readings.gospel || '';
+                    document.getElementById('readAnnouncement').value = data.readings.announcement || '';
                 }
 
-                // Render Pending
-                let pHtml = '<table class="table"><thead><tr><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Action</th></tr></thead><tbody>';
-                if (data.pending.length === 0) pHtml += '<tr><td colspan="4" class="text-muted">No pending registrations.</td></tr>';
+                // Pending Table
+                let pHtml = '<table class="table table-bordered"><thead><tr><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th><th>Action</th></tr></thead><tbody>';
+                if (data.pending.length === 0) pHtml += '<tr><td colspan="5" class="text-muted">No pending registrations.</td></tr>';
                 data.pending.forEach(p => {
-                    pHtml += `<tr><td>${p.name}</td><td>${p.phone}</td><td>${p.jumuiya}</td><td><button class="btn btn-success btn-sm" onclick="approveUser('${p.id}')">Approve</button></td></tr>`;
+                    pHtml += `<tr><td>${p.name}</td><td>${p.phone}</td><td>${p.jumuiya}</td><td>${p.group}</td><td><button class="btn btn-success btn-sm" onclick="approveUser('${p.id}')">Approve</button> <button class="btn btn-outline-danger btn-sm" onclick="rejectUser('${p.id}')">Reject</button></td></tr>`;
                 });
                 pHtml += '</tbody></table>';
                 document.getElementById('pendingList').innerHTML = pHtml;
 
-                // Render Members
-                let mHtml = '<table class="table"><thead><tr><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Action</th></tr></thead><tbody>';
-                if (data.members.length === 0) mHtml += '<tr><td colspan="4" class="text-muted">No approved members yet.</td></tr>';
-                data.members.forEach(m => {
-                    mHtml += `<tr><td>${m.name}</td><td>${m.phone}</td><td>${m.jumuiya}</td><td><button class="btn btn-danger btn-sm" onclick="removeMember('${m.id}')">Remove</button></td></tr>`;
+                // Spreadsheet Style Members Table: No, ID, Name, Number, Group
+                let mHtml = '<table class="table table-bordered table-striped"><thead><tr><th>No</th><th>ID</th><th>Name</th><th>Number</th><th>Group</th><th>Action</th></tr></thead><tbody>';
+                if (data.members.length === 0) mHtml += '<tr><td colspan="6" class="text-muted">No registered members yet.</td></tr>';
+                data.members.forEach((m, index) => {
+                    mHtml += `<tr><td>${index + 1}</td><td><strong>${m.customId || 'K' + (index+1)}</strong></td><td>${m.name}</td><td>${m.phone}</td><td>${m.group}</td><td><button class="btn btn-danger btn-sm" onclick="removeMember('${m.id}')">Remove</button></td></tr>`;
                 });
                 mHtml += '</tbody></table>';
                 document.getElementById('memberList').innerHTML = mHtml;
+
+                // Active Sessions (Revoke Access)
+                let sHtml = '<table class="table table-bordered"><thead><tr><th>Member Name</th><th>Login Time</th><th>Action</th></tr></thead><tbody>';
+                const sessions = data.activeSessions || {};
+                const keys = Object.keys(sessions);
+                if (keys.length === 0) sHtml += '<tr><td colspan="3" class="text-muted">No active user sessions.</td></tr>';
+                keys.forEach(name => {
+                    sHtml += `<tr><td>${name}</td><td>${sessions[name].loginTime}</td><td><button class="btn btn-warning btn-sm" onclick="revokeSession('${name}')">Revoke Portal Access</button></td></tr>`;
+                });
+                sHtml += '</tbody></table>';
+                document.getElementById('sessionList').innerHTML = sHtml;
             }
         }
 
@@ -138,7 +164,8 @@
                 first: document.getElementById('readFirst').value,
                 psalm: document.getElementById('readPsalm').value,
                 second: document.getElementById('readSecond').value,
-                gospel: document.getElementById('readGospel').value
+                gospel: document.getElementById('readGospel').value,
+                announcement: document.getElementById('readAnnouncement').value
             };
             const res = await fetch('/api/admin/update-readings', {
                 method: 'POST',
@@ -148,7 +175,7 @@
             const data = await res.json();
             const alertBox = document.getElementById('readingAlert');
             if(data.success) {
-                alertBox.textContent = 'Readings updated successfully!';
+                alertBox.textContent = 'Readings and updates pushed successfully to user dashboard!';
                 alertBox.className = 'alert alert-success small';
                 alertBox.classList.remove('d-none');
             }
@@ -163,11 +190,29 @@
             loadAdminData();
         }
 
+        async function rejectUser(id) {
+            await fetch('/api/admin/reject', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            });
+            loadAdminData();
+        }
+
         async function removeMember(id) {
             await fetch('/api/admin/remove-member', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id })
+            });
+            loadAdminData();
+        }
+
+        async function revokeSession(name) {
+            await fetch('/api/admin/revoke-session', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name })
             });
             loadAdminData();
         }

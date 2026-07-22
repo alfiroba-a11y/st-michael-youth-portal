@@ -9,31 +9,56 @@
 <body class="bg-light">
     <script>
         const currentUserName = localStorage.getItem('youthName');
-        if (!currentUserName) {
-            window.location.href = '/login';
-        }
+        if (!currentUserName) window.location.href = '/login';
     </script>
 
     <nav class="navbar navbar-dark bg-dark px-4">
-        <a class="navbar-brand" href="/">St. Michael Kasaini Youth Dashboard</a>
+        <a class="navbar-brand" href="#">St. Michael Kasaini Youth Dashboard</a>
         <button class="btn btn-outline-light btn-sm" onclick="logout()">Sign Out</button>
     </nav>
 
     <div class="container py-4">
-        <div class="alert alert-success">Welcome back, <span id="welcomeName"></span>!</div>
+        <div class="alert alert-success d-flex justify-content-between align-items-center">
+            <span>Welcome back, <strong id="welcomeName"></strong>!</span>
+            <span id="announcementBanner" class="badge bg-warning text-dark px-3 py-2">Loading updates...</span>
+        </div>
 
-        <!-- Sunday Readings Section (Admin Uploaded) -->
+        <!-- Horizontal Sunday Readings & Prayers Section -->
         <div class="card shadow-sm p-4 mb-4">
             <h3 id="readingTitle" class="text-primary mb-3">Sunday Holy Mass Readings</h3>
-            <div id="readingsContent">
-                <p>Loading readings...</p>
+            <div class="row g-3" id="readingsGrid">
+                <!-- Horizontally arranged columns -->
+                <div class="col-md-6 col-lg-3">
+                    <div class="p-3 border rounded bg-white h-100 shadow-sm">
+                        <h6 class="text-secondary fw-bold border-bottom pb-2">First Reading</h6>
+                        <p id="firstReading" class="small text-muted mb-0">Loading...</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="p-3 border rounded bg-white h-100 shadow-sm">
+                        <h6 class="text-secondary fw-bold border-bottom pb-2">Responsorial Psalm</h6>
+                        <p id="psalmReading" class="small text-muted mb-0">Loading...</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="p-3 border rounded bg-white h-100 shadow-sm">
+                        <h6 class="text-secondary fw-bold border-bottom pb-2">Second Reading</h6>
+                        <p id="secondReading" class="small text-muted mb-0">Loading...</p>
+                    </div>
+                </div>
+                <div class="col-md-6 col-lg-3">
+                    <div class="p-3 border rounded bg-white h-100 shadow-sm">
+                        <h6 class="text-secondary fw-bold border-bottom pb-2">Gospel</h6>
+                        <p id="gospelReading" class="small text-muted mb-0">Loading...</p>
+                    </div>
+                </div>
             </div>
         </div>
 
         <!-- Holy Rosary Section with Separated Interactive Mysteries -->
         <div class="card shadow-sm p-4 mb-4">
             <h3 class="text-primary mb-3">The Holy Rosary: Step-by-Step Guide & Mysteries</h3>
-            <p class="text-muted small">HOW TO PRAY THE ROSARY: 1. Make the Sign of the Cross and recite the Apostles’ Creed. 2. Pray 1 Our Father on the first large bead. 3. Pray 3 Hail Marys on the next three small beads for Faith, Hope, and Charity. 4. Pray 1 Glory Be. 5. Announce the mystery, pray 1 Our Father, 10 Hail Marys, 1 Glory Be, and the Fatima Prayer per decade.</p>
+            <p class="text-muted small">HOW TO PRAY THE ROSARY: 1. Make the Sign of the Cross & Apostles' Creed. 2. Pray 1 Our Father, 3 Hail Marys, 1 Glory Be. 3. Announce each mystery, 1 Our Father, 10 Hail Marys, 1 Glory Be, & Fatima Prayer.</p>
             
             <div class="btn-group w-100 mb-3" role="group">
                 <button type="button" class="btn btn-outline-primary active" onclick="showMystery('joyful', event)">Joyful (Mon & Sat)</button>
@@ -45,44 +70,44 @@
             <div id="joyfulContent" class="mystery-pane">
                 <h5 class="text-success">Joyful Mysteries</h5>
                 <ul>
-                    <li><strong>1st The Annunciation:</strong> The angel Gabriel announces to Mary that she will conceive the Son of God.</li>
-                    <li><strong>2nd The Visitation:</strong> Mary visits her cousin Elizabeth, who proclaims her blessed.</li>
-                    <li><strong>3rd The Nativity:</strong> Jesus is born in Bethlehem in a humble manger.</li>
-                    <li><strong>4th The Presentation:</strong> The infant Jesus is presented in the Temple in Jerusalem.</li>
-                    <li><strong>5th The Finding in the Temple:</strong> The young Jesus is found discussing the law with teachers in the Temple.</li>
+                    <li><strong>1st The Annunciation:</strong> Gabriel announces to Mary.</li>
+                    <li><strong>2nd The Visitation:</strong> Mary visits Elizabeth.</li>
+                    <li><strong>3rd The Nativity:</strong> Jesus is born in Bethlehem.</li>
+                    <li><strong>4th The Presentation:</strong> Jesus is presented in the Temple.</li>
+                    <li><strong>5th The Finding in the Temple:</strong> Jesus found among the teachers.</li>
                 </ul>
             </div>
 
             <div id="sorrowfulContent" class="mystery-pane d-none">
                 <h5 class="text-danger">Sorrowful Mysteries</h5>
                 <ul>
-                    <li><strong>1st The Agony in the Garden:</strong> Jesus prays in Gethsemane anticipating His passion.</li>
-                    <li><strong>2nd The Scourging at the Pillar:</strong> Jesus is cruelly whipped by Roman soldiers.</li>
-                    <li><strong>3rd The Crowning with Thorns:</strong> Soldiers mock Jesus, pressing a crown of thorns onto His head.</li>
-                    <li><strong>4th The Carrying of the Cross:</strong> Jesus carries His heavy cross up to Mount Calvary.</li>
-                    <li><strong>5th The Crucifixion:</strong> Jesus is nailed to the cross and dies for our sins.</li>
+                    <li><strong>1st The Agony in the Garden:</strong> Jesus prays in Gethsemane.</li>
+                    <li><strong>2nd The Scourging at the Pillar:</strong> Jesus is whipped.</li>
+                    <li><strong>3rd The Crowning with Thorns:</strong> Mocked with thorns.</li>
+                    <li><strong>4th The Carrying of the Cross:</strong> Carries heavy cross to Calvary.</li>
+                    <li><strong>5th The Crucifixion:</strong> Jesus dies on the cross.</li>
                 </ul>
             </div>
 
             <div id="gloriousContent" class="mystery-pane d-none">
                 <h5 class="text-dark">Glorious Mysteries</h5>
                 <ul>
-                    <li><strong>1st The Resurrection:</strong> Jesus rises triumphantly from the dead on the third day.</li>
-                    <li><strong>2nd The Ascension:</strong> Jesus ascends bodily into Heaven before His disciples.</li>
-                    <li><strong>3rd The Descent of the Holy Spirit:</strong> The Holy Spirit descends upon Mary and the Apostles as tongues of fire.</li>
-                    <li><strong>4th The Assumption:</strong> The Blessed Virgin Mary is taken body and soul into heavenly glory.</li>
-                    <li><strong>5th The Coronation of Mary:</strong> Mary is crowned Queen of Heaven and Earth.</li>
+                    <li><strong>1st The Resurrection:</strong> Jesus rises triumphantly.</li>
+                    <li><strong>2nd The Ascension:</strong> Jesus ascends into Heaven.</li>
+                    <li><strong>3rd The Descent of the Holy Spirit:</strong> Pentecost fire.</li>
+                    <li><strong>4th The Assumption:</strong> Mary taken into heavenly glory.</li>
+                    <li><strong>5th The Coronation of Mary:</strong> Queen of Heaven.</li>
                 </ul>
             </div>
 
             <div id="luminousContent" class="mystery-pane d-none">
-                <h5 class="text-info">Luminous Mysteries (Mysteries of Light)</h5>
+                <h5 class="text-info">Luminous Mysteries</h5>
                 <ul>
-                    <li><strong>1st The Baptism in the Jordan:</strong> The Holy Spirit descends on Jesus as the Father proclaims Him His beloved Son.</li>
-                    <li><strong>2nd The Wedding at Cana:</strong> Christ performs His first public miracle at Mary's request.</li>
-                    <li><strong>3rd The Proclamation of the Kingdom:</strong> Jesus calls all people to conversion and forgiveness of sins.</li>
-                    <li><strong>4th The Transfiguration:</strong> Jesus is transfigured in glory before Peter, James, and John.</li>
-                    <li><strong>5th The Institution of the Eucharist:</strong> Jesus offers His Body and Blood at the Last Supper.</li>
+                    <li><strong>1st Baptism in the Jordan:</strong> Heavens open.</li>
+                    <li><strong>2nd Wedding at Cana:</strong> First public sign.</li>
+                    <li><strong>3rd Proclamation of the Kingdom:</strong> Call to conversion.</li>
+                    <li><strong>4th The Transfiguration:</strong> Transfigured in glory.</li>
+                    <li><strong>5th Institution of the Eucharist:</strong> Last Supper.</li>
                 </ul>
             </div>
         </div>
@@ -98,24 +123,11 @@
                 if(data.success && data.readings) {
                     const r = data.readings;
                     if(r.title) document.getElementById('readingTitle').textContent = r.title;
-                    document.getElementById('readingsContent').innerHTML = `
-                        <div class="mb-3">
-                            <h6 class="text-secondary fw-bold">First Reading</h6>
-                            <p>${r.first || 'No first reading provided yet.'}</p>
-                        </div>
-                        <div class="mb-3">
-                            <h6 class="text-secondary fw-bold">Responsorial Psalm</h6>
-                            <p>${r.psalm || 'No psalm provided yet.'}</p>
-                        </div>
-                        <div class="mb-3">
-                            <h6 class="text-secondary fw-bold">Second Reading</h6>
-                            <p>${r.second || 'No second reading provided yet.'}</p>
-                        </div>
-                        <div class="mb-3">
-                            <h6 class="text-secondary fw-bold">Gospel</h6>
-                            <p>${r.gospel || 'No gospel reading provided yet.'}</p>
-                        </div>
-                    `;
+                    document.getElementById('firstReading').textContent = r.first || 'No first reading provided.';
+                    document.getElementById('psalmReading').textContent = r.psalm || 'No psalm provided.';
+                    document.getElementById('secondReading').textContent = r.second || 'No second reading provided.';
+                    document.getElementById('gospelReading').textContent = r.gospel || 'No gospel provided.';
+                    if(r.announcement) document.getElementById('announcementBanner').textContent = r.announcement;
                 }
             } catch(e) {}
         }

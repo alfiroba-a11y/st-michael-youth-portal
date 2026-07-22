@@ -14,18 +14,17 @@
 
     <div class="container py-5">
         <div class="row justify-content-center">
-            <!-- Login Card -->
             <div class="col-md-5 mb-4">
                 <div class="card shadow-sm p-4">
                     <h3 class="mb-3 text-primary">Member Sign In</h3>
                     <div id="loginAlert" class="alert d-none" role="alert"></div>
                     <form id="loginForm">
                         <div class="mb-3">
-                            <label for="loginName" class="form-label">Full Name (First & Surname)</label>
+                            <label class="form-label">Full Name</label>
                             <input type="text" class="form-control" id="loginName" required>
                         </div>
                         <div class="mb-3">
-                            <label for="loginPass" class="form-label">Password</label>
+                            <label class="form-label">Password</label>
                             <input type="password" class="form-control" id="loginPass" required>
                         </div>
                         <button type="submit" class="btn btn-primary w-100">Sign In to Dashboard</button>
@@ -33,30 +32,29 @@
                 </div>
             </div>
 
-            <!-- Registration Card -->
             <div class="col-md-7">
                 <div class="card shadow-sm p-4">
                     <h3 class="mb-3 text-success">Create Account (Sign Up)</h3>
-                    <p class="text-muted small">Note: Registration requires approval and a KES 100 fee coordinated with Treasurer Samuel Mutunga.</p>
+                    <p class="text-muted small">Requires approval and KES 100 fee with Treasurer Samuel Mutunga.</p>
                     <div id="registerAlert" class="alert d-none" role="alert"></div>
                     <form id="registerForm">
                         <div class="row">
                             <div class="mb-3 col-md-6">
-                                <label for="regName" class="form-label">Full Name (First & Surname)</label>
+                                <label class="form-label">Full Name</label>
                                 <input type="text" class="form-control" id="regName" required>
                             </div>
                             <div class="mb-3 col-md-6">
-                                <label for="regPhone" class="form-label">Phone Number</label>
+                                <label class="form-label">Phone Number</label>
                                 <input type="text" class="form-control" id="regPhone" required>
                             </div>
                         </div>
                         <div class="row">
                             <div class="mb-3 col-md-6">
-                                <label for="regJumuiya" class="form-label">Jumuiya</label>
+                                <label class="form-label">Jumuiya</label>
                                 <input type="text" class="form-control" id="regJumuiya" required>
                             </div>
                             <div class="mb-3 col-md-6">
-                                <label for="regGroup" class="form-label">Church Group / Choir</label>
+                                <label class="form-label">Group</label>
                                 <select class="form-select" id="regGroup">
                                     <option value="Youth General">Youth General</option>
                                     <option value="Choir">Choir</option>
@@ -66,10 +64,10 @@
                             </div>
                         </div>
                         <div class="mb-3">
-                            <label for="regPass" class="form-label">Create Password</label>
+                            <label class="form-label">Password</label>
                             <input type="password" class="form-control" id="regPass" required>
                         </div>
-                        <button type="submit" class="btn btn-success w-100">Submit Account Creation (KES 100 Paid)</button>
+                        <button type="submit" class="btn btn-success w-100">Submit Registration (KES 100 Paid)</button>
                     </form>
                 </div>
             </div>
@@ -82,9 +80,7 @@
             const name = document.getElementById('loginName').value.trim();
             const pass = document.getElementById('loginPass').value;
             const alertBox = document.getElementById('loginAlert');
-            
             alertBox.classList.add('d-none');
-            alertBox.textContent = '';
 
             try {
                 const res = await fetch('/api/youth/login', {
@@ -93,35 +89,31 @@
                     body: JSON.stringify({ name, pass })
                 });
                 const data = await res.json();
-                
                 if(data.success) {
                     localStorage.setItem('youthName', data.name);
                     window.location.href = '/dashboard';
                 } else {
-                    alertBox.textContent = data.message || 'Login failed. Please check your details.';
-                    alertBox.classList.remove('d-none');
+                    alertBox.textContent = data.message;
                     alertBox.className = 'alert alert-danger small';
+                    alertBox.classList.remove('d-none');
                 }
             } catch (err) {
-                alertBox.textContent = 'A network error occurred. Please check your server connection.';
-                alertBox.classList.remove('d-none');
+                alertBox.textContent = 'Connection error.';
                 alertBox.className = 'alert alert-danger small';
+                alertBox.classList.remove('d-none');
             }
         });
 
         document.getElementById('registerForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const alertBox = document.getElementById('registerAlert');
-            
             const payload = {
                 name: document.getElementById('regName').value.trim(),
                 phone: document.getElementById('regPhone').value.trim(),
                 jumuiya: document.getElementById('regJumuiya').value.trim(),
                 group: document.getElementById('regGroup').value,
-                pass: document.getElementById('regPass').value,
-                addedBy: 'Self Registration (KES 100 Paid)'
+                pass: document.getElementById('regPass').value
             };
-            
             try {
                 const res = await fetch('/api/youth/register', {
                     method: 'POST',
@@ -129,22 +121,14 @@
                     body: JSON.stringify(payload)
                 });
                 const data = await res.json();
-                
-                if (alertBox) {
-                    alertBox.textContent = data.message;
-                    alertBox.classList.remove('d-none');
-                    alertBox.className = data.success ? 'alert alert-success small' : 'alert alert-danger small';
-                }
-                
-                if (data.success) {
-                    e.target.reset();
-                }
+                alertBox.textContent = data.message;
+                alertBox.className = data.success ? 'alert alert-success small' : 'alert alert-danger small';
+                alertBox.classList.remove('d-none');
+                if (data.success) e.target.reset();
             } catch (err) {
-                if (alertBox) {
-                    alertBox.className = 'alert alert-danger small';
-                    alertBox.textContent = 'Registration failed. Please check your network connection.';
-                    alertBox.classList.remove('d-none');
-                }
+                alertBox.textContent = 'Registration failed.';
+                alertBox.className = 'alert alert-danger small';
+                alertBox.classList.remove('d-none');
             }
         });
     </script>
