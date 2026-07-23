@@ -13,9 +13,16 @@
     </nav>
 
     <div class="container my-4 flex-grow-1">
-        <div class="alert alert-info">
-            <h4 class="alert-heading">Welcome to your Member Dashboard!</h4>
-            <p class="mb-0" id="userAnnouncement">Loading community announcements...</p>
+        <!-- Updates Banner -->
+        <div class="alert alert-info shadow-sm">
+            <h4 class="alert-heading">📢 Community Updates & Announcements</h4>
+            <p class="mb-0 fw-bold" id="userAnnouncement">Loading community announcements...</p>
+        </div>
+
+        <!-- Upcoming Youth Events Section -->
+        <div class="card shadow-sm p-4 mb-4">
+            <h4 class="text-success mb-3">📅 Upcoming Youth Events</h4>
+            <div id="eventsList" class="row g-3">Loading upcoming events...</div>
         </div>
 
         <!-- Youth Directory Table -->
@@ -26,18 +33,17 @@
 
         <!-- Community Chat / Message Board -->
         <div class="card shadow-sm p-4 mb-4">
-            <h4 class="text-primary mb-3">Youth Community Board</h4>
+            <h4 class="text-primary mb-3">Youth Community Board & Queries</h4>
             <div id="messageBoard" class="border p-3 mb-3 bg-white rounded" style="height: 200px; overflow-y: auto;">Loading messages...</div>
             <form id="messageForm">
                 <div class="input-group">
-                    <input type="text" id="messageInput" class="form-control" placeholder="Type a message to fellow youth..." required>
+                    <input type="text" id="messageInput" class="form-control" placeholder="Type a message or query for leaders..." required>
                     <button class="btn btn-primary" type="submit">Post Message</button>
                 </div>
             </form>
         </div>
     </div>
 
-    <!-- Copyright and Management Footer -->
     <footer class="text-center py-3 mt-auto text-muted small border-top bg-white">
         &copy; 2026 St. Michael Kasaini Youth Portal. Created and managed by Robert Wambua. All rights reserved.
     </footer>
@@ -58,6 +64,17 @@
                     if (data.readings && data.readings.announcement) {
                         document.getElementById('userAnnouncement').textContent = data.readings.announcement;
                     }
+
+                    // Render Upcoming Events
+                    let eHtml = '';
+                    if (!data.events || data.events.length === 0) {
+                        eHtml = '<div class="col-12 text-muted small">No upcoming events scheduled at the moment.</div>';
+                    } else {
+                        data.events.forEach(ev => {
+                            eHtml += `<div class="col-md-4"><div class="p-3 border rounded bg-white shadow-sm h-100"><h5 class="text-success">${ev.title}</h5><p class="small text-muted mb-1"><strong>Time:</strong> ${ev.date || 'TBA'}</p><p class="small mb-0">${ev.description || ''}</p></div></div>`;
+                        });
+                    }
+                    document.getElementById('eventsList').innerHTML = eHtml;
 
                     // Render safe directory
                     let html = '<table class="table table-bordered table-striped"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Group</th><th>Phone</th></tr></thead><tbody>';
@@ -98,11 +115,6 @@
         });
 
         function logout() {
-            fetch('/api/youth/logout', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: currentUser })
-            });
             localStorage.removeItem('youth_user');
             window.location.href = '/login';
         }
