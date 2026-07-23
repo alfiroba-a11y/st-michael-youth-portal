@@ -82,6 +82,9 @@ function maskPhone(phone) {
     return `${start}****${end}`;
 }
 
+// Track active users for online presence
+let activeUsers = {};
+
 // Routes
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
@@ -94,6 +97,22 @@ app.get('/api/download/server-code', (req, res) => {
     let html = `<html><head><title>server.js Source Code</title><style>body{font-family:monospace;padding:20px;background:#f4f4f4;}pre{background:#fff;padding:15px;border:1px solid #ccc;}</style></head><body><h2>server.js</h2><pre>${codeContent.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre><script>window.print();</script></body></html>`;
     res.setHeader('Content-Type', 'text/html');
     res.send(html);
+});
+
+// Presence API Endpoints
+app.post('/api/ping', (req, res) => {
+    const { username } = req.body;
+    if (username) {
+        activeUsers[username] = Date.now();
+    }
+    res.json({ success: true });
+});
+
+app.get('/api/online-users', (req, res) => {
+    const now = Date.now();
+    const onlineThreshold = 5 * 60 * 1000; // 5 minutes window
+    const online = Object.keys(activeUsers).filter(user => (now - activeUsers[user]) < onlineThreshold);
+    res.json(online);
 });
 
 // API Endpoints
@@ -214,6 +233,40 @@ app.post('/api/admin/remove-member', async (req, res) => {
     data.members = data.members.filter(m => m.id !== id);
     await writeData(data);
     res.json({ success: true });
+});
+
+// Direct Admin Member Addition Endpoint (Saves to MongoDB Atlas)
+app.post('/api/admin/add-member', async (req, res) => {
+    try {
+        const { name, phone, jumuiya, group, pass } = req.body;
+        if (!name) return res.status(400).json({ success: false, error: "Member name is required." });
+
+        let data = await readData();
+        if (!data.members) data.members = [];
+        
+        const cleanName = name.trim().toLowerCase();
+        if (data.members.some(m => m.name && m.name.trim().toLowerCase() === cleanName)) {
+            return res.status(400).json({ success: false, error: "Member already exists in the directory." });
+        }
+
+        const newMember = {
+            id: Date.now().toString(),
+            customId: `K${data.members.length + 1}`,
+            name: name.trim(),
+            phone: phone || '',
+            jumuiya: jumuiya || '',
+            group: group || 'Youth General',
+            pass: pass || '12345',
+            date: new Date().toLocaleDateString()
+        };
+
+        data.members.push(newMember);
+        await writeData(data);
+
+        res.json({ success: true, message: "Member added successfully and saved to cloud database!" });
+    } catch (err) {
+        res.status(500).json({ success: false, error: "Failed to add member to database." });
+    }
 });
 
 app.post('/api/admin/update-readings', async (req, res) => {

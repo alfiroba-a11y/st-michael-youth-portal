@@ -33,6 +33,50 @@
             </div>
         </div>
 
+        <!-- Online Users Panel -->
+        <div class="card shadow-sm p-4 mb-4">
+            <h4 class="text-secondary mb-3">🟢 Members Currently Online</h4>
+            <ul id="online-users-list" class="mb-0">Loading active users...</ul>
+        </div>
+
+        <!-- Direct Admin Add Member Panel -->
+        <div class="card shadow-sm p-4 mb-4">
+            <h4 class="text-warning mb-3">➕ Add Member Directly (Bypass Signup)</h4>
+            <div id="adminMsgAlert" class="alert d-none"></div>
+            <form id="addMemberForm">
+                <div class="row">
+                    <div class="mb-3 col-md-4">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" id="newMemberName" class="form-control" required placeholder="e.g. John Doe">
+                    </div>
+                    <div class="mb-3 col-md-4">
+                        <label class="form-label">Phone Number</label>
+                        <input type="text" id="newMemberPhone" class="form-control" placeholder="e.g. 0712345678">
+                    </div>
+                    <div class="mb-3 col-md-4">
+                        <label class="form-label">Jumuiya</label>
+                        <input type="text" id="newMemberJumuiya" class="form-control" placeholder="e.g. St. Kizito">
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="mb-3 col-md-6">
+                        <label class="form-label">Youth Group</label>
+                        <select id="newMemberGroup" class="form-control">
+                            <option value="Youth General">Youth General</option>
+                            <option value="Choo/Music">Choir</option>
+                            <option value="Liturgical">Liturgical</option>
+                            <option value="Project">Project</option>
+                        </select>
+                    </div>
+                    <div class="mb-3 col-md-6">
+                        <label class="form-label">Portal Password</label>
+                        <input type="text" id="newMemberPass" class="form-control" value="12345" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-warning text-dark">Save Member Directly to Database</button>
+            </form>
+        </div>
+
         <!-- Upload Readings & Updates Banner -->
         <div class="card shadow-sm p-4 mb-4">
             <h4 class="text-primary mb-3">📢 Push Updates & Readings to Portals</h4>
@@ -129,11 +173,61 @@
                 document.getElementById('loginSection').classList.add('d-none');
                 document.getElementById('dashboardSection').classList.remove('d-none');
                 loadAdminData();
+                loadOnlineUsers();
+                // Refresh online list every 30 seconds while logged into admin panel
+                setInterval(loadOnlineUsers, 30000);
             } else {
                 alertBox.textContent = 'Invalid credentials';
                 alertBox.className = 'alert alert-danger small';
                 alertBox.classList.remove('d-none');
             }
+        });
+
+        async function loadOnlineUsers() {
+            try {
+                const res = await fetch('/api/online-users');
+                const users = await res.json();
+                const list = document.getElementById('online-users-list');
+                if (list) {
+                    list.innerHTML = users.length ? users.map(u => `<li>🟢 ${u}</li>`).join('') : '<li class="text-muted">No members currently active online.</li>';
+                }
+            } catch (e) {
+                console.error("Could not fetch online users");
+            }
+        }
+
+        // Direct member addition
+        document.getElementById('addMemberForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const msgBox = document.getElementById('adminMsgAlert');
+            const payload = {
+                name: document.getElementById('newMemberName').value,
+                phone: document.getElementById('newMemberPhone').value,
+                jumuiya: document.getElementById('newMemberJumuiya').value,
+                group: document.getElementById('newMemberGroup').value,
+                pass: document.getElementById('newMemberPass').value
+            };
+
+            const res = await fetch('/api/admin/add-member', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                msgBox.textContent = data.message;
+                msgBox.className = 'alert alert-success small';
+                msgBox.classList.remove('d-none');
+                document.getElementById('addMemberForm').reset();
+                document.getElementById('newMemberPass').value = '12345';
+                loadAdminData();
+            } else {
+                msgBox.textContent = data.error || 'Failed to add member.';
+                msgBox.className = 'alert alert-danger small';
+                msgBox.classList.remove('d-none');
+            }
+            setTimeout(() => msgBox.classList.add('d-none'), 4000);
         });
 
         async function loadAdminData() {
