@@ -193,10 +193,10 @@ app.post('/api/youth/message', async (req, res) => {
     res.json({ success: true });
 });
 
-// Admin API
+// Admin API - Updated credentials secured (Admin / Admin0247)
 app.post('/api/admin/login', (req, res) => {
     const { username, password } = req.body;
-    res.json({ success: (username === 'admin' && password === 'KasainiYouthAdmin2026!') });
+    res.json({ success: (username === 'Admin' && password === 'Admin0247') });
 });
 
 app.get('/api/admin/data', async (req, res) => {
