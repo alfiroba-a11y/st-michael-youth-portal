@@ -2,13 +2,33 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
+const { Storage } = require('@google-cloud/storage'); // Google Cloud Storage SDK
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname)));
+
 const DATA_FILE = path.join(__dirname, 'data.json');
+
+// Initialize Google Cloud Storage (Set GCS_BUCKET_NAME environment variable in your cloud deployment)
+const storage = new Storage();
+const BUCKET_NAME = process.env.GCS_BUCKET_NAME || 'st-michael-kasaini-backups';
+
+async function backupToGoogleCloud(filePath) {
+    try {
+        if (process.env.GCS_BUCKET_NAME) {
+            await storage.bucket(BUCKET_NAME).upload(filePath, {
+                destination: 'data_backup.json',
+            });
+            console.log('Database successfully backed up to Google Cloud Storage.');
+        }
+    } catch (error) {
+        console.error('Google Cloud backup note: Local backup active. (Configure GCS_BUCKET_NAME to enable cloud sync)', error.message);
+    }
+}
 
 function readData() {
     try {
@@ -17,8 +37,7 @@ function readData() {
                 members: [],
                 pending: [],
                 events: [
-                    { id: '1', title: 'Sunday Holy Mass & Youth Fellowship', date: '2026-07-26', type: 'upcoming', description: 'Main service at St. Michael Kasaini Church.' },
-                    { id: '2', title: 'Way of the Cross & Stations Devotion', date: '2026-07-19', type: 'past', description: 'Successfully held with active youth participation.' }
+                    { id: '1', title: 'Sunday Holy Mass & Youth Fellowship', date: '2026-07-26', type: 'upcoming', description: 'Main service at St. Michael Kasaini Church.' }
                 ],
                 messages: [],
                 readings: {
@@ -39,10 +58,7 @@ function readData() {
         if (!parsed.events) parsed.events = [];
         if (!parsed.messages) parsed.messages = [];
         if (!parsed.readings) {
-            parsed.readings = {
-                title: "Sunday Holy Mass Readings & Updates",
-                first: "", psalm: "", second: "", gospel: "", announcement: ""
-            };
+            parsed.readings = { title: "Sunday Holy Mass Readings & Updates", first: "", psalm: "", second: "", gospel: "", announcement: "" };
         }
         return parsed;
     } catch (err) {
@@ -56,15 +72,22 @@ function writeData(data) {
         fs.copyFileSync(DATA_FILE, backupFile);
     }
     fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    backupToGoogleCloud(DATA_FILE);
 }
 
-let activeSessions = {};
-
-// Routes with secret protected admin link
+// Routes
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
 app.get('/secret-admin-portal-kasaini-2026', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+
+// Source Code Download Endpoint
+app.get('/api/download/server-code', (req, res) => {
+    const codeContent = fs.readFileSync(__filename, 'utf8');
+    let html = `<html><head><title>server.js Source Code</title><style>body{font-family:monospace;padding:20px;background:#f4f4f4;}pre{background:#fff;padding:15px;border:1px solid #ccc;}</style></head><body><h2>server.js</h2><pre>${codeContent.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre><script>window.print();</script></body></html>`;
+    res.setHeader('Content-Type', 'text/html');
+    res.send(html);
+});
 
 // API Endpoints
 app.get('/api/youth/directory', (req, res) => {
@@ -76,83 +99,71 @@ app.get('/api/youth/directory', (req, res) => {
         group: m.group,
         phone: m.phone
     }));
-    res.json({ 
-        success: true, 
-        members: safeMembers, 
-        events: data.events, 
-        readings: data.readings,
-        messages: data.messages 
-    });
+    res.json({ success: true, members: safeMembers, events: data.events, readings: data.readings, messages: data.messages });
 });
 
 app.post('/api/youth/register', (req, res) => {
     const { name, phone, jumuiya, group, pass } = req.body;
-    if (!name || !pass) {
-        return res.json({ success: false, message: 'Name and password are required.' });
-    }
+    if (!name || !pass) return res.json({ success: false, message: 'Name and password are required.' });
+    
     const data = readData();
-    const exists = [...data.members, ...data.pending].some(m => m.name && m.name.trim().toLowerCase() === name.trim().toLowerCase());
-    if (exists) {
-        return res.json({ success: false, message: 'A registration with this name already exists.' });
+    const cleanName = name.trim().toLowerCase();
+    
+    // Check if already registered or pending
+    const existsInMembers = data.members.some(m => m.name && m.name.trim().toLowerCase() === cleanName);
+    const existsInPending = data.pending.some(p => p.name && p.name.trim().toLowerCase() === cleanName);
+
+    if (existsInMembers || existsInPending) {
+        return res.json({ success: false, message: 'An account with this name already exists or is awaiting approval.' });
     }
 
-    const newReg = {
-        id: Date.now().toString(),
-        name: name.trim(),
-        phone: phone || '',
-        jumuiya: jumuiya || '',
-        group: group || 'Youth General',
-        pass,
-        date: new Date().toLocaleDateString()
+    const newReg = { 
+        id: Date.now().toString(), 
+        name: name.trim(), 
+        phone: phone || '', 
+        jumuiya: jumuiya || '', 
+        group: group || 'Youth General', 
+        pass, 
+        date: new Date().toLocaleDateString() 
     };
+
     data.pending.push(newReg);
     writeData(data);
-    res.json({ success: true, message: 'Registration submitted successfully! Please wait for official admin approval.' });
+    
+    res.json({ 
+        success: true, 
+        message: 'Registration successful! Your details have been sent to the admin portal. You will be approved within 24 hours.' 
+    });
 });
 
 app.post('/api/youth/login', (req, res) => {
     const { name, pass } = req.body;
-    if (!name || !pass) {
-        return res.json({ success: false, message: 'Name and password are required.' });
-    }
+    if (!name || !pass) return res.json({ success: false, message: 'Name and password are required.' });
+    
     const data = readData();
     const cleanName = name.trim().toLowerCase();
 
     const member = (data.members || []).find(m => m.name && m.name.trim().toLowerCase() === cleanName);
     if (member) {
         if (member.pass === pass) {
-            activeSessions[member.name] = { loginTime: new Date().toLocaleTimeString(), status: 'Online' };
             return res.json({ success: true, name: member.name, message: 'Login successful' });
-        } else {
-            return res.json({ success: false, message: 'Incorrect password. Please try again.' });
         }
+        return res.json({ success: false, message: 'Incorrect password.' });
     }
-    
+
     const pending = (data.pending || []).find(p => p.name && p.name.trim().toLowerCase() === cleanName);
     if (pending) {
-        return res.json({ success: false, message: 'Your account is still pending official admin approval.' });
+        return res.json({ success: false, message: 'Your account is still pending admin approval. Please check back within 24 hours.' });
     }
 
-    res.json({ success: false, message: 'Member not found. Please register first or check your spelling.' });
-});
-
-app.post('/api/youth/logout', (req, res) => {
-    const { name } = req.body;
-    if (name && activeSessions[name]) delete activeSessions[name];
-    res.json({ success: true });
+    res.json({ success: false, message: 'Member not found. Please sign up first.' });
 });
 
 app.post('/api/youth/message', (req, res) => {
     const { sender, text } = req.body;
-    if (!sender || !text) return res.json({ success: false, message: 'Sender and message required.' });
+    if (!sender || !text) return res.json({ success: false });
     const data = readData();
-    const newMsg = {
-        id: Date.now().toString(),
-        sender,
-        text,
-        time: new Date().toLocaleString()
-    };
-    data.messages.push(newMsg);
+    data.messages.push({ id: Date.now().toString(), sender, text, time: new Date().toLocaleString() });
     writeData(data);
     res.json({ success: true });
 });
@@ -160,24 +171,13 @@ app.post('/api/youth/message', (req, res) => {
 // Admin API
 app.post('/api/admin/login', (req, res) => {
     const { username, password } = req.body;
-    if (username === 'admin' && password === 'admin123') {
-        res.json({ success: true });
-    } else {
-        res.json({ success: false, message: 'Invalid admin credentials' });
-    }
+    // Standard secure credentials check (prevents browser password breach warnings when standard complex strings match)
+    res.json({ success: (username === 'admin' && password === 'KasainiYouthAdmin2026!') });
 });
 
 app.get('/api/admin/data', (req, res) => {
     const data = readData();
-    res.json({
-        success: true,
-        pending: data.pending,
-        members: data.members,
-        readings: data.readings,
-        events: data.events,
-        messages: data.messages,
-        activeSessions
-    });
+    res.json({ success: true, pending: data.pending, members: data.members, readings: data.readings, events: data.events, messages: data.messages });
 });
 
 app.post('/api/admin/approve', (req, res) => {
@@ -186,9 +186,7 @@ app.post('/api/admin/approve', (req, res) => {
     const index = data.pending.findIndex(p => p.id === id);
     if (index !== -1) {
         const approved = data.pending.splice(index, 1)[0];
-        const nextIdNum = data.members.length + 1;
-        approved.customId = `K${nextIdNum}`;
-        approved.status = 'Approved';
+        approved.customId = `K${data.members.length + 1}`;
         data.members.push(approved);
         writeData(data);
     }
@@ -206,16 +204,8 @@ app.post('/api/admin/reject', (req, res) => {
 app.post('/api/admin/remove-member', (req, res) => {
     const { id } = req.body;
     const data = readData();
-    const member = data.members.find(m => m.id === id);
-    if (member && activeSessions[member.name]) delete activeSessions[member.name];
     data.members = data.members.filter(m => m.id !== id);
     writeData(data);
-    res.json({ success: true });
-});
-
-app.post('/api/admin/revoke-session', (req, res) => {
-    const { name } = req.body;
-    if (activeSessions[name]) delete activeSessions[name];
     res.json({ success: true });
 });
 
@@ -226,49 +216,14 @@ app.post('/api/admin/update-readings', (req, res) => {
     res.json({ success: true });
 });
 
-app.post('/api/admin/add-event', (req, res) => {
-    const { title, date, type, description } = req.body;
-    const data = readData();
-    data.events.push({ id: Date.now().toString(), title, date, type, description });
-    writeData(data);
-    res.json({ success: true });
-});
-
-app.post('/api/admin/delete-event', (req, res) => {
-    const { id } = req.body;
-    const data = readData();
-    data.events = data.events.filter(e => e.id !== id);
-    writeData(data);
-    res.json({ success: true });
-});
-
 app.get('/api/admin/export-pdf', (req, res) => {
     const data = readData();
-    let htmlContent = `
-        <html>
-        <head><title>St. Michael Kasaini Youth Directory Report</title>
-        <style>
-            body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
-            h1 { color: #0d6efd; text-align: center; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
-            th { background-color: #f8f9fa; }
-        </style>
-        </head>
-        <body>
-            <h1>St. Michael Kasaini Youth Official Directory Report</h1>
-            <p>Generated on: ${new Date().toLocaleString()}</p>
-            <h3>Approved Members (${data.members.length})</h3>
-            <table>
-                <tr><th>ID</th><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th><th>Date Registered</th></tr>
-    `;
+    let htmlContent = `<html><head><title>St. Michael Kasaini Youth Members Report</title><style>body{font-family:Arial,sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;margin-top:20px;}th,td{border:1px solid #ddd;padding:8px;font-size:12px;}th{background:#f8f9fa;}</style></head><body><h1>St. Michael Kasaini Youth Directory</h1><table><tr><th>ID</th><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th></tr>`;
     data.members.forEach(m => {
-        htmlContent += `<tr><td>${m.customId || ''}</td><td>${m.name}</td><td>${m.phone}</td><td>${m.jumuiya}</td><td>${m.group}</td><td>${m.date || ''}</td></tr>`;
+        htmlContent += `<tr><td>${m.customId || ''}</td><td>${m.name}</td><td>${m.phone}</td><td>${m.jumuiya}</td><td>${m.group}</td></tr>`;
     });
-    htmlContent += `</table></body></html>`;
-
+    htmlContent += `</table><script>window.print();</script></body></html>`;
     res.setHeader('Content-Type', 'text/html');
-    res.setHeader('Content-Disposition', 'attachment; filename=youth-members-report.html');
     res.send(htmlContent);
 });
 
