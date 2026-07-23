@@ -12,7 +12,7 @@ app.use(express.static(path.join(__dirname)));
 
 const DATA_FILE = path.join(__dirname, 'data.json');
 
-// Optional Google Cloud Storage backup handler (safely loaded if available)
+// Optional Google Cloud Storage backup handler
 async function backupToGoogleCloud(filePath) {
     try {
         if (process.env.GCS_BUCKET_NAME) {
@@ -21,11 +21,8 @@ async function backupToGoogleCloud(filePath) {
             await storage.bucket(process.env.GCS_BUCKET_NAME).upload(filePath, {
                 destination: 'data_backup.json',
             });
-            console.log('Database successfully backed up to Google Cloud Storage.');
         }
-    } catch (error) {
-        console.log('Cloud backup note: Running locally with secure local file retention.');
-    }
+    } catch (error) {}
 }
 
 function readData() {
@@ -73,13 +70,20 @@ function writeData(data) {
     backupToGoogleCloud(DATA_FILE);
 }
 
+// Utility to mask middle numbers of phone numbers (e.g., 0712345678 -> 071****678)
+function maskPhone(phone) {
+    if (!phone || phone.length < 7) return phone;
+    const start = phone.slice(0, 3);
+    const end = phone.slice(-3);
+    return `${start}****${end}`;
+}
+
 // Routes
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
 app.get('/secret-admin-portal-kasaini-2026', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 
-// Source Code Download Endpoint
 app.get('/api/download/server-code', (req, res) => {
     const codeContent = fs.readFileSync(__filename, 'utf8');
     let html = `<html><head><title>server.js Source Code</title><style>body{font-family:monospace;padding:20px;background:#f4f4f4;}pre{background:#fff;padding:15px;border:1px solid #ccc;}</style></head><body><h2>server.js</h2><pre>${codeContent.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre><script>window.print();</script></body></html>`;
@@ -95,7 +99,7 @@ app.get('/api/youth/directory', (req, res) => {
         name: m.name,
         jumuiya: m.jumuiya,
         group: m.group,
-        phone: m.phone
+        phone: maskPhone(m.phone)
     }));
     res.json({ success: true, members: safeMembers, events: data.events, readings: data.readings, messages: data.messages });
 });
@@ -173,7 +177,10 @@ app.post('/api/admin/login', (req, res) => {
 
 app.get('/api/admin/data', (req, res) => {
     const data = readData();
-    res.json({ success: true, pending: data.pending, members: data.members, readings: data.readings, events: data.events, messages: data.messages });
+    // Mask pending phone numbers for privacy as well
+    const safePending = data.pending.map(p => ({ ...p, phone: maskPhone(p.phone) }));
+    const safeMembers = data.members.map(m => ({ ...m, phone: maskPhone(m.phone) }));
+    res.json({ success: true, pending: safePending, members: safeMembers, readings: data.readings, events: data.events, messages: data.messages });
 });
 
 app.post('/api/admin/approve', (req, res) => {
@@ -212,11 +219,31 @@ app.post('/api/admin/update-readings', (req, res) => {
     res.json({ success: true });
 });
 
+// Endpoint to push Upcoming Events from Admin Portal
+app.post('/api/admin/add-event', (req, res) => {
+    const { title, date, description } = req.body;
+    if (!title) return res.json({ success: false, message: 'Event title is required.' });
+    const data = readData();
+    data.events.push({ id: Date.now().toString(), title, date: date || '', description: description || '', type: 'upcoming' });
+    writeData(data);
+    res.json({ success: true, message: 'Event pushed successfully!' });
+});
+
+// Endpoint for Admin Reply to Queries / Community Board
+app.post('/api/admin/reply-query', (req, res) => {
+    const { text } = req.body;
+    if (!text) return res.json({ success: false });
+    const data = readData();
+    data.messages.push({ id: Date.now().toString(), sender: '🛡️ Robert Wambua (Admin)', text, time: new Date().toLocaleString() });
+    writeData(data);
+    res.json({ success: true });
+});
+
 app.get('/api/admin/export-pdf', (req, res) => {
     const data = readData();
     let htmlContent = `<html><head><title>St. Michael Kasaini Youth Members Report</title><style>body{font-family:Arial,sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;margin-top:20px;}th,td{border:1px solid #ddd;padding:8px;font-size:12px;}th{background:#f8f9fa;}</style></head><body><h1>St. Michael Kasaini Youth Directory</h1><table><tr><th>ID</th><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th></tr>`;
     data.members.forEach(m => {
-        htmlContent += `<tr><td>${m.customId || ''}</td><td>${m.name}</td><td>${m.phone}</td><td>${m.jumuiya}</td><td>${m.group}</td></tr>`;
+        htmlContent += `<tr><td>${m.customId || ''}</td><td>${m.name}</td><td>${maskPhone(m.phone)}</td><td>${m.jumuiya}</td><td>${m.group}</td></tr>`;
     });
     htmlContent += `</table><script>window.print();</script></body></html>`;
     res.setHeader('Content-Type', 'text/html');
