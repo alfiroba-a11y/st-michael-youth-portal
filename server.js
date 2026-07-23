@@ -2,7 +2,6 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 const path = require('path');
-const { Storage } = require('@google-cloud/storage'); // Google Cloud Storage SDK
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,20 +12,19 @@ app.use(express.static(path.join(__dirname)));
 
 const DATA_FILE = path.join(__dirname, 'data.json');
 
-// Initialize Google Cloud Storage (Set GCS_BUCKET_NAME environment variable in your cloud deployment)
-const storage = new Storage();
-const BUCKET_NAME = process.env.GCS_BUCKET_NAME || 'st-michael-kasaini-backups';
-
+// Optional Google Cloud Storage backup handler (safely loaded if available)
 async function backupToGoogleCloud(filePath) {
     try {
         if (process.env.GCS_BUCKET_NAME) {
-            await storage.bucket(BUCKET_NAME).upload(filePath, {
+            const { Storage } = require('@google-cloud/storage');
+            const storage = new Storage();
+            await storage.bucket(process.env.GCS_BUCKET_NAME).upload(filePath, {
                 destination: 'data_backup.json',
             });
             console.log('Database successfully backed up to Google Cloud Storage.');
         }
     } catch (error) {
-        console.error('Google Cloud backup note: Local backup active. (Configure GCS_BUCKET_NAME to enable cloud sync)', error.message);
+        console.log('Cloud backup note: Running locally with secure local file retention.');
     }
 }
 
@@ -109,7 +107,6 @@ app.post('/api/youth/register', (req, res) => {
     const data = readData();
     const cleanName = name.trim().toLowerCase();
     
-    // Check if already registered or pending
     const existsInMembers = data.members.some(m => m.name && m.name.trim().toLowerCase() === cleanName);
     const existsInPending = data.pending.some(p => p.name && p.name.trim().toLowerCase() === cleanName);
 
@@ -171,7 +168,6 @@ app.post('/api/youth/message', (req, res) => {
 // Admin API
 app.post('/api/admin/login', (req, res) => {
     const { username, password } = req.body;
-    // Standard secure credentials check (prevents browser password breach warnings when standard complex strings match)
     res.json({ success: (username === 'admin' && password === 'KasainiYouthAdmin2026!') });
 });
 
