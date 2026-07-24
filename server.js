@@ -10,7 +10,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname)));
 
-// MongoDB Connection Setup
 const MONGO_URI = process.env.MONGO_URI;
 let db = null;
 
@@ -28,10 +27,25 @@ async function initDB() {
 }
 initDB();
 
-// Fallback local memory store if database is initializing
+// 11 Defined Jumuiyas with Unique Default Credentials
+const JUMUIYAS_LIST = [
+    { id: 'st_catherine', name: 'St. Catherine', username: 'catherine_admin', pass: 'Cath2026!' },
+    { id: 'st_ann', name: 'St. Ann', username: 'ann_admin', pass: 'Ann2026!' },
+    { id: 'st_michael', name: 'St. Michael', username: 'michael_admin', pass: 'Mich2026!' },
+    { id: 'st_raphael', name: 'St. Raphael', username: 'raphael_admin', pass: 'Raph2026!' },
+    { id: 'st_francisco', name: 'St. Francisco', username: 'francisco_admin', pass: 'Fran2026!' },
+    { id: 'st_monica', name: 'St. Monica', username: 'monica_admin', pass: 'Mon2026!' },
+    { id: 'st_stephen', name: 'St. Stephen', username: 'stephen_admin', pass: 'Steph2026!' },
+    { id: 'st_jacinta', name: 'St. Jacinta', username: 'jacinta_admin', pass: 'Jac2026!' },
+    { id: 'st_paul', name: 'St. Paul', username: 'paul_admin', pass: 'Paul2026!' },
+    { id: 'st_francis_assisi', name: 'St. Francis of Assisi', username: 'assisi_admin', pass: 'Assisi2026!' },
+    { id: 'st_charles_lwanga', name: 'St. Charles Lwanga', username: 'charles_admin', pass: 'Char2026!' }
+];
+
 let fallbackData = {
     members: [],
     pending: [],
+    jumuiyaSubmissions: [], // Stores entries submitted by Jumuiya admins (published: true/false)
     events: [
         { id: '1', title: 'Sunday Holy Mass & Youth Fellowship', date: '2026-07-26', type: 'upcoming', description: 'Main service at St. Michael Kasaini Church.' }
     ],
@@ -42,7 +56,7 @@ let fallbackData = {
         psalm: "Responsorial Psalm content...",
         second: "Second Reading content...",
         gospel: "Gospel content...",
-        announcement: "Welcome to St. Michael Kasaini Youth Portal."
+        announcement: "Welcome to St. Michael Kasaini Youth Portal. Pilgrims of Hope ⛪ 🙏"
     }
 };
 
@@ -66,7 +80,14 @@ async function writeData(data) {
         try {
             await db.collection('portal_data').updateOne(
                 { _id: 'main_store' },
-                { $set: { members: data.members, pending: data.pending, events: data.events, messages: data.messages, readings: data.readings } },
+                { $set: { 
+                    members: data.members, 
+                    pending: data.pending, 
+                    jumuiyaSubmissions: data.jumuiyaSubmissions, 
+                    events: data.events, 
+                    messages: data.messages, 
+                    readings: data.readings 
+                } },
                 { upsert: true }
             );
         } catch (e) {
@@ -77,55 +98,101 @@ async function writeData(data) {
 
 function maskPhone(phone) {
     if (!phone || phone.length < 7) return phone;
-    const start = phone.slice(0, 3);
-    const end = phone.slice(-3);
-    return `${start}****${end}`;
+    return `${phone.slice(0, 3)}****${phone.slice(-3)}`;
 }
 
-// Track active users for online presence
 let activeUsers = {};
 
-// Routes
+// HTML Routes
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
 app.get('/secret-admin-portal-kasaini-2026', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+app.get('/jumuiya-portal', (req, res) => res.sendFile(path.join(__dirname, 'jumuiya-portal.html')));
 
-app.get('/api/download/server-code', (req, res) => {
-    const fs = require('fs');
-    const codeContent = fs.readFileSync(__filename, 'utf8');
-    let html = `<html><head><title>server.js Source Code</title><style>body{font-family:monospace;padding:20px;background:#f4f4f4;}pre{background:#fff;padding:15px;border:1px solid #ccc;}</style></head><body><h2>server.js</h2><pre>${codeContent.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre><script>window.print();</script></body></html>`;
-    res.setHeader('Content-Type', 'text/html');
-    res.send(html);
-});
-
-// Presence API Endpoints
+// Presence API
 app.post('/api/ping', (req, res) => {
     const { username } = req.body;
-    if (username) {
-        activeUsers[username] = Date.now();
-    }
+    if (username) activeUsers[username] = Date.now();
     res.json({ success: true });
 });
 
 app.get('/api/online-users', (req, res) => {
     const now = Date.now();
-    const onlineThreshold = 5 * 60 * 1000; // 5 minutes window
-    const online = Object.keys(activeUsers).filter(user => (now - activeUsers[user]) < onlineThreshold);
+    const online = Object.keys(activeUsers).filter(user => (now - activeUsers[user]) < 300000);
     res.json(online);
 });
 
-// API Endpoints
+// Jumuiya Portal List & Login APIs
+app.get('/api/jumuiyas/list', (req, res) => {
+    // Return list without passwords for safety
+    const publicList = JUMUIYAS_LIST.map(j => ({ id: j.id, name: j.name, username: j.username }));
+    res.json({ success: true, jumuiyas: publicList });
+});
+
+app.post('/api/jumuiya/login', (req, res) => {
+    const { jumuiyaId, username, password } = req.body;
+    const jumuiya = JUMUIYAS_LIST.find(j => j.id === jumuiyaId);
+    if (jumuiya && jumuiya.username === username && jumuiya.pass === password) {
+        return res.json({ success: true, name: jumuiya.name });
+    }
+    res.json({ success: false, message: 'Invalid Jumuiya credentials.' });
+});
+
+// Jumuiya Admin Data Submissions
+app.get('/api/jumuiya/data', async (req, res) => {
+    const { jumuiyaName } = req.query;
+    const data = await readData();
+    const submissions = (data.jumuiyaSubmissions || []).filter(s => s.jumuiyaName === jumuiyaName);
+    res.json({ success: true, submissions });
+});
+
+app.post('/api/jumuiya/submit-record', async (req, res) => {
+    const { jumuiyaName, no, memberId, name, number, purpose } = req.body;
+    if (!name || !jumuiyaName) return res.json({ success: false, message: 'Name and Jumuiya name required.' });
+
+    const data = await readData();
+    if (!data.jumuiyaSubmissions) data.jumuiyaSubmissions = [];
+
+    const newRecord = {
+        id: Date.now().toString(),
+        jumuiyaName,
+        no: no || (data.jumuiyaSubmissions.filter(s => s.jumuiyaName === jumuiyaName).length + 1),
+        memberId: memberId || 'N/A',
+        name: name.trim(),
+        number: number || '',
+        purpose: purpose || 'Contribution',
+        published: false // Needs master admin publishing
+    };
+
+    data.jumuiyaSubmissions.push(newRecord);
+    await writeData(data);
+    res.json({ success: true, message: 'Record added successfully and sent to Master Admin for review!' });
+});
+
+// Youth Directory & Published Data for Members
 app.get('/api/youth/directory', async (req, res) => {
     const data = await readData();
-    const safeMembers = data.members.map(m => ({
-        customId: m.customId,
-        name: m.name,
-        jumuiya: m.jumuiya,
-        group: m.group,
-        phone: maskPhone(m.phone)
-    }));
-    res.json({ success: true, members: safeMembers, events: data.events, readings: data.readings, messages: data.messages });
+    // Only return published jumuiya submissions for regular member views
+    const publishedRecords = (data.jumuiyaSubmissions || []).filter(s => s.published);
+
+    // Calculate aggregated contributions per Jumuiya
+    let contributionsMap = {};
+    JUMUIYAS_LIST.forEach(j => { contributionsMap[j.name] = 0; });
+    publishedRecords.forEach(r => {
+        if (!contributionsMap[r.jumuiyaName]) contributionsMap[r.jumuiyaName] = 0;
+        contributionsMap[r.jumuiyaName] += 1; // or aggregate numeric value if used as amount
+    });
+
+    res.json({ 
+        success: true, 
+        members: data.members.map(m => ({ ...m, phone: maskPhone(m.phone) })), 
+        publishedRecords, 
+        contributionsMap,
+        events: data.events, 
+        readings: data.readings, 
+        messages: data.messages 
+    });
 });
 
 app.post('/api/youth/register', async (req, res) => {
@@ -135,53 +202,37 @@ app.post('/api/youth/register', async (req, res) => {
     const data = await readData();
     const cleanName = name.trim().toLowerCase();
     
-    const existsInMembers = data.members.some(m => m.name && m.name.trim().toLowerCase() === cleanName);
-    const existsInPending = data.pending.some(p => p.name && p.name.trim().toLowerCase() === cleanName);
-
-    if (existsInMembers || existsInPending) {
+    if (data.members.some(m => m.name.toLowerCase() === cleanName) || data.pending.some(p => p.name.toLowerCase() === cleanName)) {
         return res.json({ success: false, message: 'An account with this name already exists or is awaiting approval.' });
     }
 
-    const newReg = { 
+    data.pending.push({ 
         id: Date.now().toString(), 
         name: name.trim(), 
         phone: phone || '', 
-        jumuiya: jumuiya || '', 
+        jumuiya: jumuiya || 'St. Michael', 
         group: group || 'Youth General', 
         pass, 
         date: new Date().toLocaleDateString() 
-    };
-
-    data.pending.push(newReg);
-    await writeData(data);
-    
-    res.json({ 
-        success: true, 
-        message: 'Registration successful! Your details have been sent to the admin portal. You will be approved within 24 hours.' 
     });
+    await writeData(data);
+    res.json({ success: true, message: 'Registration successful! Awaiting admin approval.' });
 });
 
 app.post('/api/youth/login', async (req, res) => {
     const { name, pass } = req.body;
-    if (!name || !pass) return res.json({ success: false, message: 'Name and password are required.' });
-    
     const data = await readData();
     const cleanName = name.trim().toLowerCase();
 
-    const member = (data.members || []).find(m => m.name && m.name.trim().toLowerCase() === cleanName);
+    const member = data.members.find(m => m.name.toLowerCase() === cleanName);
     if (member) {
-        if (member.pass === pass) {
-            return res.json({ success: true, name: member.name, message: 'Login successful' });
-        }
+        if (member.pass === pass) return res.json({ success: true, name: member.name, jumuiya: member.jumuiya });
         return res.json({ success: false, message: 'Incorrect password.' });
     }
-
-    const pending = (data.pending || []).find(p => p.name && p.name.trim().toLowerCase() === cleanName);
-    if (pending) {
-        return res.json({ success: false, message: 'Your account is still pending admin approval. Please check back within 24 hours.' });
+    if (data.pending.find(p => p.name.toLowerCase() === cleanName)) {
+        return res.json({ success: false, message: 'Your account is still pending approval.' });
     }
-
-    res.json({ success: false, message: 'Member not found. Please sign up first.' });
+    res.json({ success: false, message: 'Member not found.' });
 });
 
 app.post('/api/youth/message', async (req, res) => {
@@ -193,7 +244,7 @@ app.post('/api/youth/message', async (req, res) => {
     res.json({ success: true });
 });
 
-// Admin API - Updated credentials secured (Admin / Admin0247)
+// Master Admin APIs
 app.post('/api/admin/login', (req, res) => {
     const { username, password } = req.body;
     res.json({ success: (username === 'Admin' && password === 'Admin0247') });
@@ -201,9 +252,24 @@ app.post('/api/admin/login', (req, res) => {
 
 app.get('/api/admin/data', async (req, res) => {
     const data = await readData();
-    const safePending = data.pending.map(p => ({ ...p, phone: maskPhone(p.phone) }));
-    const safeMembers = data.members.map(m => ({ ...m, phone: maskPhone(m.phone) }));
-    res.json({ success: true, pending: safePending, members: safeMembers, readings: data.readings, events: data.events, messages: data.messages });
+    
+    let contributionsMap = {};
+    JUMUIYAS_LIST.forEach(j => { contributionsMap[j.name] = 0; });
+    (data.jumuiyaSubmissions || []).forEach(r => {
+        if (!contributionsMap[r.jumuiyaName]) contributionsMap[r.jumuiyaName] = 0;
+        contributionsMap[r.jumuiyaName] += 1;
+    });
+
+    res.json({ 
+        success: true, 
+        pending: data.pending, 
+        members: data.members, 
+        jumuiyaSubmissions: data.jumuiyaSubmissions || [],
+        contributionsMap,
+        readings: data.readings, 
+        events: data.events, 
+        messages: data.messages 
+    });
 });
 
 app.post('/api/admin/approve', async (req, res) => {
@@ -235,38 +301,30 @@ app.post('/api/admin/remove-member', async (req, res) => {
     res.json({ success: true });
 });
 
-// Direct Admin Member Addition Endpoint (Saves to MongoDB Atlas)
-app.post('/api/admin/add-member', async (req, res) => {
-    try {
-        const { name, phone, jumuiya, group, pass } = req.body;
-        if (!name) return res.status(400).json({ success: false, error: "Member name is required." });
-
-        let data = await readData();
-        if (!data.members) data.members = [];
-        
-        const cleanName = name.trim().toLowerCase();
-        if (data.members.some(m => m.name && m.name.trim().toLowerCase() === cleanName)) {
-            return res.status(400).json({ success: false, error: "Member already exists in the directory." });
-        }
-
-        const newMember = {
-            id: Date.now().toString(),
-            customId: `K${data.members.length + 1}`,
-            name: name.trim(),
-            phone: phone || '',
-            jumuiya: jumuiya || '',
-            group: group || 'Youth General',
-            pass: pass || '12345',
-            date: new Date().toLocaleDateString()
-        };
-
-        data.members.push(newMember);
+// Master Admin: Publish or Unpublish Jumuiya Record
+app.post('/api/admin/toggle-publish', async (req, res) => {
+    const { id } = req.body;
+    const data = await readData();
+    const rec = (data.jumuiyaSubmissions || []).find(r => r.id === id);
+    if (rec) {
+        rec.published = !rec.published;
         await writeData(data);
-
-        res.json({ success: true, message: "Member added successfully and saved to cloud database!" });
-    } catch (err) {
-        res.status(500).json({ success: false, error: "Failed to add member to database." });
     }
+    res.json({ success: true });
+});
+
+// Master Admin: Edit Jumuiya Record
+app.post('/api/admin/edit-jumuiya-record', async (req, res) => {
+    const { id, name, number, purpose } = req.body;
+    const data = await readData();
+    const rec = (data.jumuiyaSubmissions || []).find(r => r.id === id);
+    if (rec) {
+        if (name) rec.name = name;
+        if (number !== undefined) rec.number = number;
+        if (purpose) rec.purpose = purpose;
+        await writeData(data);
+    }
+    res.json({ success: true });
 });
 
 app.post('/api/admin/update-readings', async (req, res) => {
@@ -278,7 +336,6 @@ app.post('/api/admin/update-readings', async (req, res) => {
 
 app.post('/api/admin/add-event', async (req, res) => {
     const { title, date, description } = req.body;
-    if (!title) return res.json({ success: false, message: 'Event title is required.' });
     const data = await readData();
     data.events.push({ id: Date.now().toString(), title, date: date || '', description: description || '', type: 'upcoming' });
     await writeData(data);
@@ -287,22 +344,10 @@ app.post('/api/admin/add-event', async (req, res) => {
 
 app.post('/api/admin/reply-query', async (req, res) => {
     const { text } = req.body;
-    if (!text) return res.json({ success: false });
     const data = await readData();
     data.messages.push({ id: Date.now().toString(), sender: '🛡️ Robert Wambua (Admin)', text, time: new Date().toLocaleString() });
     await writeData(data);
     res.json({ success: true });
-});
-
-app.get('/api/admin/export-pdf', async (req, res) => {
-    const data = await readData();
-    let htmlContent = `<html><head><title>St. Michael Kasaini Youth Members Report</title><style>body{font-family:Arial,sans-serif;padding:20px;}table{width:100%;border-collapse:collapse;margin-top:20px;}th,td{border:1px solid #ddd;padding:8px;font-size:12px;}th{background:#f8f9fa;}</style></head><body><h1>St. Michael Kasaini Youth Directory</h1><table><tr><th>ID</th><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th></tr>`;
-    data.members.forEach(m => {
-        htmlContent += `<tr><td>${m.customId || ''}</td><td>${m.name}</td><td>${maskPhone(m.phone)}</td><td>${m.jumuiya}</td><td>${m.group}</td></tr>`;
-    });
-    htmlContent += `</table><script>window.print();</script></body></html>`;
-    res.setHeader('Content-Type', 'text/html');
-    res.send(htmlContent);
 });
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
