@@ -359,44 +359,96 @@ app.post('/api/admin/delete-jumuiya-record', async (req, res) => {
     res.json({ success: true });
 });
 
-// Master Admin: Download Portal Data (Native Text Export)
+// Master Admin: Render printable report for browser Print-to-PDF
 app.get('/api/admin/download-data', async (req, res) => {
     try {
         const data = await readData();
         
-        let report = "========================================\n";
-        report += "St. Michael Kasaini Youth Portal\n";
-        report += "Master Admin Comprehensive Export Report\n";
-        report += "========================================\n\n";
+        let html = `<!DOCTYPE html>
+        <html>
+        <head>
+            <title>St. Michael Kasaini Youth Portal Report</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
+                h1 { font-size: 20px; color: #0d6efd; margin-bottom: 5px; }
+                h2 { font-size: 16px; border-bottom: 2px solid #ccc; padding-bottom: 5px; margin-top: 25px; }
+                p { font-size: 12px; color: #666; }
+                table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #f8f9fa; }
+                @media print {
+                    .no-print { display: none; }
+                }
+            </style>
+        </head>
+        <body>
+            <h1>St. Michael Kasaini Youth Portal</h1>
+            <p>Master Admin Comprehensive Export Report - Generated on ${new Date().toLocaleString()}</p>
+            <button class="no-print" onclick="window.print()" style="padding: 10px 20px; background: #0d6efd; color: white; border: none; cursor: pointer; margin-bottom: 20px; font-weight: bold; border-radius: 4px;">🖨️ Print / Save as PDF</button>
 
-        report += "--- REGISTERED MEMBERS ---\n";
+            <h2>Registered Members</h2>
+            <table>
+                <thead>
+                    <tr><th>#</th><th>ID</th><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th></tr>
+                </thead>
+                <tbody>`;
+        
         const members = data.members || [];
         if (members.length === 0) {
-            report += "No registered members found.\n";
+            html += `<tr><td colspan="6" style="text-align: center; color: #777;">No registered members found.</td></tr>`;
         } else {
             members.forEach((m, idx) => {
-                report += `${idx + 1}. [${m.customId || 'N/A'}] Name: ${m.name} | Phone: ${m.phone || 'N/A'} | Jumuiya: ${m.jumuiya || 'N/A'} | Group: ${m.group || 'N/A'}\n`;
+                html += `<tr>
+                    <td>${idx + 1}</td>
+                    <td>${m.customId || 'N/A'}</td>
+                    <td>${m.name}</td>
+                    <td>${m.phone || 'N/A'}</td>
+                    <td>${m.jumuiya || 'N/A'}</td>
+                    <td>${m.group || 'N/A'}</td>
+                </tr>`;
             });
         }
-        report += "\n";
+        
+        html += `</tbody></table>
 
-        report += "--- JUMUIYA CONTRIBUTIONS ---\n";
+            <h2>Jumuiya Contributions Submissions</h2>
+            <table>
+                <thead>
+                    <tr><th>#</th><th>Jumuiya</th><th>Contributor</th><th>Amount (KES)</th><th>Purpose</th><th>Status</th></tr>
+                </thead>
+                <tbody>`;
+
         const submissions = data.jumuiyaSubmissions || [];
         if (submissions.length === 0) {
-            report += "No contributions recorded.\n";
+            html += `<tr><td colspan="6" style="text-align: center; color: #777;">No contributions recorded.</td></tr>`;
         } else {
             submissions.forEach((s, idx) => {
-                report += `${idx + 1}. Jumuiya: ${s.jumuiyaName} | Contributor: ${s.name} | Amount: KES ${s.amount || 0} | Purpose: ${s.purpose || 'General'} | Published: ${s.published ? 'Yes' : 'No'}\n`;
+                html += `<tr>
+                    <td>${idx + 1}</td>
+                    <td>${s.jumuiyaName}</td>
+                    <td>${s.name}</td>
+                    <td>${s.amount || 0}</td>
+                    <td>${s.purpose || 'General'}</td>
+                    <td>${s.published ? 'Published' : 'Hidden'}</td>
+                </tr>`;
             });
         }
 
-        res.setHeader('Content-Type', 'text/plain');
-        res.setHeader('Content-Disposition', 'attachment; filename=kasaini_youth_portal_data.txt');
-        res.status(200).send(report);
+        html += `</tbody></table>
+            <script>
+                window.onload = function() {
+                    setTimeout(() => { window.print(); }, 500);
+                };
+            </script>
+        </body>
+        </html>`;
+
+        res.setHeader('Content-Type', 'text/html');
+        res.send(html);
 
     } catch (e) {
         console.error('Export Error:', e);
-        res.status(500).send('Error generating export file.');
+        res.status(500).send('Error generating printable report.');
     }
 });
 
