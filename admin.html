@@ -154,7 +154,7 @@
             <div id="memberList" class="table-responsive">Loading...</div>
         </div>
 
-  </div>
+ </div>
 
   <!-- Edit Record Modal -->
   <div class="modal fade" id="editModal" tabindex="-1">
@@ -300,145 +300,134 @@
                           </tr>
                       `;
                   });
-            }
-            document.getElementById('masterJumuiyaRecordsList').innerHTML = sHtml;
+              }
+              document.getElementById('masterJumuiyaRecordsList').innerHTML = sHtml;
 
-            // Pending Registrations Table
-            let pHtml = '<table class="table table-bordered"><thead><tr><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th><th>Action</th></tr></thead><tbody>';
-            if (!data.pending || data.pending.length === 0) {
-                pHtml += '<tr><td colspan="5" class="text-muted">No pending registrations.</td></tr>';
-            } else {
-                data.pending.forEach(p => {
-                    pHtml += `<tr><td>${p.name}</td><td>${maskPhoneNumber(p.phone)}</td><td>${p.jumuiya}</td><td>${p.group}</td><td><button class="btn btn-success btn-sm" onclick="approveUser('${p.id}')">Approve</button> <button class="btn btn-outline-danger btn-sm" onclick="rejectUser('${p.id}')">Reject</button></td></tr>`;
-                });
-            }
-            pHtml += '</tbody></table>';
-            document.getElementById('pendingList').innerHTML = pHtml;
+              // Pending Registrations Table
+              let pHtml = '<table class="table table-bordered"><thead><tr><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th><th>Action</th></tr></thead><tbody>';
+              if (!data.pending || data.pending.length === 0) {
+                  pHtml += '<tr><td colspan="5" class="text-muted">No pending registrations.</td></tr>';
+              } else {
+                  data.pending.forEach(p => {
+                      pHtml += `<tr><td>${p.name}</td><td>${maskPhoneNumber(p.phone)}</td><td>${p.jumuiya}</td><td>${p.group}</td><td><button class="btn btn-success btn-sm" onclick="approveUser('${p.id}')">Approve</button> <button class="btn btn-outline-danger btn-sm" onclick="rejectUser('${p.id}')">Reject</button></td></tr>`;
+                  });
+              }
+              pHtml += '</tbody></table>';
+              document.getElementById('pendingList').innerHTML = pHtml;
 
-            // Members Table
-            let mHtml = '<table class="table table-bordered table-striped"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Phone</th><th>Group</th><th>Action</th></tr></thead><tbody>';
-            if (!data.members || data.members.length === 0) {
-                mHtml += '<tr><td colspan="6" class="text-muted">No registered members yet.</td></tr>';
-            } else {
-                data.members.forEach((m) => {
-                    mHtml += `<tr><td><strong class="text-primary">${m.customId || 'N/A'}</strong></td><td>${m.name}</td><td><span class="badge bg-info text-dark">${m.jumuiya || 'St. Michael'}</span></td><td>${maskPhoneNumber(m.phone)}</td><td>${m.group}</td><td><button class="btn btn-danger btn-sm" onclick="removeMember('${m.id}')">Remove</button></td></tr>`;
-                });
-            }
-            mHtml += '</tbody></table>';
-            document.getElementById('memberList').innerHTML = mHtml;
+              // Members Table
+              let mHtml = '<table class="table table-bordered table-striped"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Phone</th><th>Group</th><th>Action</th></tr></thead><tbody>';
+              if (!data.members || data.members.length === 0) {
+                  mHtml += '<tr><td colspan="6" class="text-muted">No registered members yet.</td></tr>';
+              } else {
+                  data.members.forEach((m) => {
+                      mHtml += `<tr><td><strong class="text-primary">${m.customId || 'N/A'}</strong></td><td>${m.name}</td><td><span class="badge bg-info text-dark">${m.jumuiya || 'St. Michael'}</span></td><td>${maskPhoneNumber(m.phone)}</td><td>${m.group}</td><td><button class="btn btn-danger btn-sm" onclick="removeMember('${m.id}')">Remove</button></td></tr>`;
+                  });
+              }
+              mHtml += '</tbody></table>';
+              document.getElementById('memberList').innerHTML = mHtml;
+          }
+      }
+
+      // Event Form Submission
+      document.getElementById('eventForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const payload = {
+              title: document.getElementById('eventTitle').value,
+              date: document.getElementById('eventDate').value,
+              description: document.getElementById('eventDesc').value
+          };
+          await fetch('/api/admin/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          document.getElementById('eventForm').reset();
+          loadMasterData();
+      });
+
+      async function deleteEvent(id) {
+          if (confirm('Delete this event?')) {
+              await fetch('/api/admin/events/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+              loadMasterData();
         }
-    }
-
-    // Event Form Submission
-    document.getElementById('eventForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const payload = {
-            title: document.getElementById('eventTitle').value,
-            date: document.getElementById('eventDate').value,
-            description: document.getElementById('eventDesc').value
-        };
-        await fetch('/api/admin/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        document.getElementById('eventForm').reset();
-        loadMasterData();
-    });
-
-    async function deleteEvent(id) {
-        if (confirm('Delete this event?')) {
-            await fetch('/api/admin/events/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            loadMasterData();
       }
-    }
 
-    // Reading Form Submission
-    document.getElementById('readingForm').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const payload = {
-            title: document.getElementById('readingTitle').value,
-            firstReading: document.getElementById('firstReading').value,
-            psalm: document.getElementById('psalm').value,
-            secondReading: document.getElementById('secondReading').value,
-            gospel: document.getElementById('gospel').value
-        };
-        await fetch('/api/admin/readings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        document.getElementById('readingForm').reset();
-        loadMasterData();
-    });
+      // Reading Form Submission
+      document.getElementById('readingForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const payload = {
+              title: document.getElementById('readingTitle').value,
+              firstReading: document.getElementById('firstReading').value,
+              psalm: document.getElementById('psalm').value,
+              secondReading: document.getElementById('secondReading').value,
+              gospel: document.getElementById('gospel').value
+          };
+          await fetch('/api/admin/readings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          document.getElementById('readingForm').reset();
+          loadMasterData();
+      });
 
-    async function deleteReading(id) {
-        if (confirm('Delete this reading?')) {
-            await fetch('/api/admin/readings/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            loadMasterData();
-      }
-    }
-
-    async function togglePublish(id) {
-        await fetch('/api/admin/toggle-publish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-        loadMasterData();
-    }
-
-    function openEditModal(id, name, amount, purpose) {
-        document.getElementById('editRecId').value = id;
-        document.getElementById('editName').value = name;
-        document.getElementById('editAmount').value = amount;
-        document.getElementById('editPurpose').value = purpose;
-        new bootstrap.Modal(document.getElementById('editModal')).show();
-    }
-
-    async function saveEditedRecord() {
-        const payload = {
-            id: document.getElementById('editRecId').value,
-            name: document.getElementById('editName').value,
-            amount: document.getElementById('editAmount').value,
-            purpose: document.getElementById('editPurpose').value
-        };
-        await fetch('/api/admin/edit-jumuiya-record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
-        loadMasterData();
-    }
-
-    async function deleteJumuiyaRecord(id) {
-        if (confirm('Are you sure you want to permanently delete this submission record?')) {
-            await fetch('/api/admin/delete-jumuiya-record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            loadMasterData();
-      }
-    }
-
-    async function approveUser(id) {
-        await fetch('/api/admin/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-        loadMasterData();
-    }
-
-    async function rejectUser(id) {
-        if (confirm('Are you sure you want to reject this registration?')) {
-            await fetch('/api/admin/reject', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            loadMasterData();
-      }
-    }
-
-    async function removeMember(id) {
-        if (confirm('Are you sure you want to remove this member?')) {
-            await fetch('/api/admin/remove-member', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            loadMasterData();
-      }
-    }
-
-    async function downloadPortalData() {
-        try {
-            const response = await fetch('/api/admin/download-data');
-            if (!response.ok) throw new Error('Failed to download PDF data');
-            
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'kasaini_youth_portal_data.pdf';
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            window.URL.revokeObjectURL(url);
-        } catch (error) {
-            alert('Error downloading portal data: ' + error.message);
+      async function deleteReading(id) {
+          if (confirm('Delete this reading?')) {
+              await fetch('/api/admin/readings/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+              loadMasterData();
         }
-    }
+      }
+
+      async function togglePublish(id) {
+          await fetch('/api/admin/toggle-publish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+          loadMasterData();
+      }
+
+      function openEditModal(id, name, amount, purpose) {
+          document.getElementById('editRecId').value = id;
+          document.getElementById('editName').value = name;
+          document.getElementById('editAmount').value = amount;
+          document.getElementById('editPurpose').value = purpose;
+          new bootstrap.Modal(document.getElementById('editModal')).show();
+      }
+
+      async function saveEditedRecord() {
+          const payload = {
+              id: document.getElementById('editRecId').value,
+              name: document.getElementById('editName').value,
+              amount: document.getElementById('editAmount').value,
+              purpose: document.getElementById('editPurpose').value
+          };
+          await fetch('/api/admin/edit-jumuiya-record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+          loadMasterData();
+      }
+
+      async function deleteJumuiyaRecord(id) {
+          if (confirm('Are you sure you want to permanently delete this submission record?')) {
+              await fetch('/api/admin/delete-jumuiya-record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+              loadMasterData();
+        }
+      }
+
+      async function approveUser(id) {
+          await fetch('/api/admin/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+          loadMasterData();
+      }
+
+      async function rejectUser(id) {
+          if (confirm('Are you sure you want to reject this registration?')) {
+              await fetch('/api/admin/reject', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+              loadMasterData();
+        }
+      }
+
+      async function removeMember(id) {
+          if (confirm('Are you sure you want to remove this member?')) {
+              await fetch('/api/admin/remove-member', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+              loadMasterData();
+        }
+      }
+
+      async function downloadPortalData() {
+          try {
+              window.open('/api/admin/download-data', '_blank');
+          } catch (error) {
+              alert('Error downloading portal data: ' + error.message);
+          }
+      }
   </script>
 </body></html>
