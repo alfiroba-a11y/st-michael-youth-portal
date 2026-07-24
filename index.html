@@ -261,16 +261,33 @@
             try {
                 const res = await fetch('/api/youth/directory');
                 const data = await res.json();
-                if(data.success && data.readings) {
-                    const r = data.readings;
-                    if(r.title) document.getElementById('readingTitle').textContent = r.title;
-                    document.getElementById('firstReading').textContent = r.first || 'No first reading provided.';
-                    document.getElementById('psalmReading').textContent = r.psalm || 'No psalm provided.';
-                    document.getElementById('secondReading').textContent = r.second || 'No second reading provided.';
-                    document.getElementById('gospelReading').textContent = r.gospel || 'No gospel provided.';
-                    if(r.announcement) document.getElementById('announcementBanner').textContent = r.announcement;
+                
+                if (data.success && data.readings) {
+                    const r = Array.isArray(data.readings) ? data.readings[0] : data.readings;
+                    
+                    if (r) {
+                        if (r.title) document.getElementById('readingTitle').textContent = r.title;
+                        
+                        document.getElementById('firstReading').textContent = r.firstReading || 'No first reading provided.';
+                        document.getElementById('psalmReading').textContent = r.psalm || 'No psalm provided.';
+                        document.getElementById('secondReading').textContent = r.secondReading || 'No second reading provided.';
+                        document.getElementById('gospelReading').textContent = r.gospel || 'No gospel provided.';
+                        
+                        const banner = document.getElementById('announcementBanner');
+                        if (r.announcement) {
+                            banner.textContent = r.announcement;
+                            banner.style.display = 'block';
+                        } else {
+                            banner.style.display = 'none';
+                        }
+                    }
                 }
-            } catch(e) {}
+            } catch(e) {
+                console.error('Failed to load readings:', e);
+                document.getElementById('announcementBanner').textContent = 'Unable to load updates at this time.';
+            }
         }
+        
         loadReadings();
-    </script></body></html>
+    </script>
+</body></html>
