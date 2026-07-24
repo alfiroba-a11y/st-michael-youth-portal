@@ -45,7 +45,7 @@ const JUMUIYAS_LIST = [
 let fallbackData = {
     members: [],
     pending: [],
-    jumuiyaSubmissions: [], // Stores entries submitted by Jumuiya admins (replaces ID with Amount, omits phone numbers from public view)
+    jumuiyaSubmissions: [], // Stores entries submitted by Jumuiya admins
     events: [
         { id: '1', title: 'Sunday Holy Mass & Youth Fellowship', date: '2026-07-26', type: 'upcoming', description: 'Main service at St. Michael Kasaini Church.' }
     ],
@@ -138,7 +138,7 @@ app.post('/api/jumuiya/login', (req, res) => {
     res.json({ success: false, message: 'Invalid Jumuiya credentials.' });
 });
 
-// Jumuiya Admin Data Submissions (Amount-based tracking instead of row IDs)
+// Jumuiya Admin Data Submissions
 app.get('/api/jumuiya/data', async (req, res) => {
     const { jumuiyaName } = req.query;
     const data = await readData();
@@ -157,9 +157,9 @@ app.post('/api/jumuiya/submit-record', async (req, res) => {
         id: Date.now().toString(),
         jumuiyaName,
         name: name.trim(),
-        amount: parseFloat(amount) || 0, // Replaced ID tracking with strict numerical amount
+        amount: parseFloat(amount) || 0,
         purpose: purpose || 'General Contribution',
-        published: false // Explicit Master Admin approval required before showing on members portal
+        published: false
     };
 
     data.jumuiyaSubmissions.push(newRecord);
@@ -171,8 +171,6 @@ app.post('/api/jumuiya/submit-record', async (req, res) => {
 app.get('/api/youth/directory', async (req, res) => {
     const data = await readData();
     
-    // Filter only admin-approved contributions for the public Master Contributions list
-    // Phone numbers are explicitly removed from this response payload
     const publishedRecords = (data.jumuiyaSubmissions || [])
         .filter(s => s.published)
         .map(s => ({
@@ -183,7 +181,6 @@ app.get('/api/youth/directory', async (req, res) => {
             jumuiyaName: s.jumuiyaName
         }));
 
-    // Calculate aggregated contribution sums per Jumuiya
     let contributionsMap = {};
     JUMUIYAS_LIST.forEach(j => { contributionsMap[j.name] = 0; });
     
@@ -197,7 +194,7 @@ app.get('/api/youth/directory', async (req, res) => {
     res.json({ 
         success: true, 
         members: data.members.map(m => ({ ...m, phone: maskPhone(m.phone) })), 
-        masterContributions: publishedRecords, // Isolated master contribution dataset 
+        masterContributions: publishedRecords, 
         contributionsMap,
         events: data.events, 
         readings: data.readings, 
@@ -313,7 +310,7 @@ app.post('/api/admin/remove-member', async (req, res) => {
     res.json({ success: true });
 });
 
-// Master Admin: Publish or Unpublish Jumuiya Record to Master Contributions List
+// Master Admin: Publish or Unpublish Jumuiya Record
 app.post('/api/admin/toggle-publish', async (req, res) => {
     const { id } = req.body;
     const data = await readData();
@@ -334,6 +331,17 @@ app.post('/api/admin/edit-jumuiya-record', async (req, res) => {
         if (name) rec.name = name;
         if (amount !== undefined) rec.amount = parseFloat(amount) || 0;
         if (purpose) rec.purpose = purpose;
+        await writeData(data);
+    }
+    res.json({ success: true });
+});
+
+// Master Admin: Delete Jumuiya Submission Record
+app.post('/api/admin/delete-jumuiya-record', async (req, res) => {
+    const { id } = req.body;
+    const data = await readData();
+    if (data.jumuiyaSubmissions) {
+        data.jumuiyaSubmissions = data.jumuiyaSubmissions.filter(r => r.id !== id);
         await writeData(data);
     }
     res.json({ success: true });
