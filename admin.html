@@ -57,7 +57,7 @@
         <!-- All Submissions from Every Jumuiya (Review & Publish Controls - Contributions: NO phone number) -->
         <div class="card shadow-sm p-4 mb-4">
             <h4 class="text-success mb-3">📥 Review & Publish Jumuiya Submissions</h4>
-            <p class="text-muted small">Review records fed by each Jumuiya admin. Toggle "Publish" to display them on the members portal, or use "Edit" to modify any details.</p>
+            <p class="text-muted small">Review records fed by each Jumuiya admin. Toggle "Publish" to display them on the members portal, or use "Edit" / "Delete" to manage entries.</p>
             <div class="table-responsive">
                 <table class="table table-bordered align-middle">
                     <thead class="table-secondary">
@@ -107,6 +107,10 @@
                         <input type="text" id="editName" class="form-control">
                     </div>
                     <div class="mb-3">
+                        <label class="form-label">Amount</label>
+                        <input type="number" id="editAmount" class="form-control">
+                    </div>
+                    <div class="mb-3">
                         <label class="form-label">Purpose</label>
                         <input type="text" id="editPurpose" class="form-control">
                     </div>
@@ -125,7 +129,6 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // Helper function to mask phone numbers in the middle (e.g., 0712345678 -> 0712***678)
         function maskPhoneNumber(phone) {
             if (!phone || phone === '-') return '-';
             const str = String(phone).trim();
@@ -164,32 +167,31 @@
             const res = await fetch('/api/admin/data');
             const data = await res.json();
             if (data.success) {
-                // Contributions Summary Table
                 let cHtml = '';
                 for (const [jumuiya, count] of Object.entries(data.contributionsMap)) {
-                    cHtml += `<tr><td><strong>⛪ ${jumuiya}</strong></td><td><span class="badge bg-primary fs-6">${count} Contributions</span></td></tr>`;
+                    cHtml += `<tr><td><strong>⛪ ${jumuiya}</strong></td><td><span class="badge bg-primary fs-6">KES ${count}</span></td></tr>`;
                 }
                 document.getElementById('contributionsSummaryList').innerHTML = cHtml;
 
-                // Jumuiya Submissions Table (Contributions list - NO phone number)
                 let sHtml = '';
                 if (!data.jumuiyaSubmissions || data.jumuiyaSubmissions.length === 0) {
                     sHtml = '<tr><td colspan="7" class="text-muted text-center">No submissions received yet from Jumuiya admins.</td></tr>';
                 } else {
-                    data.jumuiyaSubmissions.forEach(s => {
+                    data.jumuiyaSubmissions.forEach((s, index) => {
                         sHtml += `
                             <tr>
                                 <td><strong>${s.jumuiyaName}</strong></td>
-                                <td>${s.no}</td>
-                                <td>${s.memberId}</td>
-                                <td>${s.name}</td>
+                                <td>${index + 1}</td>
+                                <td>${s.id.slice(-6)}</td>
+                                <td>${s.name} <br><small class="text-muted">KES ${s.amount}</small></td>
                                 <td>${s.purpose}</td>
                                 <td>${s.published ? '<span class="badge bg-success">Published</span>' : '<span class="badge bg-warning text-dark">Draft / Hidden</span>'}</td>
                                 <td>
                                     <button class="btn btn-sm ${s.published ? 'btn-outline-secondary' : 'btn-success'} mb-1" onclick="togglePublish('${s.id}')">
                                         ${s.published ? 'Unpublish' : 'Publish'}
                                     </button>
-                                    <button class="btn btn-sm btn-outline-primary mb-1" onclick="openEditModal('${s.id}', '${s.name}', '${s.purpose}')">Edit</button>
+                                    <button class="btn btn-sm btn-outline-primary mb-1" onclick="openEditModal('${s.id}', '${s.name}', '${s.amount}', '${s.purpose}')">Edit</button>
+                                    <button class="btn btn-sm btn-outline-danger mb-1" onclick="deleteJumuiyaRecord('${s.id}')">Delete</button>
                                 </td>
                             </tr>
                         `;
@@ -197,7 +199,6 @@
                 }
                 document.getElementById('masterJumuiyaRecordsList').innerHTML = sHtml;
 
-                // Pending Registrations Table (Phone included with middle masked)
                 let pHtml = '<table class="table table-bordered"><thead><tr><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th><th>Action</th></tr></thead><tbody>';
                 if (data.pending.length === 0) {
                     pHtml += '<tr><td colspan="5" class="text-muted">No pending registrations.</td></tr>';
@@ -209,7 +210,6 @@
                 pHtml += '</tbody></table>';
                 document.getElementById('pendingList').innerHTML = pHtml;
 
-                // Members Table with Jumuiya Name displayed (Phone included with middle masked)
                 let mHtml = '<table class="table table-bordered table-striped"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Phone</th><th>Group</th><th>Action</th></tr></thead><tbody>';
                 if (data.members.length === 0) {
                     mHtml += '<tr><td colspan="6" class="text-muted">No registered members yet.</td></tr>';
@@ -228,9 +228,10 @@
             loadMasterData();
         }
 
-        function openEditModal(id, name, purpose) {
+        function openEditModal(id, name, amount, purpose) {
             document.getElementById('editRecId').value = id;
             document.getElementById('editName').value = name;
+            document.getElementById('editAmount').value = amount;
             document.getElementById('editPurpose').value = purpose;
             new bootstrap.Modal(document.getElementById('editModal')).show();
         }
@@ -239,11 +240,19 @@
             const payload = {
                 id: document.getElementById('editRecId').value,
                 name: document.getElementById('editName').value,
+                amount: document.getElementById('editAmount').value,
                 purpose: document.getElementById('editPurpose').value
             };
             await fetch('/api/admin/edit-jumuiya-record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
             loadMasterData();
+        }
+
+        async function deleteJumuiyaRecord(id) {
+            if (confirm('Are you sure you want to permanently delete this submission record?')) {
+                await fetch('/api/admin/delete-jumuiya-record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+                loadMasterData();
+            }
         }
 
         async function approveUser(id) {
@@ -264,4 +273,5 @@
                 loadMasterData();
             }
         }
-    </script></body></html>
+    </script>
+</body></html>
