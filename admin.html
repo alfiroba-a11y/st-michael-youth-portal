@@ -54,7 +54,7 @@
             </div>
         </div>
 
-        <!-- All Submissions from Every Jumuiya (Review & Publish Controls) -->
+        <!-- All Submissions from Every Jumuiya (Review & Publish Controls - Contributions: NO phone number) -->
         <div class="card shadow-sm p-4 mb-4">
             <h4 class="text-success mb-3">📥 Review & Publish Jumuiya Submissions</h4>
             <p class="text-muted small">Review records fed by each Jumuiya admin. Toggle "Publish" to display them on the members portal, or use "Edit" to modify any details.</p>
@@ -78,13 +78,13 @@
             </div>
         </div>
 
-        <!-- Pending Youth Registrations -->
+        <!-- Pending Youth Registrations (Phone included with masked digits) -->
         <div class="card shadow-sm p-4 mb-4">
             <h4>👤 Pending Youth Registrations</h4>
             <div id="pendingList" class="table-responsive">Loading...</div>
         </div>
 
-        <!-- Registered Youth Directory -->
+        <!-- Registered Youth Directory (Phone included with masked digits) -->
         <div class="card shadow-sm p-4 mb-4">
             <h4>👥 Registered Youth Directory</h4>
             <div id="memberList" class="table-responsive">Loading...</div>
@@ -125,6 +125,16 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Helper function to mask phone numbers in the middle (e.g., 0712345678 -> 0712***678)
+        function maskPhoneNumber(phone) {
+            if (!phone || phone === '-') return '-';
+            const str = String(phone).trim();
+            if (str.length <= 6) return '***';
+            const start = str.slice(0, 4);
+            const end = str.slice(-3);
+            return `${start}***${end}`;
+        }
+
         document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('adminUser').value;
@@ -161,7 +171,7 @@
                 }
                 document.getElementById('contributionsSummaryList').innerHTML = cHtml;
 
-                // Jumuiya Submissions Table with Publish & Edit controls (Phone removed)
+                // Jumuiya Submissions Table (Contributions list - NO phone number)
                 let sHtml = '';
                 if (!data.jumuiyaSubmissions || data.jumuiyaSubmissions.length === 0) {
                     sHtml = '<tr><td colspan="7" class="text-muted text-center">No submissions received yet from Jumuiya admins.</td></tr>';
@@ -187,21 +197,27 @@
                 }
                 document.getElementById('masterJumuiyaRecordsList').innerHTML = sHtml;
 
-                // Pending Registrations Table (Phone removed)
-                let pHtml = '<table class="table table-bordered"><thead><tr><th>Name</th><th>Jumuiya</th><th>Group</th><th>Action</th></tr></thead><tbody>';
-                if (data.pending.length === 0) pHtml += '<tr><td colspan="4" class="text-muted">No pending registrations.</td></tr>';
-                data.pending.forEach(p => {
-                    pHtml += `<tr><td>${p.name}</td><td>${p.jumuiya}</td><td>${p.group}</td><td><button class="btn btn-success btn-sm" onclick="approveUser('${p.id}')">Approve</button> <button class="btn btn-outline-danger btn-sm" onclick="rejectUser('${p.id}')">Reject</button></td></tr>`;
-                });
+                // Pending Registrations Table (Phone included with middle masked)
+                let pHtml = '<table class="table table-bordered"><thead><tr><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th><th>Action</th></tr></thead><tbody>';
+                if (data.pending.length === 0) {
+                    pHtml += '<tr><td colspan="5" class="text-muted">No pending registrations.</td></tr>';
+                } else {
+                    data.pending.forEach(p => {
+                        pHtml += `<tr><td>${p.name}</td><td>${maskPhoneNumber(p.phone)}</td><td>${p.jumuiya}</td><td>${p.group}</td><td><button class="btn btn-success btn-sm" onclick="approveUser('${p.id}')">Approve</button> <button class="btn btn-outline-danger btn-sm" onclick="rejectUser('${p.id}')">Reject</button></td></tr>`;
+                    });
+                }
                 pHtml += '</tbody></table>';
                 document.getElementById('pendingList').innerHTML = pHtml;
 
-                // Members Table with Jumuiya Name displayed (Phone removed)
-                let mHtml = '<table class="table table-bordered table-striped"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Group</th><th>Action</th></tr></thead><tbody>';
-                if (data.members.length === 0) mHtml += '<tr><td colspan="5" class="text-muted">No registered members yet.</td></tr>';
-                data.members.forEach((m) => {
-                    mHtml += `<tr><td><strong class="text-primary">${m.customId || 'N/A'}</strong></td><td>${m.name}</td><td><span class="badge bg-info text-dark">${m.jumuiya || 'St. Michael'}</span></td><td>${m.group}</td><td><button class="btn btn-danger btn-sm" onclick="removeMember('${m.id}')">Remove</button></td></tr>`;
-                });
+                // Members Table with Jumuiya Name displayed (Phone included with middle masked)
+                let mHtml = '<table class="table table-bordered table-striped"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Phone</th><th>Group</th><th>Action</th></tr></thead><tbody>';
+                if (data.members.length === 0) {
+                    mHtml += '<tr><td colspan="6" class="text-muted">No registered members yet.</td></tr>';
+                } else {
+                    data.members.forEach((m) => {
+                        mHtml += `<tr><td><strong class="text-primary">${m.customId || 'N/A'}</strong></td><td>${m.name}</td><td><span class="badge bg-info text-dark">${m.jumuiya || 'St. Michael'}</span></td><td>${maskPhoneNumber(m.phone)}</td><td>${m.group}</td><td><button class="btn btn-danger btn-sm" onclick="removeMember('${m.id}')">Remove</button></td></tr>`;
+                    });
+                }
                 mHtml += '</tbody></table>';
                 document.getElementById('memberList').innerHTML = mHtml;
             }
