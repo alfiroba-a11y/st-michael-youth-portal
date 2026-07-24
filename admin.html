@@ -28,7 +28,7 @@
         <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm">
             <div>
                 <h2>🛡️ Master Admin Control Panel</h2>
-                <small class="text-muted">Overseeing all 11 Jumuiyas, member registrations, and published feeds</small>
+                <small class="text-muted">Overseeing all 11 Jumuiyas, member registrations, events, readings, and published feeds</small>
             </div>
             <div>
                 <a href="/jumuiya-portal" class="btn btn-outline-primary btn-sm me-2" target="_blank">🌐 View Jumuiya Portal Grid</a>
@@ -54,7 +54,60 @@
             </div>
         </div>
 
-        <!-- All Submissions from Every Jumuiya (Review & Publish Controls - Contributions: NO phone number) -->
+        <!-- Manage Portal Events & Readings Section -->
+        <div class="row mb-4">
+            <!-- Events Management -->
+            <div class="col-lg-6 mb-3">
+                <div class="card shadow-sm p-4 h-100">
+                    <h4 class="text-info mb-3">📅 Post / Update Events</h4>
+                    <form id="eventForm">
+                        <input type="hidden" id="eventId">
+                        <div class="mb-3">
+                            <label class="form-label">Event Title</label>
+                            <input type="text" id="eventTitle" class="form-control" required placeholder="e.g. Youth Sunday Mass">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Event Date & Time</label>
+                            <input type="text" id="eventDate" class="form-control" required placeholder="e.g. Next Sunday at 10:00 AM">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description / Details</label>
+                            <textarea id="eventDesc" class="form-control" rows="3" required placeholder="Enter event details..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-info text-white btn-sm w-100">Save / Publish Event</button>
+                    </form>
+                    <hr class="my-3">
+                    <div id="eventsListAdmin" class="small text-muted">Loading active events...</div>
+                </div>
+            </div>
+
+            <!-- Readings Management -->
+            <div class="col-lg-6 mb-3">
+                <div class="card shadow-sm p-4 h-100">
+                    <h4 class="text-warning mb-3">📖 Post / Update Readings</h4>
+                    <form id="readingForm">
+                        <input type="hidden" id="readingId">
+                        <div class="mb-3">
+                            <label class="form-label">Reading Title / Theme</label>
+                            <input type="text" id="readingTitle" class="form-control" required placeholder="e.g. Sunday Mass Readings">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Reading References</label>
+                            <input type="text" id="readingRef" class="form-control" required placeholder="e.g. Isaiah 50:4-7 | Philippians 2:6-11">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Content / Reflection Text</label>
+                            <textarea id="readingContent" class="form-control" rows="3" required placeholder="Enter scripture text or summary..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-warning btn-sm w-100">Save / Publish Reading</button>
+                    </form>
+                    <hr class="my-3">
+                    <div id="readingsListAdmin" class="small text-muted">Loading active readings...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- All Submissions from Every Jumuiya -->
         <div class="card shadow-sm p-4 mb-4">
             <h4 class="text-success mb-3">📥 Review & Publish Jumuiya Submissions</h4>
             <p class="text-muted small">Review records fed by each Jumuiya admin. Toggle "Publish" to display them on the members portal, or use "Edit" / "Delete" to manage entries.</p>
@@ -78,13 +131,13 @@
             </div>
         </div>
 
-        <!-- Pending Youth Registrations (Phone included with masked digits) -->
+        <!-- Pending Youth Registrations -->
         <div class="card shadow-sm p-4 mb-4">
             <h4>👤 Pending Youth Registrations</h4>
             <div id="pendingList" class="table-responsive">Loading...</div>
         </div>
 
-        <!-- Registered Youth Directory (Phone included with masked digits) -->
+        <!-- Registered Youth Directory -->
         <div class="card shadow-sm p-4 mb-4">
             <h4>👥 Registered Youth Directory</h4>
             <div id="memberList" class="table-responsive">Loading...</div>
@@ -167,12 +220,44 @@
             const res = await fetch('/api/admin/data');
             const data = await res.json();
             if (data.success) {
+                // Contributions Summary
                 let cHtml = '';
-                for (const [jumuiya, count] of Object.entries(data.contributionsMap)) {
+                for (const [jumuiya, count] of Object.entries(data.contributionsMap || {})) {
                     cHtml += `<tr><td><strong>⛪ ${jumuiya}</strong></td><td><span class="badge bg-primary fs-6">KES ${count}</span></td></tr>`;
                 }
-                document.getElementById('contributionsSummaryList').innerHTML = cHtml;
+                document.getElementById('contributionsSummaryList').innerHTML = cHtml || '<tr><td colspan="2" class="text-muted">No contributions recorded.</td></tr>';
 
+                // Events Admin List
+                let eHtml = '<ul class="list-group">';
+                if (data.events && data.events.length > 0) {
+                    data.events.forEach(ev => {
+                        eHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div><strong>${ev.title}</strong> (${ev.date})<br><small>${ev.description}</small></div>
+                            <button class="btn btn-outline-danger btn-sm" onclick="deleteEvent('${ev.id}')">Delete</button>
+                        </li>`;
+                    });
+                } else {
+                    eHtml += '<li class="list-group-item text-muted">No active events posted.</li>';
+                }
+                eHtml += '</ul>';
+                document.getElementById('eventsListAdmin').innerHTML = eHtml;
+
+                // Readings Admin List
+                let rHtml = '<ul class="list-group">';
+                if (data.readings && data.readings.length > 0) {
+                    data.readings.forEach(rd => {
+                        rHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div><strong>${rd.title}</strong> [${rd.reference}]<br><small>${rd.content}</small></div>
+                            <button class="btn btn-outline-danger btn-sm" onclick="deleteReading('${rd.id}')">Delete</button>
+                        </li>`;
+                    });
+                } else {
+                    rHtml += '<li class="list-group-item text-muted">No active readings posted.</li>';
+                }
+                rHtml += '</ul>';
+                document.getElementById('readingsListAdmin').innerHTML = rHtml;
+
+                // Jumuiya Submissions Table
                 let sHtml = '';
                 if (!data.jumuiyaSubmissions || data.jumuiyaSubmissions.length === 0) {
                     sHtml = '<tr><td colspan="7" class="text-muted text-center">No submissions received yet from Jumuiya admins.</td></tr>';
@@ -183,14 +268,14 @@
                                 <td><strong>${s.jumuiyaName}</strong></td>
                                 <td>${index + 1}</td>
                                 <td>${s.id.slice(-6)}</td>
-                                <td>${s.name} <br><small class="text-muted">KES ${s.amount}</small></td>
+                                <td>${s.name} <br><small class="text-muted">KES ${s.amount || 0}</small></td>
                                 <td>${s.purpose}</td>
                                 <td>${s.published ? '<span class="badge bg-success">Published</span>' : '<span class="badge bg-warning text-dark">Draft / Hidden</span>'}</td>
                                 <td>
                                     <button class="btn btn-sm ${s.published ? 'btn-outline-secondary' : 'btn-success'} mb-1" onclick="togglePublish('${s.id}')">
                                         ${s.published ? 'Unpublish' : 'Publish'}
                                     </button>
-                                    <button class="btn btn-sm btn-outline-primary mb-1" onclick="openEditModal('${s.id}', '${s.name}', '${s.amount}', '${s.purpose}')">Edit</button>
+                                    <button class="btn btn-sm btn-outline-primary mb-1" onclick="openEditModal('${s.id}', '${s.name}', '${s.amount || 0}', '${s.purpose}')">Edit</button>
                                     <button class="btn btn-sm btn-outline-danger mb-1" onclick="deleteJumuiyaRecord('${s.id}')">Delete</button>
                                 </td>
                             </tr>
@@ -199,8 +284,9 @@
                 }
                 document.getElementById('masterJumuiyaRecordsList').innerHTML = sHtml;
 
+                // Pending Registrations Table
                 let pHtml = '<table class="table table-bordered"><thead><tr><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th><th>Action</th></tr></thead><tbody>';
-                if (data.pending.length === 0) {
+                if (!data.pending || data.pending.length === 0) {
                     pHtml += '<tr><td colspan="5" class="text-muted">No pending registrations.</td></tr>';
                 } else {
                     data.pending.forEach(p => {
@@ -210,8 +296,9 @@
                 pHtml += '</tbody></table>';
                 document.getElementById('pendingList').innerHTML = pHtml;
 
+                // Members Table
                 let mHtml = '<table class="table table-bordered table-striped"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Phone</th><th>Group</th><th>Action</th></tr></thead><tbody>';
-                if (data.members.length === 0) {
+                if (!data.members || data.members.length === 0) {
                     mHtml += '<tr><td colspan="6" class="text-muted">No registered members yet.</td></tr>';
                 } else {
                     data.members.forEach((m) => {
@@ -220,6 +307,46 @@
                 }
                 mHtml += '</tbody></table>';
                 document.getElementById('memberList').innerHTML = mHtml;
+            }
+        }
+
+        // Event Form Submission
+        document.getElementById('eventForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                title: document.getElementById('eventTitle').value,
+                date: document.getElementById('eventDate').value,
+                description: document.getElementById('eventDesc').value
+            };
+            await fetch('/api/admin/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            document.getElementById('eventForm').reset();
+            loadMasterData();
+        });
+
+        async function deleteEvent(id) {
+            if (confirm('Delete this event?')) {
+                await fetch('/api/admin/events/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+                loadMasterData();
+            }
+        }
+
+        // Reading Form Submission
+        document.getElementById('readingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                title: document.getElementById('readingTitle').value,
+                reference: document.getElementById('readingRef').value,
+                content: document.getElementById('readingContent').value
+            };
+            await fetch('/api/admin/readings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            document.getElementById('readingForm').reset();
+            loadMasterData();
+        });
+
+        async function deleteReading(id) {
+            if (confirm('Delete this reading?')) {
+                await fetch('/api/admin/readings/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+                loadMasterData();
             }
         }
 
