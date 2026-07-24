@@ -1,9 +1,12 @@
-<!DOCTYPE html><html lang="en"><head>
+<!DOCTYPE html>
+<html lang="en">
+<head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Jumuiya Admin Portal - St. Michael Kasaini Youth</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head><body class="bg-light d-flex flex-column min-vh-100">
+</head>
+<body class="bg-light d-flex flex-column min-vh-100">
 
     <nav class="navbar navbar-dark bg-primary shadow-sm px-4">
         <a class="navbar-brand fw-bold" href="/">⛪ St. Michael Kasaini Youth</a>
@@ -12,7 +15,7 @@
 
     <div class="container my-5" style="max-width: 900px;">
         
-        {/* Step 1: Select Jumuiya Grid */}
+        <!-- Step 1: Select Jumuiya Grid -->
         <div id="selectionSection">
             <h2 class="text-center mb-3 text-primary">Select Your Jumuiya Admin Portal</h2>
             <p class="text-center text-muted mb-4">Choose your respective Jumuiya below to access your secure administration portal.</p>
@@ -21,7 +24,7 @@
             </div>
         </div>
 
-        {/* Step 2: Login Box (Hidden initially) */}
+        <!-- Step 2: Login Box (Hidden initially) -->
         <div id="loginSection" class="card shadow-sm p-4 mx-auto d-none" style="max-width: 450px;">
             <button class="btn btn-sm btn-outline-secondary mb-3 align-self-start" onclick="backToSelection()">← Back to Jumuiya List</button>
             <h3 id="loginTitle" class="mb-3 text-danger">Jumuiya Login</h3>
@@ -41,19 +44,19 @@
             </form>
         </div>
 
-        {/* Step 3: Jumuiya Admin Dashboard & Spreadsheet Entry (Hidden initially) */}
+        <!-- Step 3: Jumuiya Admin Dashboard & Contribution Entry (Hidden initially) -->
         <div id="dashboardSection" class="d-none">
             <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm">
                 <div>
                     <h3 id="dashboardTitle" class="text-primary mb-0">Jumuiya Portal</h3>
-                    <small class="text-muted">Manage contributions and submit records for review</small>
+                    <small class="text-muted">Manage financial contributions and submit records for review</small>
                 </div>
                 <button class="btn btn-outline-danger btn-sm" onclick="location.reload()">Logout</button>
             </div>
 
-            {/* Spreadsheet Data Entry Form */}
+            <!-- Contribution Data Entry Form -->
             <div class="card shadow-sm p-4 mb-4">
-                <h4 class="text-success mb-3">➕ Add New Record / Contribution</h4>
+                <h4 class="text-success mb-3">➕ Add Contribution Record</h4>
                 <div id="recordAlert" class="alert d-none"></div>
                 <form id="recordForm">
                     <div class="row">
@@ -66,25 +69,25 @@
                             <input type="text" id="recId" class="form-control" placeholder="Member ID">
                         </div>
                         <div class="mb-3 col-md-4">
-                            <label class="form-label">Name</label>
+                            <label class="form-label">Contributor Name</label>
                             <input type="text" id="recName" class="form-control" required placeholder="Full Name">
                         </div>
                         <div class="mb-3 col-md-3">
-                            <label class="form-label">Number</label>
-                            <input type="text" id="recNumber" class="form-control" placeholder="Phone Number">
+                            <label class="form-label">Amount (KES)</label>
+                            <input type="number" id="recAmount" class="form-control" required placeholder="e.g. 500">
                         </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Purpose / Contribution Details</label>
                         <input type="text" id="recPurpose" class="form-control" placeholder="e.g. Sunday Collection / Youth Project Fund" required>
                     </div>
-                    <button type="submit" class="btn btn-success">Submit Record to Master Admin</button>
+                    <button type="submit" class="btn btn-success">Submit Contribution to Master Admin</button>
                 </form>
             </div>
 
-            {/* Table showing data filled by this Jumuiya */}
+            <!-- Table showing data filled by this Jumuiya -->
             <div class="card shadow-sm p-4">
-                <h4 class="mb-3 text-secondary">📋 Records Submitted by This Jumuiya</h4>
+                <h4 class="mb-3 text-secondary">📋 Contribution Records Submitted by This Jumuiya</h4>
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped align-middle">
                         <thead class="table-dark">
@@ -92,13 +95,13 @@
                                 <th>No</th>
                                 <th>ID</th>
                                 <th>Name</th>
-                                <th>Number</th>
+                                <th>Amount (KES)</th>
                                 <th>Purpose</th>
                                 <th>Status</th>
                             </tr>
                         </thead>
                         <tbody id="jumuiyaRecordsList">
-                            <tr><td colspan="6" class="text-muted text-center">No records added yet.</td></tr>
+                            <tr><td colspan="6" class="text-muted text-center">No contributions recorded yet.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -181,16 +184,16 @@
             if (data.success && data.submissions.length > 0) {
                 tbody.innerHTML = data.submissions.map(s => `
                     <tr>
-                        <td>${s.no}</td>
-                        <td>${s.memberId}</td>
+                        <td>${s.no || ''}</td>
+                        <td>${s.memberId || ''}</td>
                         <td>${s.name}</td>
-                        <td>${s.number}</td>
+                        <td><strong>KES ${Number(s.amount || 0).toLocaleString()}</strong></td>
                         <td>${s.purpose}</td>
                         <td>${s.published ? '<span class="badge bg-success">Published on Portal</span>' : '<span class="badge bg-warning text-dark">Pending Master Approval</span>'}</td>
                     </tr>
                 `).join('');
             } else {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-muted text-center">No submissions recorded yet for ${currentJumuiyaName}.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="text-muted text-center">No contributions recorded yet for ${currentJumuiyaName}.</td></tr>`;
             }
         }
 
@@ -202,7 +205,7 @@
                 no: document.getElementById('recNo').value,
                 memberId: document.getElementById('recId').value,
                 name: document.getElementById('recName').value,
-                number: document.getElementById('recNumber').value,
+                amount: Number(document.getElementById('recAmount').value),
                 purpose: document.getElementById('recPurpose').value
             };
 
@@ -226,4 +229,6 @@
             }
             setTimeout(() => alertBox.classList.add('d-none'), 4000);
         });
-    </script></body></html>
+    </script>
+</body>
+</html>
