@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
 const { MongoClient } = require('mongodb');
+const PDFDocument = require('pdfkit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -360,28 +361,57 @@ app.post('/api/admin/delete-jumuiya-record', async (req, res) => {
     res.json({ success: true });
 });
 
-// Master Admin: Download Portal Data (CSV Export)
+// Master Admin: Download Portal Data (PDF Export)
 app.get('/api/admin/download-data', async (req, res) => {
     try {
         const data = await readData();
-        
-        let csv = "--- REGISTERED MEMBERS ---\n";
-        csv += "ID,Name,Phone,Jumuiya,Group,Registration Date\n";
-        (data.members || []).forEach(m => {
-            csv += `"${m.customId || ''}","${m.name || ''}","${m.phone || ''}","${m.jumuiya || ''}","${m.group || ''}","${m.date || ''}"\n`;
-        });
+        const doc = new PDFDocument({ margin: 40, size: 'A4' });
 
-        csv += "\n--- JUMUIYA CONTRIBUTIONS ---\n";
-        csv += "Record ID,Jumuiya Name,Contributor Name,Amount,Purpose,Published\n";
-        (data.jumuiyaSubmissions || []).forEach(s => {
-            csv += `"${s.id || ''}","${s.jumuiyaName || ''}","${s.name || ''}",${s.amount || 0},"${s.purpose || ''}",${s.published ? 'Yes' : 'No'}\n`;
-        });
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', 'attachment; filename=kasaini_youth_portal_data.pdf');
 
-        res.setHeader('Content-Type', 'text/csv');
-        res.setHeader('Content-Disposition', 'attachment; filename=kasaini_youth_portal_data.csv');
-        res.status(200).send(csv);
+        doc.pipe(res);
+
+        // Header Title
+        doc.fontSize(18).fillColor('#1e293b').text('St. Michael Kasaini Youth Portal', { align: 'center' });
+        doc.fontSize(12).fillColor('#64748b').text('Master Admin Comprehensive Export Report', { align: 'center' });
+        doc.moveDown(1.5);
+
+        // Registered Members Section
+        doc.fontSize(14).fillColor('#0284c7').text('Registered Members');
+        doc.moveDown(0.5);
+
+        const members = data.members || [];
+        if (members.length === 0) {
+            doc.fontSize(10).fillColor('#334155').text('No registered members found.');
+        } else {
+            members.forEach((m, idx) => {
+                doc.fontSize(10).fillColor('#334155').text(
+                    `${idx + 1}. [${m.customId || 'N/A'}] Name: ${m.name} | Phone: ${m.phone || 'N/A'} | Jumuiya: ${m.jumuiya || 'N/A'} | Group: ${m.group || 'N/A'}`
+                );
+            });
+        }
+        doc.moveDown(1.5);
+
+        // Jumuiya Contributions Section
+        doc.fontSize(14).fillColor('#16a34a').text('Jumuiya Contributions');
+        doc.moveDown(0.5);
+
+        const submissions = data.jumuiyaSubmissions || [];
+        if (submissions.length === 0) {
+            doc.fontSize(10).fillColor('#334155').text('No contributions recorded.');
+        } else {
+            submissions.forEach((s, idx) => {
+                doc.fontSize(10).fillColor('#334155').text(
+                    `${idx + 1}. Jumuiya: ${s.jumuiyaName} | Contributor: ${s.name} | Amount: KES ${s.amount || 0} | Purpose: ${s.purpose || 'General'} | Published: ${s.published ? 'Yes' : 'No'}`
+                );
+            });
+        }
+
+        doc.end();
     } catch (e) {
-        res.status(500).send('Error generating export file.');
+        console.error('PDF Export Error:', e);
+        res.status(500).send('Error generating PDF export file.');
     }
 });
 
@@ -411,7 +441,6 @@ app.post('/api/admin/readings', async (req, res) => {
     const data = await readData();
     if (!Array.isArray(data.readings)) data.readings = [];
     
-    // Replace or add new readings block
     const newReading = {
         id: Date.now().toString(),
         title: title || "Sunday Mass Readings",
@@ -421,7 +450,6 @@ app.post('/api/admin/readings', async (req, res) => {
         gospel: gospel || ""
     };
     
-    // Keeping latest reading active or replacing existing list
     data.readings = [newReading];
     await writeData(data);
     res.json({ success: true, message: 'Readings published successfully!' });
