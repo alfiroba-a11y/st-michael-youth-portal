@@ -36,7 +36,7 @@
             </div>
         </div>
 
-        {/* Jumuiya Contributions Summary Table */}
+        <!-- Jumuiya Contributions Summary Table -->
         <div class="card shadow-sm p-4 mb-4">
             <h4 class="text-primary mb-3">📊 Jumuiya Contributions Summary</h4>
             <div class="table-responsive">
@@ -54,7 +54,7 @@
             </div>
         </div>
 
-        {/* All Submissions from Every Jumuiya (Review & Publish Controls) */}
+        <!-- All Submissions from Every Jumuiya (Review & Publish Controls) -->
         <div class="card shadow-sm p-4 mb-4">
             <h4 class="text-success mb-3">📥 Review & Publish Jumuiya Submissions</h4>
             <p class="text-muted small">Review records fed by each Jumuiya admin. Toggle "Publish" to display them on the members portal, or use "Edit" to modify any details.</p>
@@ -66,26 +66,25 @@
                             <th>No</th>
                             <th>ID</th>
                             <th>Name</th>
-                            <th>Number</th>
                             <th>Purpose</th>
                             <th>Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="masterJumuiyaRecordsList">
-                        <tr><td colspan="8" class="text-muted text-center">No submissions received yet.</td></tr>
+                        <tr><td colspan="7" class="text-muted text-center">No submissions received yet.</td></tr>
                     </tbody>
                 </table>
             </div>
         </div>
 
-        {/* Pending Youth Registrations */}
+        <!-- Pending Youth Registrations -->
         <div class="card shadow-sm p-4 mb-4">
             <h4>👤 Pending Youth Registrations</h4>
             <div id="pendingList" class="table-responsive">Loading...</div>
         </div>
 
-        {/* Registered Youth Directory */}
+        <!-- Registered Youth Directory -->
         <div class="card shadow-sm p-4 mb-4">
             <h4>👥 Registered Youth Directory</h4>
             <div id="memberList" class="table-responsive">Loading...</div>
@@ -93,7 +92,7 @@
 
     </div>
 
-    {/* Edit Record Modal */}
+    <!-- Edit Record Modal -->
     <div class="modal fade" id="editModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content">
@@ -106,10 +105,6 @@
                     <div class="mb-3">
                         <label class="form-label">Name</label>
                         <input type="text" id="editName" class="form-control">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Number</label>
-                        <input type="text" id="editNumber" class="form-control">
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Purpose</label>
@@ -166,10 +161,10 @@
                 }
                 document.getElementById('contributionsSummaryList').innerHTML = cHtml;
 
-                // Jumuiya Submissions Table with Publish & Edit controls
+                // Jumuiya Submissions Table with Publish & Edit controls (Phone removed)
                 let sHtml = '';
                 if (!data.jumuiyaSubmissions || data.jumuiyaSubmissions.length === 0) {
-                    sHtml = '<tr><td colspan="8" class="text-muted text-center">No submissions received yet from Jumuiya admins.</td></tr>';
+                    sHtml = '<tr><td colspan="7" class="text-muted text-center">No submissions received yet from Jumuiya admins.</td></tr>';
                 } else {
                     data.jumuiyaSubmissions.forEach(s => {
                         sHtml += `
@@ -178,14 +173,13 @@
                                 <td>${s.no}</td>
                                 <td>${s.memberId}</td>
                                 <td>${s.name}</td>
-                                <td>${s.number}</td>
                                 <td>${s.purpose}</td>
                                 <td>${s.published ? '<span class="badge bg-success">Published</span>' : '<span class="badge bg-warning text-dark">Draft / Hidden</span>'}</td>
                                 <td>
                                     <button class="btn btn-sm ${s.published ? 'btn-outline-secondary' : 'btn-success'} mb-1" onclick="togglePublish('${s.id}')">
                                         ${s.published ? 'Unpublish' : 'Publish'}
                                     </button>
-                                    <button class="btn btn-sm btn-outline-primary mb-1" onclick="openEditModal('${s.id}', '${s.name}', '${s.number}', '${s.purpose}')">Edit</button>
+                                    <button class="btn btn-sm btn-outline-primary mb-1" onclick="openEditModal('${s.id}', '${s.name}', '${s.purpose}')">Edit</button>
                                 </td>
                             </tr>
                         `;
@@ -193,20 +187,20 @@
                 }
                 document.getElementById('masterJumuiyaRecordsList').innerHTML = sHtml;
 
-                // Pending Registrations Table
-                let pHtml = '<table class="table table-bordered"><thead><tr><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th><th>Action</th></tr></thead><tbody>';
-                if (data.pending.length === 0) pHtml += '<tr><td colspan="5" class="text-muted">No pending registrations.</td></tr>';
+                // Pending Registrations Table (Phone removed)
+                let pHtml = '<table class="table table-bordered"><thead><tr><th>Name</th><th>Jumuiya</th><th>Group</th><th>Action</th></tr></thead><tbody>';
+                if (data.pending.length === 0) pHtml += '<tr><td colspan="4" class="text-muted">No pending registrations.</td></tr>';
                 data.pending.forEach(p => {
-                    pHtml += `<tr><td>${p.name}</td><td>${p.phone}</td><td>${p.jumuiya}</td><td>${p.group}</td><td><button class="btn btn-success btn-sm" onclick="approveUser('${p.id}')">Approve</button> <button class="btn btn-outline-danger btn-sm" onclick="rejectUser('${p.id}')">Reject</button></td></tr>`;
+                    pHtml += `<tr><td>${p.name}</td><td>${p.jumuiya}</td><td>${p.group}</td><td><button class="btn btn-success btn-sm" onclick="approveUser('${p.id}')">Approve</button> <button class="btn btn-outline-danger btn-sm" onclick="rejectUser('${p.id}')">Reject</button></td></tr>`;
                 });
                 pHtml += '</tbody></table>';
                 document.getElementById('pendingList').innerHTML = pHtml;
 
-                // Members Table with Jumuiya Name displayed
-                let mHtml = '<table class="table table-bordered table-striped"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Number</th><th>Group</th><th>Action</th></tr></thead><tbody>';
-                if (data.members.length === 0) mHtml += '<tr><td colspan="6" class="text-muted">No registered members yet.</td></tr>';
+                // Members Table with Jumuiya Name displayed (Phone removed)
+                let mHtml = '<table class="table table-bordered table-striped"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Group</th><th>Action</th></tr></thead><tbody>';
+                if (data.members.length === 0) mHtml += '<tr><td colspan="5" class="text-muted">No registered members yet.</td></tr>';
                 data.members.forEach((m) => {
-                    mHtml += `<tr><td><strong class="text-primary">${m.customId || 'N/A'}</strong></td><td>${m.name}</td><td><span class="badge bg-info text-dark">${m.jumuiya || 'St. Michael'}</span></td><td>${m.phone}</td><td>${m.group}</td><td><button class="btn btn-danger btn-sm" onclick="removeMember('${m.id}')">Remove</button></td></tr>`;
+                    mHtml += `<tr><td><strong class="text-primary">${m.customId || 'N/A'}</strong></td><td>${m.name}</td><td><span class="badge bg-info text-dark">${m.jumuiya || 'St. Michael'}</span></td><td>${m.group}</td><td><button class="btn btn-danger btn-sm" onclick="removeMember('${m.id}')">Remove</button></td></tr>`;
                 });
                 mHtml += '</tbody></table>';
                 document.getElementById('memberList').innerHTML = mHtml;
@@ -218,10 +212,9 @@
             loadMasterData();
         }
 
-        function openEditModal(id, name, number, purpose) {
+        function openEditModal(id, name, purpose) {
             document.getElementById('editRecId').value = id;
             document.getElementById('editName').value = name;
-            document.getElementById('editNumber').value = number;
             document.getElementById('editPurpose').value = purpose;
             new bootstrap.Modal(document.getElementById('editModal')).show();
         }
@@ -230,7 +223,6 @@
             const payload = {
                 id: document.getElementById('editRecId').value,
                 name: document.getElementById('editName').value,
-                number: document.getElementById('editNumber').value,
                 purpose: document.getElementById('editPurpose').value
             };
             await fetch('/api/admin/edit-jumuiya-record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
