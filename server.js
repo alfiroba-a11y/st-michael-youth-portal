@@ -2,7 +2,6 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
 const { MongoClient } = require('mongodb');
-const PDFDocument = require('pdfkit');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -71,7 +70,6 @@ async function readData() {
             await db.collection('portal_data').insertOne({ _id: 'main_store', ...fallbackData });
             return fallbackData;
         }
-        // Backward compatibility fallback if old readings format was an object
         if (doc.readings && !Array.isArray(doc.readings)) {
             doc.readings = [{
                 id: '1',
@@ -361,57 +359,44 @@ app.post('/api/admin/delete-jumuiya-record', async (req, res) => {
     res.json({ success: true });
 });
 
-// Master Admin: Download Portal Data (PDF Export)
+// Master Admin: Download Portal Data (Native Text Export)
 app.get('/api/admin/download-data', async (req, res) => {
     try {
         const data = await readData();
-        const doc = new PDFDocument({ margin: 40, size: 'A4' });
+        
+        let report = "========================================\n";
+        report += "St. Michael Kasaini Youth Portal\n";
+        report += "Master Admin Comprehensive Export Report\n";
+        report += "========================================\n\n";
 
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', 'attachment; filename=kasaini_youth_portal_data.pdf');
-
-        doc.pipe(res);
-
-        // Header Title
-        doc.fontSize(18).fillColor('#1e293b').text('St. Michael Kasaini Youth Portal', { align: 'center' });
-        doc.fontSize(12).fillColor('#64748b').text('Master Admin Comprehensive Export Report', { align: 'center' });
-        doc.moveDown(1.5);
-
-        // Registered Members Section
-        doc.fontSize(14).fillColor('#0284c7').text('Registered Members');
-        doc.moveDown(0.5);
-
+        report += "--- REGISTERED MEMBERS ---\n";
         const members = data.members || [];
         if (members.length === 0) {
-            doc.fontSize(10).fillColor('#334155').text('No registered members found.');
+            report += "No registered members found.\n";
         } else {
             members.forEach((m, idx) => {
-                doc.fontSize(10).fillColor('#334155').text(
-                    `${idx + 1}. [${m.customId || 'N/A'}] Name: ${m.name} | Phone: ${m.phone || 'N/A'} | Jumuiya: ${m.jumuiya || 'N/A'} | Group: ${m.group || 'N/A'}`
-                );
+                report += `${idx + 1}. [${m.customId || 'N/A'}] Name: ${m.name} | Phone: ${m.phone || 'N/A'} | Jumuiya: ${m.jumuiya || 'N/A'} | Group: ${m.group || 'N/A'}\n`;
             });
         }
-        doc.moveDown(1.5);
+        report += "\n";
 
-        // Jumuiya Contributions Section
-        doc.fontSize(14).fillColor('#16a34a').text('Jumuiya Contributions');
-        doc.moveDown(0.5);
-
+        report += "--- JUMUIYA CONTRIBUTIONS ---\n";
         const submissions = data.jumuiyaSubmissions || [];
         if (submissions.length === 0) {
-            doc.fontSize(10).fillColor('#334155').text('No contributions recorded.');
+            report += "No contributions recorded.\n";
         } else {
             submissions.forEach((s, idx) => {
-                doc.fontSize(10).fillColor('#334155').text(
-                    `${idx + 1}. Jumuiya: ${s.jumuiyaName} | Contributor: ${s.name} | Amount: KES ${s.amount || 0} | Purpose: ${s.purpose || 'General'} | Published: ${s.published ? 'Yes' : 'No'}`
-                );
+                report += `${idx + 1}. Jumuiya: ${s.jumuiyaName} | Contributor: ${s.name} | Amount: KES ${s.amount || 0} | Purpose: ${s.purpose || 'General'} | Published: ${s.published ? 'Yes' : 'No'}\n`;
             });
         }
 
-        doc.end();
+        res.setHeader('Content-Type', 'text/plain');
+        res.setHeader('Content-Disposition', 'attachment; filename=kasaini_youth_portal_data.txt');
+        res.status(200).send(report);
+
     } catch (e) {
-        console.error('PDF Export Error:', e);
-        res.status(500).send('Error generating PDF export file.');
+        console.error('Export Error:', e);
+        res.status(500).send('Error generating export file.');
     }
 });
 
@@ -435,7 +420,7 @@ app.post('/api/admin/events/delete', async (req, res) => {
     res.json({ success: true });
 });
 
-// Mass Readings Management Endpoints (Supports new 4-part structure)
+// Mass Readings Management Endpoints
 app.post('/api/admin/readings', async (req, res) => {
     const { title, firstReading, psalm, secondReading, gospel } = req.body;
     const data = await readData();
