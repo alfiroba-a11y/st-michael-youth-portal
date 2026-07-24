@@ -32,6 +32,9 @@
             </div>
             <div>
                 <a href="/jumuiya-portal" class="btn btn-outline-primary btn-sm me-2" target="_blank">🌐 View Jumuiya Portal Grid</a>
+                <button onclick="downloadPortalData()" class="btn btn-success btn-sm me-2" style="font-weight: bold;">
+                    📥 Download Portal Data (CSV)
+                </button>
                 <button class="btn btn-outline-secondary btn-sm" onclick="location.reload()">Logout</button>
             </div>
         </div>
@@ -416,6 +419,24 @@
             if (confirm('Are you sure you want to remove this member?')) {
                 await fetch('/api/admin/remove-member', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
                 loadMasterData();
+            }
+        }
+
+        async function downloadPortalData() {
+            try {
+                const response = await fetch('/api/admin/download-csv');
+                if (!response.ok) throw new Error('Failed to download data');
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'portal_data.csv';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+            } catch (error) {
+                alert('Error downloading portal data: ' + error.message);
             }
         }
     </script>
