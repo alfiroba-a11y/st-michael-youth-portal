@@ -47,17 +47,19 @@ let fallbackData = {
     pending: [],
     jumuiyaSubmissions: [], // Stores entries submitted by Jumuiya admins
     events: [
-        { id: '1', title: 'Sunday Holy Mass & Youth Fellowship', date: '2026-07-26', type: 'upcoming', description: 'Main service at St. Michael Kasaini Church.' }
+        { id: '1', title: 'Sunday Holy Mass & Youth Fellowship', date: 'Next Sunday at 10:00 AM', description: 'Main service at St. Michael Kasaini Church.', type: 'upcoming' }
     ],
     messages: [],
-    readings: {
-        title: "Sunday Holy Mass Readings & Updates",
-        first: "First Reading content...",
-        psalm: "Responsorial Psalm content...",
-        second: "Second Reading content...",
-        gospel: "Gospel content...",
-        announcement: "Welcome to St. Michael Kasaini Youth Portal. Pilgrims of Hope ⛪ 🙏"
-    }
+    readings: [
+        {
+            id: '1',
+            title: "Sunday Holy Mass Readings & Updates",
+            firstReading: "1 Kings 3:5, 7–12 — King Solomon Requests Wisdom...",
+            psalm: "Psalm 119 — Lord, I love your commands...",
+            secondReading: "Romans 8:28–30 — God Works for Good...",
+            gospel: "Matthew 13:44–52 — Parables Highlighting the Kingdom..."
+        }
+    ]
 };
 
 async function readData() {
@@ -67,6 +69,17 @@ async function readData() {
         if (!doc) {
             await db.collection('portal_data').insertOne({ _id: 'main_store', ...fallbackData });
             return fallbackData;
+        }
+        // Backward compatibility fallback if old readings format was an object
+        if (doc.readings && !Array.isArray(doc.readings)) {
+            doc.readings = [{
+                id: '1',
+                title: doc.readings.title || "Sunday Mass Readings",
+                firstReading: doc.readings.first || doc.readings.firstReading || "",
+                psalm: doc.readings.psalm || "",
+                secondReading: doc.readings.second || doc.readings.secondReading || "",
+                gospel: doc.readings.gospel || ""
+            }];
         }
         return doc;
     } catch (e) {
@@ -347,9 +360,62 @@ app.post('/api/admin/delete-jumuiya-record', async (req, res) => {
     res.json({ success: true });
 });
 
+// Events Management Endpoints
+app.post('/api/admin/events', async (req, res) => {
+    const { title, date, description } = req.body;
+    const data = await readData();
+    if (!data.events) data.events = [];
+    data.events.push({ id: Date.now().toString(), title, date: date || '', description: description || '', type: 'upcoming' });
+    await writeData(data);
+    res.json({ success: true, message: 'Event saved successfully!' });
+});
+
+app.post('/api/admin/events/delete', async (req, res) => {
+    const { id } = req.body;
+    const data = await readData();
+    if (data.events) {
+        data.events = data.events.filter(e => e.id !== id && e._id !== id);
+        await writeData(data);
+    }
+    res.json({ success: true });
+});
+
+// Mass Readings Management Endpoints (Supports new 4-part structure)
+app.post('/api/admin/readings', async (req, res) => {
+    const { title, firstReading, psalm, secondReading, gospel } = req.body;
+    const data = await readData();
+    if (!Array.isArray(data.readings)) data.readings = [];
+    
+    // Replace or add new readings block
+    const newReading = {
+        id: Date.now().toString(),
+        title: title || "Sunday Mass Readings",
+        firstReading: firstReading || "",
+        psalm: psalm || "",
+        secondReading: secondReading || "",
+        gospel: gospel || ""
+    };
+    
+    // Keeping latest reading active or replacing existing list
+    data.readings = [newReading];
+    await writeData(data);
+    res.json({ success: true, message: 'Readings published successfully!' });
+});
+
+app.post('/api/admin/readings/delete', async (req, res) => {
+    const { id } = req.body;
+    const data = await readData();
+    if (data.readings) {
+        data.readings = data.readings.filter(r => r.id !== id && r._id !== id);
+        await writeData(data);
+    }
+    res.json({ success: true });
+});
+
+// Legacy handler support
 app.post('/api/admin/update-readings', async (req, res) => {
     const data = await readData();
-    data.readings = req.body;
+    data.readings = [req.body];
     await writeData(data);
     res.json({ success: true });
 });
