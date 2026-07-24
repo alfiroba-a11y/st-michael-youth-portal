@@ -360,6 +360,31 @@ app.post('/api/admin/delete-jumuiya-record', async (req, res) => {
     res.json({ success: true });
 });
 
+// Master Admin: Download Portal Data (CSV Export)
+app.get('/api/admin/download-data', async (req, res) => {
+    try {
+        const data = await readData();
+        
+        let csv = "--- REGISTERED MEMBERS ---\n";
+        csv += "ID,Name,Phone,Jumuiya,Group,Registration Date\n";
+        (data.members || []).forEach(m => {
+            csv += `"${m.customId || ''}","${m.name || ''}","${m.phone || ''}","${m.jumuiya || ''}","${m.group || ''}","${m.date || ''}"\n`;
+        });
+
+        csv += "\n--- JUMUIYA CONTRIBUTIONS ---\n";
+        csv += "Record ID,Jumuiya Name,Contributor Name,Amount,Purpose,Published\n";
+        (data.jumuiyaSubmissions || []).forEach(s => {
+            csv += `"${s.id || ''}","${s.jumuiyaName || ''}","${s.name || ''}",${s.amount || 0},"${s.purpose || ''}",${s.published ? 'Yes' : 'No'}\n`;
+        });
+
+        res.setHeader('Content-Type', 'text/csv');
+        res.setHeader('Content-Disposition', 'attachment; filename=kasaini_youth_portal_data.csv');
+        res.status(200).send(csv);
+    } catch (e) {
+        res.status(500).send('Error generating export file.');
+    }
+});
+
 // Events Management Endpoints
 app.post('/api/admin/events', async (req, res) => {
     const { title, date, description } = req.body;
