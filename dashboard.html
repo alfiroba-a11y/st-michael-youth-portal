@@ -66,28 +66,20 @@
             document.getElementById('welcomeUser').textContent = `Signed in as: ${currentUser}`;
         }
 
-        // Helper function to mask phone numbers in the middle (e.g., 0712345678 -> 0712***678)
-        function maskPhoneNumber(phone) {
-            if (!phone || phone === '-') return '-';
-            const str = String(phone).trim();
-            if (str.length <= 6) return '***';
-            const start = str.slice(0, 4);
-            const end = str.slice(-3);
-            return `${start}***${end}`;
-        }
-
         async function loadDashboardData() {
-            // 1. Load Announcements & Events
             try {
-                const res = await fetch('/api/youth/announcements'); // Ensure backend handles this or general dashboard feed
+                const res = await fetch('/api/youth/directory');
                 const data = await res.json();
+                
                 if (data.success) {
-                    if (data.announcement) {
-                        document.getElementById('userAnnouncement').textContent = data.announcement;
+                    // 1. Announcements (Maps correctly to server's data.readings.announcement)
+                    if (data.readings && data.readings.announcement) {
+                        document.getElementById('userAnnouncement').textContent = data.readings.announcement;
                     } else {
-                        document.getElementById('userAnnouncement').textContent = 'No active announcements right now.';
+                        document.getElementById('userAnnouncement').textContent = 'Welcome to St. Michael Kasaini Youth Portal.';
                     }
 
+                    // 2. Render Upcoming Events
                     let eHtml = '';
                     if (!data.events || data.events.length === 0) {
                         eHtml = '<div class="col-12 text-muted small">No upcoming events scheduled at the moment.</div>';
@@ -97,63 +89,45 @@
                         });
                     }
                     document.getElementById('eventsList').innerHTML = eHtml;
-                }
-            } catch (e) {
-                document.getElementById('userAnnouncement').textContent = 'Welcome to St. Michael Kasaini Youth Portal.';
-                document.getElementById('eventsList').innerHTML = '<div class="col-12 text-muted small">Could not load events.</div>';
-            }
 
-            // 2. Load Master Approved Contributions List
-            try {
-                const res = await fetch('/api/youth/contributions');
-                const data = await res.json();
-                let cHtml = '<table class="table table-bordered table-striped align-middle"><thead><tr><th>Contributor Name</th><th>Amount (KES)</th><th>Purpose</th><th>Jumuiya</th></tr></thead><tbody>';
-                if (!data.success || !data.submissions || data.submissions.length === 0) {
-                    cHtml += '<tr><td colspan="4" class="text-muted text-center">No approved contributions published yet.</td></tr>';
-                } else {
-                    data.submissions.forEach(item => {
-                        cHtml += `<tr><td>${item.name}</td><td><strong>KES ${Number(item.amount || 0).toLocaleString()}</strong></td><td>${item.purpose}</td><td><span class="badge bg-secondary">${item.jumuiyaName}</span></td></tr>`;
-                    });
-                }
-                cHtml += '</tbody></table>';
-                document.getElementById('masterContributionsList').innerHTML = cHtml;
-            } catch (e) {
-                document.getElementById('masterContributionsList').innerHTML = '<p class="text-danger small text-center">Failed to load contributions.</p>';
-            }
+                    // 3. Render Master Approved Contributions List (Maps correctly to server's masterContributions)
+                    const contributionsList = data.masterContributions || [];
+                    let cHtml = '<table class="table table-bordered table-striped align-middle"><thead><tr><th>Contributor Name</th><th>Amount (KES)</th><th>Purpose</th><th>Jumuiya</th></tr></thead><tbody>';
+                    if (contributionsList.length === 0) {
+                        cHtml += '<tr><td colspan="4" class="text-muted text-center">No approved contributions published yet.</td></tr>';
+                    } else {
+                        contributionsList.forEach(item => {
+                            cHtml += `<tr><td>${item.name}</td><td><strong>KES ${Number(item.amount || 0).toLocaleString()}</strong></td><td>${item.purpose}</td><td><span class="badge bg-secondary">${item.jumuiyaName}</span></td></tr>`;
+                        });
+                    }
+                    cHtml += '</tbody></table>';
+                    document.getElementById('masterContributionsList').innerHTML = cHtml;
 
-            // 3. Load Youth Directory & Members (Phone numbers masked)
-            try {
-                const res = await fetch('/api/youth/directory');
-                const data = await res.json();
-                let html = '<table class="table table-bordered table-striped"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Group</th><th>Phone</th></tr></thead><tbody>';
-                if (!data.success || !data.members || data.members.length === 0) {
-                    html += '<tr><td colspan="5" class="text-muted text-center">No approved members listed yet.</td></tr>';
-                } else {
-                    data.members.forEach(m => {
-                        html += `<tr><td><strong class="text-primary">${m.customId || ''}</strong></td><td>${m.name}</td><td>${m.jumuiya || '-'}</td><td>${m.group || '-'}</td><td>${maskPhoneNumber(m.phone)}</td></tr>`;
-                    });
-                }
-                html += '</tbody></table>';
-                document.getElementById('directoryList').innerHTML = html;
-            } catch (e) {
-                document.getElementById('directoryList').innerHTML = '<p class="text-danger small text-center">Failed to load directory.</p>';
-            }
+                    // 4. Render Registered Members Directory (Phone numbers already masked by server function maskPhone)
+                    let html = '<table class="table table-bordered table-striped"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Group</th><th>Phone</th></tr></thead><tbody>';
+                    if (!data.members || data.members.length === 0) {
+                        html += '<tr><td colspan="5" class="text-muted text-center">No approved members listed yet.</td></tr>';
+                    } else {
+                        data.members.forEach(m => {
+                            html += `<tr><td><strong class="text-primary">${m.customId || ''}</strong></td><td>${m.name}</td><td>${m.jumuiya || '-'}</td><td>${m.group || '-'}</td><td>${m.phone || '-'}</td></tr>`;
+                        });
+                    }
+                    html += '</tbody></table>';
+                    document.getElementById('directoryList').innerHTML = html;
 
-            // 4. Load Community Messages Board
-            try {
-                const res = await fetch('/api/youth/messages');
-                const data = await res.json();
-                let mHtml = '';
-                if (!data.success || !data.messages || data.messages.length === 0) {
-                    mHtml = '<p class="text-muted small">No community messages yet. Be the first to post!</p>';
-                } else {
-                    data.messages.forEach(msg => {
-                        mHtml += `<div class="border-bottom pb-2 mb-2"><small class="text-muted"><strong>${msg.sender}</strong> (${msg.time || ''}):</small><p class="mb-0 text-dark small">${msg.text || msg.content}</p></div>`;
-                    });
+                    // 5. Render Community Messages Board
+                    let mHtml = '';
+                    if (!data.messages || data.messages.length === 0) {
+                        mHtml = '<p class="text-muted small">No community messages yet. Be the first to post!</p>';
+                    } else {
+                        data.messages.forEach(msg => {
+                            mHtml += `<div class="border-bottom pb-2 mb-2"><small class="text-muted"><strong>${msg.sender}</strong> (${msg.time || ''}):</small><p class="mb-0 text-dark small">${msg.text}</p></div>`;
+                        });
+                    }
+                    document.getElementById('messageBoard').innerHTML = mHtml;
                 }
-                document.getElementById('messageBoard').innerHTML = mHtml;
-            } catch (e) {
-                document.getElementById('messageBoard').innerHTML = '<p class="text-danger small">Could not load community messages.</p>';
+            } catch (err) {
+                console.error("Error loading dashboard data:", err);
             }
         }
 
