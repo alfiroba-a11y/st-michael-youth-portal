@@ -88,16 +88,24 @@
                     <form id="readingForm">
                         <input type="hidden" id="readingId">
                         <div class="mb-3">
-                            <label class="form-label">Reading Title / Theme</label>
-                            <input type="text" id="readingTitle" class="form-control" required placeholder="e.g. Sunday Mass Readings">
+                            <label class="form-label">Mass Theme / Sunday Title</label>
+                            <input type="text" id="readingTitle" class="form-control" required placeholder="e.g. Seventeenth Sunday in Ordinary Time">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Reading References</label>
-                            <input type="text" id="readingRef" class="form-control" required placeholder="e.g. Isaiah 50:4-7 | Philippians 2:6-11">
+                            <label class="form-label">1. First Reading (Reference & Text)</label>
+                            <textarea id="firstReading" class="form-control" rows="2" required placeholder="e.g. 1 Kings 3:5, 7–12 — King Solomon Requests..."></textarea>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label">Content / Reflection Text</label>
-                            <textarea id="readingContent" class="form-control" rows="3" required placeholder="Enter scripture text or summary..."></textarea>
+                            <label class="form-label">2. Responsorial Psalm (Reference & Text)</label>
+                            <textarea id="psalm" class="form-control" rows="2" required placeholder="e.g. Psalm 119 — Lord, I love your commands..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">3. Second Reading (Reference & Text)</label>
+                            <textarea id="secondReading" class="form-control" rows="2" required placeholder="e.g. Romans 8:28–30 — God Works for Good..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">4. Gospel (Reference & Text)</label>
+                            <textarea id="gospel" class="form-control" rows="2" required placeholder="e.g. Matthew 13:44–52 — Parables Highlighting..."></textarea>
                         </div>
                         <button type="submit" class="btn btn-warning btn-sm w-100">Save / Publish Reading</button>
                     </form>
@@ -231,9 +239,10 @@
                 let eHtml = '<ul class="list-group">';
                 if (data.events && data.events.length > 0) {
                     data.events.forEach(ev => {
+                        const eventId = ev.id || ev._id;
                         eHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div><strong>${ev.title}</strong> (${ev.date})<br><small>${ev.description}</small></div>
-                            <button class="btn btn-outline-danger btn-sm" onclick="deleteEvent('${ev.id}')">Delete</button>
+                            <div><strong>${ev.title || 'Untitled Event'}</strong> (${ev.date || ''})<br><small>${ev.description || ''}</small></div>
+                            <button class="btn btn-outline-danger btn-sm" onclick="deleteEvent('${eventId}')">Delete</button>
                         </li>`;
                     });
                 } else {
@@ -246,9 +255,16 @@
                 let rHtml = '<ul class="list-group">';
                 if (data.readings && data.readings.length > 0) {
                     data.readings.forEach(rd => {
+                        const readingId = rd.id || rd._id;
                         rHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
-                            <div><strong>${rd.title}</strong> [${rd.reference}]<br><small>${rd.content}</small></div>
-                            <button class="btn btn-outline-danger btn-sm" onclick="deleteReading('${rd.id}')">Delete</button>
+                            <div>
+                                <strong>${rd.title || 'Mass Readings'}</strong><br>
+                                <small><strong>1st:</strong> ${rd.firstReading || '-'}</small><br>
+                                <small><strong>Psalm:</strong> ${rd.psalm || '-'}</small><br>
+                                <small><strong>2nd:</strong> ${rd.secondReading || '-'}</small><br>
+                                <small><strong>Gospel:</strong> ${rd.gospel || '-'}</small>
+                            </div>
+                            <button class="btn btn-outline-danger btn-sm" onclick="deleteReading('${readingId}')">Delete</button>
                         </li>`;
                     });
                 } else {
@@ -335,8 +351,10 @@
             e.preventDefault();
             const payload = {
                 title: document.getElementById('readingTitle').value,
-                reference: document.getElementById('readingRef').value,
-                content: document.getElementById('readingContent').value
+                firstReading: document.getElementById('firstReading').value,
+                psalm: document.getElementById('psalm').value,
+                secondReading: document.getElementById('secondReading').value,
+                gospel: document.getElementById('gospel').value
             };
             await fetch('/api/admin/readings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
             document.getElementById('readingForm').reset();
