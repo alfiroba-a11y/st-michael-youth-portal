@@ -254,6 +254,44 @@ app.post('/api/youth/login', async (req, res) => {
     res.json({ success: false, message: 'Member not found.' });
 });
 
+// Member Profile Update Endpoint
+app.post('/api/youth/update-profile', async (req, res) => {
+    try {
+        const { currentUser, name, group, password } = req.body;
+        if (!currentUser) return res.json({ success: false, message: 'Current user session missing.' });
+
+        const data = await readData();
+        const cleanCurrent = currentUser.trim().toLowerCase();
+
+        const member = data.members.find(m => m.name.toLowerCase() === cleanCurrent || m.customId?.toLowerCase() === cleanCurrent);
+        if (!member) {
+            return res.json({ success: false, message: 'Member not found.' });
+        }
+
+        if (name && name.trim().toLowerCase() !== cleanCurrent) {
+            const nameExists = data.members.some(m => m.name.toLowerCase() === name.trim().toLowerCase());
+            if (nameExists) {
+                return res.json({ success: false, message: 'An account with this name already exists.' });
+            }
+            member.name = name.trim();
+        }
+
+        if (group) {
+            member.group = group.trim();
+        }
+
+        if (password && password.trim() !== '') {
+            member.pass = password;
+        }
+
+        await writeData(data);
+        res.json({ success: true, message: 'Profile updated successfully!' });
+    } catch (err) {
+        console.error('Error updating profile:', err);
+        res.json({ success: false, message: 'Server error updating profile.' });
+    }
+});
+
 app.post('/api/youth/message', async (req, res) => {
     const { sender, text } = req.body;
     if (!sender || !text) return res.json({ success: false });
