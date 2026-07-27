@@ -1,561 +1,433 @@
-const express = require('express');
-const bodyParser = require('body-parser');
-const path = require('path');
-const { MongoClient } = require('mongodb');
-
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname)));
-
-const MONGO_URI = process.env.MONGO_URI;
-let db = null;
-
-async function initDB() {
-    if (MONGO_URI) {
-        try {
-            const client = new MongoClient(MONGO_URI);
-            await client.connect();
-            db = client.db('kasaini_youth_db');
-            console.log('Connected successfully to MongoDB Atlas.');
-        } catch (err) {
-            console.error('MongoDB connection error:', err.message);
-        }
-    }
-}
-initDB();
-
-// 11 Defined Jumuiyas with Unique Default Credentials
-const JUMUIYAS_LIST = [
-    { id: 'st_catherine', name: 'St. Catherine', username: 'catherine_admin', pass: 'Cath2026!' },
-    { id: 'st_ann', name: 'St. Ann', username: 'ann_admin', pass: 'Ann2026!' },
-    { id: 'st_michael', name: 'St. Michael', username: 'michael_admin', pass: 'Mich2026!' },
-    { id: 'st_raphael', name: 'St. Raphael', username: 'raphael_admin', pass: 'Raph2026!' },
-    { id: 'st_francisco', name: 'St. Francisco', username: 'francisco_admin', pass: 'Fran2026!' },
-    { id: 'st_monica', name: 'St. Monica', username: 'monica_admin', pass: 'Mon2026!' },
-    { id: 'st_stephen', name: 'St. Stephen', username: 'stephen_admin', pass: 'Steph2026!' },
-    { id: 'st_jacinta', name: 'St. Jacinta', username: 'jacinta_admin', pass: 'Jac2026!' },
-    { id: 'st_paul', name: 'St. Paul', username: 'paul_admin', pass: 'Paul2026!' },
-    { id: 'st_francis_assisi', name: 'St. Francis of Assisi', username: 'assisi_admin', pass: 'Assisi2026!' },
-    { id: 'st_charles_lwanga', name: 'St. Charles Lwanga', username: 'charles_admin', pass: 'Char2026!' }
-];
-
-let fallbackData = {
-    members: [],
-    pending: [],
-    jumuiyaSubmissions: [],
-    events: [
-        { id: '1', title: 'Sunday Holy Mass & Youth Fellowship', date: 'Next Sunday at 10:00 AM', description: 'Main service at St. Michael Kasaini Church.', type: 'upcoming' }
-    ],
-    messages: [],
-    readings: [
-        {
-            id: '1',
-            title: "Sunday Holy Mass Readings & Updates",
-            firstReading: "1 Kings 3:5, 7–12 — King Solomon Requests Wisdom...",
-            psalm: "Psalm 119 — Lord, I love your commands...",
-            secondReading: "Romans 8:28–30 — God Works for Good...",
-            gospel: "Matthew 13:44–52 — Parables Highlighting the Kingdom..."
-        }
-    ]
-};
-
-async function readData() {
-    if (!db) return fallbackData;
-    try {
-        let doc = await db.collection('portal_data').findOne({ _id: 'main_store' });
-        if (!doc) {
-            await db.collection('portal_data').insertOne({ _id: 'main_store', ...fallbackData });
-            return fallbackData;
-        }
-        if (doc.readings && !Array.isArray(doc.readings)) {
-            doc.readings = [{
-                id: '1',
-                title: doc.readings.title || "Sunday Mass Readings",
-                firstReading: doc.readings.first || doc.readings.firstReading || "",
-                psalm: doc.readings.psalm || "",
-                secondReading: doc.readings.second || doc.readings.secondReading || "",
-                gospel: doc.readings.gospel || ""
-            }];
-        }
-        return doc;
-    } catch (e) {
-        return fallbackData;
-    }
-}
-
-async function writeData(data) {
-    fallbackData = data;
-    if (db) {
-        try {
-            await db.collection('portal_data').updateOne(
-                { _id: 'main_store' },
-                { $set: { 
-                    members: data.members, 
-                    pending: data.pending, 
-                    jumuiyaSubmissions: data.jumuiyaSubmissions, 
-                    events: data.events, 
-                    messages: data.messages, 
-                    readings: data.readings 
-                } },
-                { upsert: true }
-            );
-        } catch (e) {
-            console.error('Database write error:', e.message);
-        }
-    }
-}
-
-function maskPhone(phone) {
-    if (!phone || phone.length < 7) return phone;
-    return `${phone.slice(0, 3)}****${phone.slice(-3)}`;
-}
-
-let activeUsers = {};
-
-// HTML Routes
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
-app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
-app.get('/secret-admin-portal-kasaini-2026', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
-app.get('/jumuiya-portal', (req, res) => res.sendFile(path.join(__dirname, 'jumuiya-portal.html')));
-
-// Presence API
-app.post('/api/ping', (req, res) => {
-    const { username } = req.body;
-    if (username) activeUsers[username] = Date.now();
-    res.json({ success: true });
-});
-
-app.get('/api/online-users', (req, res) => {
-    const now = Date.now();
-    const online = Object.keys(activeUsers).filter(user => (now - activeUsers[user]) < 300000);
-    res.json(online);
-});
-
-// Jumuiya Portal List & Login APIs
-app.get('/api/jumuiyas/list', (req, res) => {
-    const publicList = JUMUIYAS_LIST.map(j => ({ id: j.id, name: j.name, username: j.username }));
-    res.json({ success: true, jumuiyas: publicList });
-});
-
-app.post('/api/jumuiya/login', (req, res) => {
-    const { jumuiyaId, username, password } = req.body;
-    const jumuiya = JUMUIYAS_LIST.find(j => j.id === jumuiyaId);
-    if (jumuiya && jumuiya.username === username && jumuiya.pass === password) {
-        return res.json({ success: true, name: jumuiya.name });
-    }
-    res.json({ success: false, message: 'Invalid Jumuiya credentials.' });
-});
-
-// Jumuiya Admin Data Submissions
-app.get('/api/jumuiya/data', async (req, res) => {
-    const { jumuiyaName } = req.query;
-    const data = await readData();
-    const submissions = (data.jumuiyaSubmissions || []).filter(s => s.jumuiyaName === jumuiyaName);
-    res.json({ success: true, submissions });
-});
-
-app.post('/api/jumuiya/submit-record', async (req, res) => {
-    const { jumuiyaName, name, amount, purpose } = req.body;
-    if (!name || !jumuiyaName) return res.json({ success: false, message: 'Name and Jumuiya name are required.' });
-
-    const data = await readData();
-    if (!data.jumuiyaSubmissions) data.jumuiyaSubmissions = [];
-
-    const newRecord = {
-        id: Date.now().toString(),
-        jumuiyaName,
-        name: name.trim(),
-        amount: parseFloat(amount) || 0,
-        purpose: purpose || 'General Contribution',
-        published: false
-    };
-
-    data.jumuiyaSubmissions.push(newRecord);
-    await writeData(data);
-    res.json({ success: true, message: 'Contribution recorded successfully and sent for Master Admin review!' });
-});
-
-// Youth Directory & Master Contributions List for Members Portal
-app.get('/api/youth/directory', async (req, res) => {
-    const data = await readData();
+<!DOCTYPE html><html lang="en"><head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Admin Portal - St. Michael Kasaini Youth</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head><body class="bg-light d-flex flex-column min-vh-100">
     
-    const publishedRecords = (data.jumuiyaSubmissions || [])
-        .filter(s => s.published)
-        .map(s => ({
-            id: s.id,
-            name: s.name,
-            amount: s.amount,
-            purpose: s.purpose,
-            jumuiyaName: s.jumuiyaName
-        }));
+    <div class="container my-auto" style="max-width: 400px;" id="loginWrapper">
+        <div id="loginSection" class="card shadow-sm p-4">
+            <h3 class="mb-3 text-danger">Master Admin Login</h3>
+            <div id="adminAlert" class="alert d-none" role="alert"></div>
+            <form id="adminLoginForm">
+                <div class="mb-3">
+                    <label class="form-label">Username</label>
+                    <input type="text" id="adminUser" class="form-control" required placeholder="Enter username">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="adminPass" class="form-control" required placeholder="Enter password">
+                </div>
+                <button type="submit" class="btn btn-danger w-100 mb-2">Login to Master Portal</button>
+            </form>
+            <div class="mt-3 text-center"><a href="/" class="text-decoration-none small">Back to Home</a></div>
+        </div>
+    </div>
 
-    let contributionsMap = {};
-    JUMUIYAS_LIST.forEach(j => { contributionsMap[j.name] = 0; });
-    
-    (data.jumuiyaSubmissions || []).forEach(r => {
-        if (r.published) {
-            if (!contributionsMap[r.jumuiyaName]) contributionsMap[r.jumuiyaName] = 0;
-            contributionsMap[r.jumuiyaName] += r.amount;
+    <div id="dashboardSection" class="container py-4 d-none flex-grow-1" style="max-width: 1200px;">
+        <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm">
+            <div>
+                <h2>🛡️ Master Admin Control Panel</h2>
+                <small class="text-muted">Overseeing all 11 Jumuiyas, member registrations, events, readings, and published feeds</small>
+            </div>
+            <div>
+                <a href="/jumuiya-portal" class="btn btn-outline-primary btn-sm me-2" target="_blank">🌐 View Jumuiya Portal Grid</a>
+                <button onclick="downloadPortalData()" class="btn btn-success btn-sm me-2" style="font-weight: bold;">
+                    📥 Download Portal Data (PDF)
+                </button>
+                <button class="btn btn-outline-secondary btn-sm" onclick="location.reload()">Logout</button>
+            </div>
+        </div>
+
+        <!-- Jumuiya Contributions Summary Table -->
+        <div class="card shadow-sm p-4 mb-4">
+            <h4 class="text-primary mb-3">📊 Jumuiya Contributions Summary</h4>
+            <div class="table-responsive">
+                <table class="table table-bordered table-striped align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Jumuiya Name</th>
+                            <th>Total Submissions / Contributions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="contributionsSummaryList">
+                        <tr><td colspan="2" class="text-muted">Loading contributions summary...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Manage Portal Events & Readings Section -->
+        <div class="row mb-4">
+            <!-- Events Management -->
+            <div class="col-lg-6 mb-3">
+                <div class="card shadow-sm p-4 h-100">
+                    <h4 class="text-info mb-3">📅 Post / Update Events</h4>
+                    <form id="eventForm">
+                        <input type="hidden" id="eventId">
+                        <div class="mb-3">
+                            <label class="form-label">Event Title</label>
+                            <input type="text" id="eventTitle" class="form-control" required placeholder="e.g. Youth Sunday Mass">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Event Date & Time</label>
+                            <input type="text" id="eventDate" class="form-control" required placeholder="e.g. Next Sunday at 10:00 AM">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Description / Details</label>
+                            <textarea id="eventDesc" class="form-control" rows="3" required placeholder="Enter event details..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-info text-white btn-sm w-100">Save / Publish Event</button>
+                    </form>
+                    <hr class="my-3">
+                    <div id="eventsListAdmin" class="small text-muted">Loading active events...</div>
+                </div>
+            </div>
+
+            <!-- Readings Management -->
+            <div class="col-lg-6 mb-3">
+                <div class="card shadow-sm p-4 h-100">
+                    <h4 class="text-warning mb-3">📖 Post / Update Readings</h4>
+                    <form id="readingForm">
+                        <input type="hidden" id="readingId">
+                        <div class="mb-3">
+                            <label class="form-label">Mass Theme / Sunday Title</label>
+                            <input type="text" id="readingTitle" class="form-control" required placeholder="e.g. Seventeenth Sunday in Ordinary Time">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">1. First Reading (Reference & Text)</label>
+                            <textarea id="firstReading" class="form-control" rows="2" required placeholder="e.g. 1 Kings 3:5, 7–12 — King Solomon Requests..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">2. Responsorial Psalm (Reference & Text)</label>
+                            <textarea id="psalm" class="form-control" rows="2" required placeholder="e.g. Psalm 119 — Lord, I love your commands..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">3. Second Reading (Reference & Text)</label>
+                            <textarea id="secondReading" class="form-control" rows="2" required placeholder="e.g. Romans 8:28–30 — God Works for Good..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">4. Gospel (Reference & Text)</label>
+                            <textarea id="gospel" class="form-control" rows="2" required placeholder="e.g. Matthew 13:44–52 — Parables Highlighting..."></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-warning btn-sm w-100">Save / Publish Reading</button>
+                    </form>
+                    <hr class="my-3">
+                    <div id="readingsListAdmin" class="small text-muted">Loading active readings...</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- All Submissions from Every Jumuiya -->
+        <div class="card shadow-sm p-4 mb-4">
+            <h4 class="text-success mb-3">📥 Review & Publish Jumuiya Submissions</h4>
+            <p class="text-muted small">Review records fed by each Jumuiya admin. Toggle "Publish" to display them on the members portal, or use "Edit" / "Delete" to manage entries.</p>
+            <div class="table-responsive">
+                <table class="table table-bordered align-middle">
+                    <thead class="table-secondary">
+                        <tr>
+                            <th>Jumuiya Name</th>
+                            <th>No</th>
+                            <th>ID</th>
+                            <th>Name</th>
+                            <th>Purpose</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="masterJumuiyaRecordsList">
+                        <tr><td colspan="7" class="text-muted text-center">No submissions received yet.</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Pending Youth Registrations -->
+        <div class="card shadow-sm p-4 mb-4">
+            <h4>👤 Pending Youth Registrations</h4>
+            <div id="pendingList" class="table-responsive">Loading...</div>
+        </div>
+
+        <!-- Registered Youth Directory -->
+        <div class="card shadow-sm p-4 mb-4">
+            <h4>👥 Registered Youth Directory</h4>
+            <div id="memberList" class="table-responsive">Loading...</div>
+        </div>
+
+ </div>
+
+  <!-- Edit Record Modal -->
+  <div class="modal fade" id="editModal" tabindex="-1">
+      <div class="modal-dialog">
+          <div class="modal-content">
+              <div class="modal-header">
+                  <h5 class="modal-title">Edit Jumuiya Record</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+              </div>
+              <div class="modal-body">
+                  <input type="hidden" id="editRecId">
+                  <div class="mb-3">
+                      <label class="form-label">Name</label>
+                      <input type="text" id="editName" class="form-control">
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Amount</label>
+                      <input type="number" id="editAmount" class="form-control">
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Purpose</label>
+                      <input type="text" id="editPurpose" class="form-control">
+                  </div>
+              </div>
+              <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                  <button type="button" class="btn btn-primary btn-sm" onclick="saveEditedRecord()">Save Changes</button>
+              </div>
+          </div>
+      </div>
+  </div>
+
+  <footer class="text-center py-3 mt-auto text-muted small border-top bg-white">
+      &copy; 2026 St. Michael Kasaini Youth Portal. Created and managed by Robert Wambua. All rights reserved.
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+      function maskPhoneNumber(phone) {
+          if (!phone || phone === '-') return '-';
+          const str = String(phone).trim();
+          if (str.length <= 6) return '***';
+          const start = str.slice(0, 4);
+          const end = str.slice(-3);
+          return `${start}***${end}`;
+      }
+
+      document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const username = document.getElementById('adminUser').value;
+          const password = document.getElementById('adminPass').value;
+          const alertBox = document.getElementById('adminAlert');
+
+          const res = await fetch('/api/admin/login', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ username, password })
+          });
+          const data = await res.json();
+
+          if (data.success) {
+              document.getElementById('loginWrapper').classList.remove('my-auto');
+              document.getElementById('loginWrapper').classList.add('d-none');
+              document.getElementById('dashboardSection').classList.remove('d-none');
+              loadMasterData();
+          } else {
+              alertBox.textContent = 'Invalid credentials';
+              alertBox.className = 'alert alert-danger small';
+              alertBox.classList.remove('d-none');
+          }
+      });
+
+      async function loadMasterData() {
+          const res = await fetch('/api/admin/data');
+          const data = await res.json();
+          if (data.success) {
+              // Contributions Summary
+              let cHtml = '';
+              for (const [jumuiya, count] of Object.entries(data.contributionsMap || {})) {
+                  cHtml += `<tr><td><strong>⛪ ${jumuiya}</strong></td><td><span class="badge bg-primary fs-6">KES ${count}</span></td></tr>`;
+              }
+              document.getElementById('contributionsSummaryList').innerHTML = cHtml || '<tr><td colspan="2" class="text-muted">No contributions recorded.</td></tr>';
+
+              // Events Admin List
+              let eHtml = '<ul class="list-group">';
+              if (data.events && data.events.length > 0) {
+                  data.events.forEach(ev => {
+                      const eventId = ev.id || ev._id;
+                      eHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                          <div><strong>${ev.title || 'Untitled Event'}</strong> (${ev.date || ''})<br><small>${ev.description || ''}</small></div>
+                          <button class="btn btn-outline-danger btn-sm" onclick="deleteEvent('${eventId}')">Delete</button>
+                      </li>`;
+                  });
+              } else {
+                  eHtml += '<li class="list-group-item text-muted">No active events posted.</li>';
+              }
+              eHtml += '</ul>';
+              document.getElementById('eventsListAdmin').innerHTML = eHtml;
+
+              // Readings Admin List
+              let rHtml = '<ul class="list-group">';
+              if (data.readings && data.readings.length > 0) {
+                  data.readings.forEach(rd => {
+                      const readingId = rd.id || rd._id;
+                      rHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                          <div>
+                              <strong>${rd.title || 'Mass Readings'}</strong><br>
+                              <small><strong>1st:</strong> ${rd.firstReading || '-'}</small><br>
+                              <small><strong>Psalm:</strong> ${rd.psalm || '-'}</small><br>
+                              <small><strong>2nd:</strong> ${rd.secondReading || '-'}</small><br>
+                              <small><strong>Gospel:</strong> ${rd.gospel || '-'}</small>
+                          </div>
+                          <button class="btn btn-outline-danger btn-sm" onclick="deleteReading('${readingId}')">Delete</button>
+                      </li>`;
+                  });
+              } else {
+                  rHtml += '<li class="list-group-item text-muted">No active readings posted.</li>';
+              }
+              rHtml += '</ul>';
+              document.getElementById('readingsListAdmin').innerHTML = rHtml;
+
+              // Jumuiya Submissions Table
+              let sHtml = '';
+              if (!data.jumuiyaSubmissions || data.jumuiyaSubmissions.length === 0) {
+                  sHtml = '<tr><td colspan="7" class="text-muted text-center">No submissions received yet from Jumuiya admins.</td></tr>';
+              } else {
+                  data.jumuiyaSubmissions.forEach((s, index) => {
+                      sHtml += `
+                          <tr>
+                              <td><strong>${s.jumuiyaName}</strong></td>
+                              <td>${index + 1}</td>
+                              <td>${s.id.slice(-6)}</td>
+                              <td>${s.name} <br><small class="text-muted">KES ${s.amount || 0}</small></td>
+                              <td>${s.purpose}</td>
+                              <td>${s.published ? '<span class="badge bg-success">Published</span>' : '<span class="badge bg-warning text-dark">Draft / Hidden</span>'}</td>
+                              <td>
+                                  <button class="btn btn-sm ${s.published ? 'btn-outline-secondary' : 'btn-success'} mb-1" onclick="togglePublish('${s.id}')">
+                                      ${s.published ? 'Unpublish' : 'Publish'}
+                                  </button>
+                                  <button class="btn btn-sm btn-outline-primary mb-1" onclick="openEditModal('${s.id}', '${s.name}', '${s.amount || 0}', '${s.purpose}')">Edit</button>
+                                  <button class="btn btn-sm btn-outline-danger mb-1" onclick="deleteJumuiyaRecord('${s.id}')">Delete</button>
+                              </td>
+                          </tr>
+                      `;
+                  });
+              }
+              document.getElementById('masterJumuiyaRecordsList').innerHTML = sHtml;
+
+              // Pending Registrations Table
+              let pHtml = '<table class="table table-bordered"><thead><tr><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th><th>Action</th></tr></thead><tbody>';
+              if (!data.pending || data.pending.length === 0) {
+                  pHtml += '<tr><td colspan="5" class="text-muted">No pending registrations.</td></tr>';
+              } else {
+                  data.pending.forEach(p => {
+                      pHtml += `<tr><td>${p.name}</td><td>${maskPhoneNumber(p.phone)}</td><td>${p.jumuiya}</td><td>${p.group}</td><td><button class="btn btn-success btn-sm" onclick="approveUser('${p.id}')">Approve</button> <button class="btn btn-outline-danger btn-sm" onclick="rejectUser('${p.id}')">Reject</button></td></tr>`;
+                  });
+              }
+              pHtml += '</tbody></table>';
+              document.getElementById('pendingList').innerHTML = pHtml;
+
+              // Members Table
+              let mHtml = '<table class="table table-bordered table-striped"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Phone</th><th>Group</th><th>Action</th></tr></thead><tbody>';
+              if (!data.members || data.members.length === 0) {
+                  mHtml += '<tr><td colspan="6" class="text-muted">No registered members yet.</td></tr>';
+              } else {
+                  data.members.forEach((m) => {
+                      mHtml += `<tr><td><strong class="text-primary">${m.customId || 'N/A'}</strong></td><td>${m.name}</td><td><span class="badge bg-info text-dark">${m.jumuiya || 'St. Michael'}</span></td><td>${maskPhoneNumber(m.phone)}</td><td>${m.group}</td><td><button class="btn btn-danger btn-sm" onclick="removeMember('${m.id}')">Remove</button></td></tr>`;
+                  });
+              }
+              mHtml += '</tbody></table>';
+              document.getElementById('memberList').innerHTML = mHtml;
+          }
+      }
+
+      // Event Form Submission
+      document.getElementById('eventForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const payload = {
+              title: document.getElementById('eventTitle').value,
+              date: document.getElementById('eventDate').value,
+              description: document.getElementById('eventDesc').value
+          };
+          await fetch('/api/admin/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          document.getElementById('eventForm').reset();
+          loadMasterData();
+      });
+
+      async function deleteEvent(id) {
+          if (confirm('Delete this event?')) {
+              await fetch('/api/admin/events/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+              loadMasterData();
         }
-    });
+      }
 
-    res.json({ 
-        success: true, 
-        members: data.members.map(m => ({ ...m, phone: maskPhone(m.phone) })), 
-        masterContributions: publishedRecords, 
-        contributionsMap,
-        events: data.events, 
-        readings: data.readings, 
-        messages: data.messages 
-    });
-});
+      // Reading Form Submission
+      document.getElementById('readingForm').addEventListener('submit', async (e) => {
+          e.preventDefault();
+          const payload = {
+              title: document.getElementById('readingTitle').value,
+              firstReading: document.getElementById('firstReading').value,
+              psalm: document.getElementById('psalm').value,
+              secondReading: document.getElementById('secondReading').value,
+              gospel: document.getElementById('gospel').value
+          };
+          await fetch('/api/admin/readings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          document.getElementById('readingForm').reset();
+          loadMasterData();
+      });
 
-app.post('/api/youth/register', async (req, res) => {
-    const { name, phone, jumuiya, group, pass } = req.body;
-    if (!name || !pass) return res.json({ success: false, message: 'Name and password are required.' });
-    
-    const data = await readData();
-    const cleanName = name.trim().toLowerCase();
-    
-    if (data.members.some(m => m.name.toLowerCase() === cleanName) || data.pending.some(p => p.name.toLowerCase() === cleanName)) {
-        return res.json({ success: false, message: 'An account with this name already exists or is awaiting approval.' });
-    }
-
-    data.pending.push({ 
-        id: Date.now().toString(), 
-        name: name.trim(), 
-        phone: phone || '', 
-        jumuiya: jumuiya || 'St. Michael', 
-        group: group || 'Youth General', 
-        pass, 
-        date: new Date().toLocaleDateString() 
-    });
-    await writeData(data);
-    res.json({ success: true, message: 'Registration successful! Awaiting admin approval.' });
-});
-
-app.post('/api/youth/login', async (req, res) => {
-    const { name, pass } = req.body;
-    const data = await readData();
-    const cleanName = name.trim().toLowerCase();
-
-    const member = data.members.find(m => m.name.toLowerCase() === cleanName);
-    if (member) {
-        if (member.pass === pass) return res.json({ success: true, name: member.name, jumuiya: member.jumuiya });
-        return res.json({ success: false, message: 'Incorrect password.' });
-    }
-    if (data.pending.find(p => p.name.toLowerCase() === cleanName)) {
-        return res.json({ success: false, message: 'Your account is still pending approval.' });
-    }
-    res.json({ success: false, message: 'Member not found.' });
-});
-
-// Member Profile Update Endpoint
-app.post('/api/youth/update-profile', async (req, res) => {
-    try {
-        const { currentUser, name, group, password } = req.body;
-        if (!currentUser) return res.json({ success: false, message: 'Current user session missing.' });
-
-        const data = await readData();
-        const cleanCurrent = currentUser.trim().toLowerCase();
-
-        const member = data.members.find(m => m.name.toLowerCase() === cleanCurrent || m.customId?.toLowerCase() === cleanCurrent);
-        if (!member) {
-            return res.json({ success: false, message: 'Member not found.' });
+      async function deleteReading(id) {
+          if (confirm('Delete this reading?')) {
+              await fetch('/api/admin/readings/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+              loadMasterData();
         }
+      }
 
-        if (name && name.trim().toLowerCase() !== cleanCurrent) {
-            const nameExists = data.members.some(m => m.name.toLowerCase() === name.trim().toLowerCase());
-            if (nameExists) {
-                return res.json({ success: false, message: 'An account with this name already exists.' });
-            }
-            member.name = name.trim();
+      async function togglePublish(id) {
+          await fetch('/api/admin/toggle-publish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+          loadMasterData();
+      }
+
+      function openEditModal(id, name, amount, purpose) {
+          document.getElementById('editRecId').value = id;
+          document.getElementById('editName').value = name;
+          document.getElementById('editAmount').value = amount;
+          document.getElementById('editPurpose').value = purpose;
+          new bootstrap.Modal(document.getElementById('editModal')).show();
+      }
+
+      async function saveEditedRecord() {
+          const payload = {
+              id: document.getElementById('editRecId').value,
+              name: document.getElementById('editName').value,
+              amount: document.getElementById('editAmount').value,
+              purpose: document.getElementById('editPurpose').value
+          };
+          await fetch('/api/admin/edit-jumuiya-record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+          loadMasterData();
+      }
+
+      async function deleteJumuiyaRecord(id) {
+          if (confirm('Are you sure you want to permanently delete this submission record?')) {
+              await fetch('/api/admin/delete-jumuiya-record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+              loadMasterData();
         }
+      }
 
-        if (group) {
-            member.group = group.trim();
+      async function approveUser(id) {
+          await fetch('/api/admin/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+          loadMasterData();
+      }
+
+      async function rejectUser(id) {
+          if (confirm('Are you sure you want to reject this registration?')) {
+              await fetch('/api/admin/reject', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+              loadMasterData();
         }
+      }
 
-        if (password && password.trim() !== '') {
-            member.pass = password;
+      async function removeMember(id) {
+          if (confirm('Are you sure you want to remove this member?')) {
+              await fetch('/api/admin/remove-member', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+              loadMasterData();
         }
+      }
 
-        await writeData(data);
-        res.json({ success: true, message: 'Profile updated successfully!' });
-    } catch (err) {
-        console.error('Error updating profile:', err);
-        res.json({ success: false, message: 'Server error updating profile.' });
-    }
-});
-
-app.post('/api/youth/message', async (req, res) => {
-    const { sender, text } = req.body;
-    if (!sender || !text) return res.json({ success: false });
-    const data = await readData();
-    data.messages.push({ id: Date.now().toString(), sender, text, time: new Date().toLocaleString() });
-    await writeData(data);
-    res.json({ success: true });
-});
-
-// Master Admin APIs
-app.post('/api/admin/login', (req, res) => {
-    const { username, password } = req.body;
-    res.json({ success: (username === 'Admin' && password === 'Admin0247') });
-});
-
-app.get('/api/admin/data', async (req, res) => {
-    const data = await readData();
-    
-    let contributionsMap = {};
-    JUMUIYAS_LIST.forEach(j => { contributionsMap[j.name] = 0; });
-    (data.jumuiyaSubmissions || []).forEach(r => {
-        if (r.published) {
-            if (!contributionsMap[r.jumuiyaName]) contributionsMap[r.jumuiyaName] = 0;
-            contributionsMap[r.jumuiyaName] += r.amount;
-        }
-    });
-
-    res.json({ 
-        success: true, 
-        pending: data.pending, 
-        members: data.members, 
-        jumuiyaSubmissions: data.jumuiyaSubmissions || [],
-        contributionsMap,
-        readings: data.readings, 
-        events: data.events, 
-        messages: data.messages 
-    });
-});
-
-app.post('/api/admin/approve', async (req, res) => {
-    const { id } = req.body;
-    const data = await readData();
-    const index = data.pending.findIndex(p => p.id === id);
-    if (index !== -1) {
-        const approved = data.pending.splice(index, 1)[0];
-        approved.customId = `K${data.members.length + 1}`;
-        data.members.push(approved);
-        await writeData(data);
-    }
-    res.json({ success: true });
-});
-
-app.post('/api/admin/reject', async (req, res) => {
-    const { id } = req.body;
-    const data = await readData();
-    data.pending = data.pending.filter(p => p.id !== id);
-    await writeData(data);
-    res.json({ success: true });
-});
-
-app.post('/api/admin/remove-member', async (req, res) => {
-    const { id } = req.body;
-    const data = await readData();
-    data.members = data.members.filter(m => m.id !== id);
-    await writeData(data);
-    res.json({ success: true });
-});
-
-// Master Admin: Publish or Unpublish Jumuiya Record
-app.post('/api/admin/toggle-publish', async (req, res) => {
-    const { id } = req.body;
-    const data = await readData();
-    const rec = (data.jumuiyaSubmissions || []).find(r => r.id === id);
-    if (rec) {
-        rec.published = !rec.published;
-        await writeData(data);
-    }
-    res.json({ success: true });
-});
-
-app.post('/api/admin/edit-jumuiya-record', async (req, res) => {
-    const { id, name, amount, purpose } = req.body;
-    const data = await readData();
-    const rec = (data.jumuiyaSubmissions || []).find(r => r.id === id);
-    if (rec) {
-        if (name) rec.name = name;
-        if (amount !== undefined) rec.amount = parseFloat(amount) || 0;
-        if (purpose) rec.purpose = purpose;
-        await writeData(data);
-    }
-    res.json({ success: true });
-});
-
-app.post('/api/admin/delete-jumuiya-record', async (req, res) => {
-    const { id } = req.body;
-    const data = await readData();
-    if (data.jumuiyaSubmissions) {
-        data.jumuiyaSubmissions = data.jumuiyaSubmissions.filter(r => r.id !== id);
-        await writeData(data);
-    }
-    res.json({ success: true });
-});
-
-app.get('/api/admin/download-data', async (req, res) => {
-    try {
-        const data = await readData();
-        
-        let html = `<!DOCTYPE html>
-        <html>
-        <head>
-            <title>St. Michael Kasaini Youth Portal Report</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 20px; color: #333; }
-                h1 { font-size: 20px; color: #0d6efd; margin-bottom: 5px; }
-                h2 { font-size: 16px; border-bottom: 2px solid #ccc; padding-bottom: 5px; margin-top: 25px; }
-                p { font-size: 12px; color: #666; }
-                table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
-                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                th { background-color: #f8f9fa; }
-                @media print {
-                    .no-print { display: none; }
-                }
-            </style>
-        </head>
-        <body>
-            <h1>St. Michael Kasaini Youth Portal</h1>
-            <p>Master Admin Comprehensive Export Report - Generated on ${new Date().toLocaleString()}</p>
-            <button class="no-print" onclick="window.print()" style="padding: 10px 20px; background: #0d6efd; color: white; border: none; cursor: pointer; margin-bottom: 20px; font-weight: bold; border-radius: 4px;">🖨️ Print / Save as PDF</button>
-
-            <h2>Registered Members</h2>
-            <table>
-                <thead>
-                    <tr><th>#</th><th>ID</th><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th></tr>
-                </thead>
-                <tbody>`;
-        
-        const members = data.members || [];
-        if (members.length === 0) {
-            html += `<tr><td colspan="6" style="text-align: center; color: #777;">No registered members found.</td></tr>`;
-        } else {
-            members.forEach((m, idx) => {
-                html += `<tr>
-                    <td>${idx + 1}</td>
-                    <td>${m.customId || 'N/A'}</td>
-                    <td>${m.name}</td>
-                    <td>${m.phone || 'N/A'}</td>
-                    <td>${m.jumuiya || 'N/A'}</td>
-                    <td>${m.group || 'N/A'}</td>
-                </tr>`;
-            });
-        }
-        
-        html += `</tbody></table>
-
-            <h2>Jumuiya Contributions Submissions</h2>
-            <table>
-                <thead>
-                    <tr><th>#</th><th>Jumuiya</th><th>Contributor</th><th>Amount (KES)</th><th>Purpose</th><th>Status</th></tr>
-                </thead>
-                <tbody>`;
-
-        const submissions = data.jumuiyaSubmissions || [];
-        if (submissions.length === 0) {
-            html += `<tr><td colspan="6" style="text-align: center; color: #777;">No contributions recorded.</td></tr>`;
-        } else {
-            submissions.forEach((s, idx) => {
-                html += `<tr>
-                    <td>${idx + 1}</td>
-                    <td>${s.jumuiyaName}</td>
-                    <td>${s.name}</td>
-                    <td>${s.amount || 0}</td>
-                    <td>${s.purpose || 'General'}</td>
-                    <td>${s.published ? 'Published' : 'Hidden'}</td>
-                </tr>`;
-            });
-        }
-
-        html += `</tbody></table>
-            <script>
-                window.onload = function() {
-                    setTimeout(() => { window.print(); }, 500);
-                };
-            </script>
-        </body>
-        </html>`;
-
-        res.setHeader('Content-Type', 'text/html');
-        res.send(html);
-
-    } catch (e) {
-        console.error('Export Error:', e);
-        res.status(500).send('Error generating printable report.');
-    }
-});
-
-app.post('/api/admin/events', async (req, res) => {
-    const { title, date, description } = req.body;
-    const data = await readData();
-    if (!data.events) data.events = [];
-    data.events.push({ id: Date.now().toString(), title, date: date || '', description: description || '', type: 'upcoming' });
-    await writeData(data);
-    res.json({ success: true, message: 'Event saved successfully!' });
-});
-
-app.post('/api/admin/events/delete', async (req, res) => {
-    const { id } = req.body;
-    const data = await readData();
-    if (data.events) {
-        data.events = data.events.filter(e => e.id !== id && e._id !== id);
-        await writeData(data);
-    }
-    res.json({ success: true });
-});
-
-app.post('/api/admin/readings', async (req, res) => {
-    const { title, firstReading, psalm, secondReading, gospel } = req.body;
-    const data = await readData();
-    if (!Array.isArray(data.readings)) data.readings = [];
-    
-    const newReading = {
-        id: Date.now().toString(),
-        title: title || "Sunday Mass Readings",
-        firstReading: firstReading || "",
-        psalm: psalm || "",
-        secondReading: secondReading || "",
-        gospel: gospel || ""
-    };
-    
-    data.readings = [newReading];
-    await writeData(data);
-    res.json({ success: true, message: 'Readings published successfully!' });
-});
-
-app.post('/api/admin/readings/delete', async (req, res) => {
-    const { id } = req.body;
-    const data = await readData();
-    if (data.readings) {
-        data.readings = data.readings.filter(r => r.id !== id && r._id !== id);
-        await writeData(data);
-    }
-    res.json({ success: true });
-});
-
-app.post('/api/admin/update-readings', async (req, res) => {
-    const data = await readData();
-    data.readings = [req.body];
-    await writeData(data);
-    res.json({ success: true });
-});
-
-app.post('/api/admin/add-event', async (req, res) => {
-    const { title, date, description } = req.body;
-    const data = await readData();
-    data.events.push({ id: Date.now().toString(), title, date: date || '', description: description || '', type: 'upcoming' });
-    await writeData(data);
-    res.json({ success: true, message: 'Event pushed successfully!' });
-});
-
-app.post('/api/admin/reply-query', async (req, res) => {
-    const { text } = req.body;
-    const data = await readData();
-    data.messages.push({ id: Date.now().toString(), sender: '🛡️ Robert Wambua (Admin)', text, time: new Date().toLocaleString() });
-    await writeData(data);
-    res.json({ success: true });
-});
-
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+      async function downloadPortalData() {
+          try {
+              window.open('/api/admin/download-data', '_blank');
+          } catch (error) {
+              alert('Error downloading portal data: ' + error.message);
+          }
+      }
+  </script>
+</body></html>
