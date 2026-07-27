@@ -36,8 +36,11 @@
                             <label class="form-label">Password</label>
                             <input type="password" id="loginPass" class="form-control" required placeholder="Enter your password">
                         </div>
-                        <button type="submit" class="btn btn-primary w-100">Sign In to Dashboard</button>
+                        <button type="submit" class="btn btn-primary w-100 mb-2">Sign In to Dashboard</button>
                     </form>
+                    <div class="text-center mt-2">
+                        <button type="button" class="btn btn-link btn-sm text-decoration-none p-0" data-bs-toggle="modal" data-bs-target="#forgotPasswordModal">Forgot Password / Reset?</button>
+                    </div>
                 </div>
 
                 <!-- Sign Up Form -->
@@ -68,6 +71,35 @@
                         <button type="submit" class="btn btn-success w-100">Submit Registration</button>
                     </form>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot Password Modal -->
+    <div class="modal fade" id="forgotPasswordModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content p-4">
+                <h4 class="text-danger mb-3">Reset Password Request</h4>
+                <p class="text-muted small">Enter your full name and phone number to submit a password reset request to the admin.</p>
+                <div id="resetAlert" class="alert d-none" role="alert"></div>
+                <form id="forgotPasswordForm">
+                    <div class="mb-3">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" id="resetName" class="form-control" required placeholder="Your registered full name">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Phone Number</label>
+                        <input type="text" id="resetPhone" class="form-control" required placeholder="Your registered phone number">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">New Password</label>
+                        <input type="password" id="newResetPass" class="form-control" required placeholder="Enter your desired new password">
+                    </div>
+                    <div class="d-flex justify-content-end gap-2">
+                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger btn-sm">Request Password Reset</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -144,6 +176,42 @@
                 alertBox.textContent = 'Registration error. Please check connection.';
                 alertBox.className = 'alert alert-danger small';
                 alertBox.classList.remove('d-none');
+            }
+        });
+
+        // Forgot Password / Reset Request Handler
+        document.getElementById('forgotPasswordForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('resetName').value.trim();
+            const phone = document.getElementById('resetPhone').value.trim();
+            const newPassword = document.getElementById('newResetPass').value;
+            const resetAlert = document.getElementById('resetAlert');
+
+            try {
+                const res = await fetch('/api/youth/forgot-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, phone, newPassword })
+                });
+                const data = await res.json();
+
+                resetAlert.textContent = data.message || 'Reset request submitted successfully.';
+                resetAlert.className = data.success ? 'alert alert-success small' : 'alert alert-danger small';
+                resetAlert.classList.remove('d-none');
+
+                if (data.success) {
+                    setTimeout(() => {
+                        const modalEl = document.getElementById('forgotPasswordModal');
+                        const modalInstance = bootstrap.Modal.getInstance(modalEl);
+                        if (modalInstance) modalInstance.hide();
+                        document.getElementById('forgotPasswordForm').reset();
+                        resetAlert.classList.add('d-none');
+                    }, 1500);
+                }
+            } catch (err) {
+                resetAlert.textContent = 'Server connection error. Please try again.';
+                resetAlert.className = 'alert alert-danger small';
+                resetAlert.classList.remove('d-none');
             }
         });
     </script></body></html>
