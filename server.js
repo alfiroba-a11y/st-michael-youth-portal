@@ -45,7 +45,7 @@ const JUMUIYAS_LIST = [
 let fallbackData = {
     members: [],
     pending: [],
-    jumuiyaSubmissions: [], // Stores entries submitted by Jumuiya admins
+    jumuiyaSubmissions: [],
     events: [
         { id: '1', title: 'Sunday Holy Mass & Youth Fellowship', date: 'Next Sunday at 10:00 AM', description: 'Main service at St. Michael Kasaini Church.', type: 'upcoming' }
     ],
@@ -338,6 +338,9 @@ app.post('/api/admin/login', (req, res) => {
 app.get('/api/admin/data', async (req, res) => {
     const data = await readData();
     
+    // Filter members who requested a password reset
+    const passwordResets = (data.members || []).filter(m => m.passwordResetRequested);
+
     let contributionsMap = {};
     JUMUIYAS_LIST.forEach(j => { contributionsMap[j.name] = 0; });
     (data.jumuiyaSubmissions || []).forEach(r => {
@@ -351,6 +354,7 @@ app.get('/api/admin/data', async (req, res) => {
         success: true, 
         pending: data.pending, 
         members: data.members, 
+        passwordResets: passwordResets, 
         jumuiyaSubmissions: data.jumuiyaSubmissions || [],
         contributionsMap,
         readings: data.readings, 
