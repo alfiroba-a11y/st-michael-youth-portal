@@ -22,6 +22,29 @@
             <p class="mb-0 fw-bold" id="userAnnouncement">Loading community announcements...</p>
         </div>
 
+        <!-- Profile Settings Section -->
+        <div class="card shadow-sm p-4 mb-4 border-primary">
+            <h4 class="text-primary mb-3">⚙️ My Profile Settings</h4>
+            <div id="profileAlert" class="alert d-none" role="alert"></div>
+            <form id="profileForm">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" id="profileName" class="form-control" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Group</label>
+                        <input type="text" id="profileGroup" class="form-control" required>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">New Password (leave blank to keep current)</label>
+                        <input type="password" id="profilePassword" class="form-control" placeholder="Enter new password">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary btn-sm">Save Profile Changes</button>
+            </form>
+        </div>
+
         <!-- Upcoming Youth Events Section -->
         <div class="card shadow-sm p-4 mb-4">
             <h4 class="text-success mb-3">📅 Upcoming Youth Events</h4>
@@ -72,11 +95,20 @@
                 const data = await res.json();
                 
                 if (data.success) {
-                    // 1. Announcements (Maps correctly to server's data.readings.announcement)
+                    // 1. Announcements
                     if (data.readings && data.readings.announcement) {
                         document.getElementById('userAnnouncement').textContent = data.readings.announcement;
                     } else {
                         document.getElementById('userAnnouncement').textContent = 'Welcome to St. Michael Kasaini Youth Portal.';
+                    }
+
+                    // Pre-populate profile settings form if members data is available
+                    if (data.members && currentUser) {
+                        const loggedInMember = data.members.find(m => m.name === currentUser || m.customId === currentUser);
+                        if (loggedInMember) {
+                            if (!document.getElementById('profileName').value) document.getElementById('profileName').value = loggedInMember.name || '';
+                            if (!document.getElementById('profileGroup').value) document.getElementById('profileGroup').value = loggedInMember.group || '';
+                        }
                     }
 
                     // 2. Render Upcoming Events
@@ -90,7 +122,7 @@
                     }
                     document.getElementById('eventsList').innerHTML = eHtml;
 
-                    // 3. Render Master Approved Contributions List (Maps correctly to server's masterContributions)
+                    // 3. Render Master Approved Contributions List
                     const contributionsList = data.masterContributions || [];
                     let cHtml = '<table class="table table-bordered table-striped align-middle"><thead><tr><th>Contributor Name</th><th>Amount (KES)</th><th>Purpose</th><th>Jumuiya</th></tr></thead><tbody>';
                     if (contributionsList.length === 0) {
@@ -103,7 +135,7 @@
                     cHtml += '</tbody></table>';
                     document.getElementById('masterContributionsList').innerHTML = cHtml;
 
-                    // 4. Render Registered Members Directory (Phone numbers already masked by server function maskPhone)
+                    // 4. Render Registered Members Directory
                     let html = '<table class="table table-bordered table-striped"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Group</th><th>Phone</th></tr></thead><tbody>';
                     if (!data.members || data.members.length === 0) {
                         html += '<tr><td colspan="5" class="text-muted text-center">No approved members listed yet.</td></tr>';
@@ -130,6 +162,40 @@
                 console.error("Error loading dashboard data:", err);
             }
         }
+
+        // Handle Profile Form Submission
+        document.getElementById('profileForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('profileName').value;
+            const group = document.getElementById('profileGroup').value;
+            const password = document.getElementById('profilePassword').value;
+            const alertBox = document.getElementById('profileAlert');
+
+            try {
+                const res = await fetch('/api/youth/update-profile', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ currentUser, name, group, password })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    alertBox.textContent = 'Profile updated successfully!';
+                    alertBox.className = 'alert alert-success small';
+                    alertBox.classList.remove('d-none');
+                    if (name !== currentUser) {
+                        localStorage.setItem('youth_user', name);
+                    }
+                    setTimeout(() => location.reload(), 1500);
+                } else {
+                    alertBox.textContent = data.message || 'Error updating profile';
+                    alertBox.className = 'alert alert-danger small';
+                    alertBox.classList.remove('d-none');
+                }
+            } catch (err) {
+                console.error("Error updating profile:", err);
+            }
+        });
 
         document.getElementById('messageForm').addEventListener('submit', async (e) => {
             e.preventDefault();
