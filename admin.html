@@ -321,11 +321,12 @@
                   prHtml += '<tr><td colspan="4" class="text-muted">No pending password reset requests.</td></tr>';
               } else {
                   data.passwordResets.forEach(pr => {
+                      const memberId = pr.id || pr._id;
                       prHtml += `<tr>
                           <td>${pr.name}</td>
                           <td>${maskPhoneNumber(pr.phone)}</td>
                           <td><span class="badge bg-warning text-dark">Forgot Password / Awaiting Approval</span></td>
-                          <td><button class="btn btn-success btn-sm" onclick="approvePasswordReset('${pr.id}')">Approve New Password</button></td>
+                          <td><button class="btn btn-success btn-sm" onclick="approvePasswordReset('${memberId}')">Approve New Password</button></td>
                       </tr>`;
                   });
               }
