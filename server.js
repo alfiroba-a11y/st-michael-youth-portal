@@ -254,6 +254,34 @@ app.post('/api/youth/login', async (req, res) => {
     res.json({ success: false, message: 'Member not found.' });
 });
 
+// Member Password Reset Request Endpoint
+app.post('/api/youth/forgot-password', async (req, res) => {
+    try {
+        const { name, phone, newPassword } = req.body;
+        if (!name || !phone || !newPassword) {
+            return res.json({ success: false, message: 'All fields are required.' });
+        }
+
+        const data = await readData();
+        const cleanName = name.trim().toLowerCase();
+        const cleanPhone = phone.trim();
+
+        const member = data.members.find(m => m.name.toLowerCase() === cleanName && (m.phone || '').trim() === cleanPhone);
+        if (!member) {
+            return res.json({ success: false, message: 'Member not found with this name and phone number.' });
+        }
+
+        member.pendingNewPassword = newPassword;
+        member.passwordResetRequested = true;
+        await writeData(data);
+
+        res.json({ success: true, message: 'Password reset request sent to admin successfully.' });
+    } catch (err) {
+        console.error('Password reset request error:', err);
+        res.status(500).json({ success: false, message: 'Server error processing request.' });
+    }
+});
+
 // Member Profile Update Endpoint
 app.post('/api/youth/update-profile', async (req, res) => {
     try {
@@ -358,6 +386,51 @@ app.post('/api/admin/remove-member', async (req, res) => {
     data.members = data.members.filter(m => m.id !== id);
     await writeData(data);
     res.json({ success: true });
+});
+
+// Master Admin Endpoint to Edit Member Details (Name, Phone, Jumuiya, Group)
+app.post('/api/admin/edit-member', async (req, res) => {
+    try {
+        const { id, name, phone, jumuiya, group } = req.body;
+        const data = await readData();
+
+        const member = (data.members || []).find(m => m.id === id || m._id === id);
+        if (!member) {
+            return res.json({ success: false, message: 'Member not found.' });
+        }
+
+        if (name) member.name = name.trim();
+        if (phone !== undefined) member.phone = phone.trim();
+        if (jumuiya) member.jumuiya = jumuiya.trim();
+        if (group) member.group = group.trim();
+
+        await writeData(data);
+        res.json({ success: true, message: 'Member details updated successfully!', member });
+    } catch (err) {
+        console.error('Error updating member details:', err);
+        res.status(500).json({ success: false, message: 'Error updating member details.' });
+    }
+});
+
+// Master Admin Endpoint to Approve Password Reset
+app.post('/api/admin/approve-password-reset', async (req, res) => {
+    try {
+        const { id } = req.body;
+        const data = await readData();
+
+        const member = (data.members || []).find(m => m.id === id || m._id === id);
+        if (member && member.passwordResetRequested && member.pendingNewPassword) {
+            member.pass = member.pendingNewPassword;
+            member.pendingNewPassword = undefined;
+            member.passwordResetRequested = false;
+            await writeData(data);
+            return res.json({ success: true, message: 'Password reset approved successfully.' });
+        }
+        res.json({ success: false, message: 'Pending password reset request not found.' });
+    } catch (err) {
+        console.error('Error approving password reset:', err);
+        res.status(500).json({ success: false, message: 'Error approving password reset.' });
+    }
 });
 
 // Master Admin: Publish or Unpublish Jumuiya Record
