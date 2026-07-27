@@ -62,7 +62,12 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Youth Group / Choir</label>
-                            <input type="text" id="regGroup" class="form-control" placeholder="e.g. Youth Choir / General">
+                            <select id="regGroup" class="form-select" required>
+                                <option value="" disabled selected>Select youth group</option>
+                                <option value="YCA">YCA</option>
+                                <option value="YSC">YSC</option>
+                                <option value="MYM">MYM</option>
+                            </select>
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Create Password</label>
@@ -214,4 +219,5 @@
                 resetAlert.classList.remove('d-none');
             }
         });
-    </script></body></html>
+    </script>
+</body></html>
