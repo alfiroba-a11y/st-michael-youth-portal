@@ -441,7 +441,9 @@ app.get('/api/jumuiya/download-data', async (req, res) => {
             <script>window.onload = function() { setTimeout(() => { window.print(); }, 500); };</script>
         </body></html>`;
 
-        res.setHeader('Content-Type', 'text/html');
+        const filename = `${(jumuiyaName || 'Jumuiya').replace(/[^a-zA-Z0-9]/g, '_')}_Report.html`;
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
         res.send(html);
     } catch (e) {
         console.error('Jumuiya Export Error:', e);
