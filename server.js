@@ -126,6 +126,8 @@ let fallbackData = {
     members: [],
     pending: [],
     jumuiyaSubmissions: [],
+    polls: [],
+    targetAmount: 50000,
     events: [
         { id: '1', title: 'Sunday Holy Mass & Youth Fellowship', date: 'Next Sunday at 10:00 AM', description: 'Main service at St. Michael Kasaini Church.', type: 'upcoming' }
     ],
@@ -176,6 +178,7 @@ async function writeData(data) {
                     members: data.members, 
                     pending: data.pending, 
                     jumuiyaSubmissions: data.jumuiyaSubmissions, 
+                    polls: data.polls || [],
                     events: data.events, 
                     messages: data.messages, 
                     readings: data.readings 
@@ -328,7 +331,7 @@ app.get('/api/youth/directory', async (req, res) => {
         events: data.events, 
         readings: data.readings, 
         messages: data.messages,
-        reflection,       // Included for dashboards
+        reflection,        // Included for dashboards
         textReflection: reflection, // Alias just in case frontend uses this key
         patronSaint       // Included for dashboards
     });
@@ -476,6 +479,7 @@ app.get('/api/admin/data', async (req, res) => {
         members: data.members, 
         passwordResets: passwordResets, 
         jumuiyaSubmissions: data.jumuiyaSubmissions || [],
+        polls: data.polls || [],
         contributionsMap,
         readings: data.readings, 
         events: data.events, 
@@ -484,6 +488,140 @@ app.get('/api/admin/data', async (req, res) => {
         textReflection: reflection,
         patronSaint
     });
+});
+
+// 1. Get Global Stats & Target Amount
+app.get('/api/admin/global-stats', async (req, res) => {
+    try {
+        const data = await readData();
+        
+        let totalCollected = 0;
+        (data.jumuiyaSubmissions || []).forEach(r => {
+            if (r.published) {
+                totalCollected += Number(r.amount) || 0;
+            }
+        });
+
+        let targetAmount = 50000;
+        if (db) {
+            const settings = await db.collection('settings').findOne({ type: 'monthly_target' });
+            if (settings && settings.targetAmount) {
+                targetAmount = Number(settings.targetAmount);
+            }
+        } else if (data.targetAmount) {
+            targetAmount = Number(data.targetAmount);
+        }
+
+        res.json({
+            success: true,
+            totalCollected,
+            targetAmount
+        });
+    } catch (err) {
+        console.error('Error fetching global stats:', err);
+        res.status(500).json({ success: false, message: 'Server error fetching global stats.' });
+    }
+});
+
+// 2. Set Monthly Youth Target
+app.post('/api/admin/set-target', async (req, res) => {
+    try {
+        const { targetAmount } = req.body;
+        if (!targetAmount || isNaN(targetAmount)) {
+            return res.json({ success: false, message: 'Valid target amount is required.' });
+        }
+
+        const parsedTarget = Number(targetAmount);
+
+        if (db) {
+            await db.collection('settings').updateOne(
+                { type: 'monthly_target' },
+                { $set: { targetAmount: parsedTarget, updatedAt: new Date() } },
+                { upsert: true }
+            );
+        } else {
+            fallbackData.targetAmount = parsedTarget;
+        }
+
+        res.json({ success: true, message: 'Monthly target updated successfully!' });
+    } catch (err) {
+        console.error('Error setting target:', err);
+        res.status(500).json({ success: false, message: 'Server error updating target.' });
+    }
+});
+
+// 3. Close and Archive Current Cycle
+app.post('/api/admin/close-cycle', async (req, res) => {
+    try {
+        const { cycleName } = req.body;
+        const data = await readData();
+
+        const archiveRecord = {
+            id: Date.now().toString(),
+            cycleName: cycleName || `Cycle ${new Date().toLocaleDateString()}`,
+            closedAt: new Date(),
+            submissions: data.jumuiyaSubmissions || []
+        };
+
+        if (db) {
+            await db.collection('cycle_history').insertOne(archiveRecord);
+            await db.collection('portal_data').updateOne(
+                { _id: 'main_store' },
+                { $set: { jumuiyaSubmissions: [] } }
+            );
+        }
+
+        data.jumuiyaSubmissions = [];
+        await writeData(data);
+
+        res.json({ success: true, message: `Cycle "${archiveRecord.cycleName}" closed and archived successfully. Board cleared for the new cycle!` });
+    } catch (err) {
+        console.error('Error closing cycle:', err);
+        res.status(500).json({ success: false, message: 'Server error closing cycle.' });
+    }
+});
+
+// 4. Polls Management API Endpoints
+app.post('/api/admin/polls', async (req, res) => {
+    try {
+        const { question, options } = req.body;
+        if (!question || !options || !Array.isArray(options)) {
+            return res.json({ success: false, message: 'Question and options are required.' });
+        }
+
+        const data = await readData();
+        if (!data.polls) data.polls = [];
+
+        const newPoll = {
+            id: Date.now().toString(),
+            question: question.trim(),
+            options: options.map(opt => ({ text: opt, votes: 0 })),
+            createdAt: new Date()
+        };
+
+        data.polls.push(newPoll);
+        await writeData(data);
+
+        res.json({ success: true, message: 'Poll published successfully!' });
+    } catch (err) {
+        console.error('Error creating poll:', err);
+        res.status(500).json({ success: false, message: 'Server error creating poll.' });
+    }
+});
+
+app.post('/api/admin/polls/delete', async (req, res) => {
+    try {
+        const { id } = req.body;
+        const data = await readData();
+        if (data.polls) {
+            data.polls = data.polls.filter(p => p.id !== id && p._id !== id);
+            await writeData(data);
+        }
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Error deleting poll:', err);
+        res.status(500).json({ success: false, message: 'Server error deleting poll.' });
+    }
 });
 
 app.post('/api/admin/approve', async (req, res) => {
