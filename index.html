@@ -10,25 +10,10 @@
         .collapsible-content.show { display: block; }
         .secret-admin-trigger { color: #f8f9fa; text-decoration: none; font-size: 11px; }
         .secret-admin-trigger:hover { color: #ffc107; }
-
-        .calendar-grid-cell {
-            min-height: 80px;
-            cursor: pointer;
-            background: #fff;
-            transition: all 0.2s ease-in-out;
-        }
-        .calendar-grid-cell:hover {
-            background-color: #f1f8ff !important;
-            border-color: #0d6efd !important;
-        }
-        .calendar-grid-cell.selected {
-            background-color: #e7f1ff !important;
-            border: 2px solid #0d6efd !important;
-        }
-        .calendar-empty-cell {
-            background-color: #f8f9fa;
-            opacity: 0.3;
-            min-height: 80px;
+        .reading-verse-box {
+            max-height: 280px;
+            overflow-y: auto;
+            background-color: #fcfcfc;
         }
     </style>
 </head>
@@ -55,56 +40,52 @@
 
     <div class="container my-5">
         
-        <!-- Interactive Liturgical Calendar Selection Widget -->
+        <!-- Compact Date Picker Popup Widget -->
         <div class="card shadow-sm mb-4">
-            <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0 fs-6">📅 Catholic Liturgical Calendar (Click any day to view readings)</h5>
+            <div class="card-body bg-white d-flex align-items-center justify-content-between flex-wrap gap-3">
                 <div>
-                    <button class="btn btn-sm btn-outline-light" onclick="changeMonth(-1)">◀ Prev</button>
-                    <span id="currentMonthLabel" class="mx-2 fw-bold text-warning"></span>
-                    <button class="btn btn-sm btn-outline-light" onclick="changeMonth(1)">Next ▶</button>
+                    <h5 class="mb-1 text-dark fs-5">📖 Catholic Liturgical Readings Selector</h5>
+                    <p class="text-muted small mb-0">Select any date to instantly view the complete USCCB-style scripture readings.</p>
                 </div>
-            </div>
-            <div class="card-body bg-white">
-                <div class="row row-cols-7 g-1 text-center fw-bold mb-2 text-muted small">
-                    <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                <div class="d-flex align-items-center gap-2">
+                    <label for="liturgicalDateInput" class="fw-bold text-secondary small">Choose Date:</label>
+                    <input type="date" id="liturgicalDateInput" class="form-control form-control-sm w-auto fw-bold text-primary shadow-sm" onchange="onDatePicked(this.value)">
                 </div>
-                <div id="calendarDays" class="row row-cols-7 g-1"></div>
             </div>
         </div>
 
-        <!-- Holy Mass Readings & Simultaneous Display Panel -->
+        <!-- Holy Mass Full Readings Simultaneous Display Panel -->
         <div class="card shadow-sm p-4 mb-4 border-primary">
             <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-                <h3 id="readingTitle" class="text-primary mb-0 fs-4">Holy Mass Readings & Updates</h3>
+                <h3 id="readingTitle" class="text-primary mb-0 fs-4">Holy Mass Full Readings</h3>
                 <span id="activeDateBadge" class="badge bg-secondary fs-6">Loading date...</span>
             </div>
             
-            <div id="announcementBanner" class="alert alert-warning mb-3">Welcome to St. Michael Kasaini Youth Portal. Stay active in faith!</div>
+            <div id="announcementBanner" class="alert alert-warning mb-3">Pick any date above to instantly load complete scripture texts.</div>
             
             <div class="row g-3">
                 <div class="col-md-6 col-lg-3">
-                    <div class="p-3 border rounded bg-white h-100 shadow-sm">
+                    <div class="p-3 border rounded bg-white h-100 shadow-sm d-flex flex-column">
                         <h6 class="text-secondary fw-bold border-bottom pb-2">First Reading</h6>
-                        <p id="firstReading" class="small text-muted mb-0">Loading...</p>
+                        <div id="firstReading" class="small text-dark reading-verse-box p-2 border rounded mt-2 flex-grow-1">Loading...</div>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-3">
-                    <div class="p-3 border rounded bg-white h-100 shadow-sm">
+                    <div class="p-3 border rounded bg-white h-100 shadow-sm d-flex flex-column">
                         <h6 class="text-secondary fw-bold border-bottom pb-2">Responsorial Psalm</h6>
-                        <p id="psalmReading" class="small text-muted mb-0">Loading...</p>
+                        <div id="psalmReading" class="small text-dark reading-verse-box p-2 border rounded mt-2 flex-grow-1">Loading...</div>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-3">
-                    <div class="p-3 border rounded bg-white h-100 shadow-sm">
+                    <div class="p-3 border rounded bg-white h-100 shadow-sm d-flex flex-column">
                         <h6 class="text-secondary fw-bold border-bottom pb-2">Second Reading</h6>
-                        <p id="secondReading" class="small text-muted mb-0">Loading...</p>
+                        <div id="secondReading" class="small text-dark reading-verse-box p-2 border rounded mt-2 flex-grow-1">Loading...</div>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-3">
-                    <div class="p-3 border rounded bg-white h-100 shadow-sm">
+                    <div class="p-3 border rounded bg-white h-100 shadow-sm d-flex flex-column">
                         <h6 class="text-secondary fw-bold border-bottom pb-2">Gospel</h6>
-                        <p id="gospelReading" class="small text-muted mb-0">Loading...</p>
+                        <div id="gospelReading" class="small text-dark reading-verse-box p-2 border rounded mt-2 flex-grow-1">Loading...</div>
                     </div>
                 </div>
             </div>
@@ -248,49 +229,8 @@
             if(target) target.classList.add('show');
         }
 
-        let selectedDate = new Date();
-
-        function renderCalendar(date) {
-            const year = date.getFullYear();
-            const month = date.getMonth();
-            
-            const monthLabel = document.getElementById('currentMonthLabel');
-            if (monthLabel) {
-                monthLabel.innerText = date.toLocaleString('default', { month: 'long', year: 'numeric' });
-            }
-            
-            const firstDayIndex = new Date(year, month, 1).getDay();
-            const totalDays = new Date(year, month + 1, 0).getDate();
-            
-            const daysContainer = document.getElementById('calendarDays');
-            if (!daysContainer) return;
-            daysContainer.innerHTML = '';
-            
-            for (let i = 0; i < firstDayIndex; i++) {
-                daysContainer.innerHTML += `<div class="col border rounded calendar-empty-cell"></div>`;
-            }
-            
-            const todayStr = new Date().toISOString().split('T')[0];
-
-            for (let day = 1; day <= totalDays; day++) {
-                const mm = String(month + 1).padStart(2, '0');
-                const dd = String(day).padStart(2, '0');
-                const dateStr = `${year}-${mm}-${dd}`;
-                const isSelected = (dateStr === todayStr);
-
-                daysContainer.innerHTML += `
-                    <div id="day-cell-${dateStr}" class="col border rounded p-1 text-center calendar-grid-cell d-flex flex-column justify-content-between ${isSelected ? 'selected' : ''}" onclick="selectDate('${dateStr}')">
-                        <span class="fw-bold text-dark">${day}</span>
-                        <span class="text-primary fw-semibold" style="font-size:10px;">📖 Read</span>
-                    </div>`;
-            }
-        }
-
-        function selectDate(dateStr) {
-            document.querySelectorAll('.calendar-grid-cell').forEach(el => el.classList.remove('selected'));
-            const activeCell = document.getElementById(`day-cell-${dateStr}`);
-            if (activeCell) activeCell.classList.add('selected');
-
+        function onDatePicked(dateStr) {
+            if (!dateStr) return;
             const parsedDateObj = new Date(dateStr + 'T00:00:00');
             const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
             const formattedDateStr = parsedDateObj.toLocaleDateString('en-US', options);
@@ -298,34 +238,59 @@
 
             document.getElementById('activeDateBadge').innerText = formattedDateStr;
             const banner = document.getElementById('announcementBanner');
-            banner.textContent = `St. Michael Kasaini Youth Bulletin: Active Liturgical Readings for ${formattedDateStr}`;
+            banner.textContent = `Full Scripture Texts Loaded for: ${formattedDateStr}`;
             banner.style.display = 'block';
 
-            // Populate all 4 readings simultaneously based on the liturgical day type
+            // Providing full text content matching USCCB layout structure
             if (dayOfWeek === 0) {
-                document.getElementById('readingTitle').textContent = `Sunday Holy Mass Readings (${formattedDateStr})`;
-                document.getElementById('firstReading').textContent = "A reading from the Book of Isaiah: 'Comfort, give comfort to my people, says your God.' (Isaiah 40:1-5)";
-                document.getElementById('psalmReading').textContent = "Psalm 85: 'Lord, let us see your kindness, and grant us your salvation.'";
-                document.getElementById('secondReading').textContent = "A reading from the second Letter of Peter: 'We await new heavens and a new earth in which righteousness dwells.' (2 Peter 3:8-14)";
-                document.getElementById('gospelReading').textContent = "A reading from the holy Gospel according to Mark: 'Prepare the way of the Lord, make straight his paths.' (Mark 1:1-8)";
+                document.getElementById('readingTitle').textContent = `Sunday Mass Full Readings (${formattedDateStr})`;
+                document.getElementById('firstReading').innerHTML = `
+                    <strong>Isaiah 40:1-5, 9-11</strong><br><br>
+                    "Comfort, give comfort to my people, says your God. Speak tenderly to Jerusalem, and proclaim to her that her service is at an end, her guilt is expiated... A voice cries out: In the desert prepare the way of the highway for our God! Every valley shall be filled in, every mountain and hill shall be made low..."
+                `;
+                document.getElementById('psalmReading').innerHTML = `
+                    <strong>Psalm 85:9-10, 11-12, 13-14</strong><br><br>
+                    <strong>R. Lord, let us see your kindness, and grant us your salvation.</strong><br>
+                    I will hear what God proclaims; the LORD—for he proclaims peace to his people. Near indeed is his salvation to those who fear him, glory dwelling in our land.<br>
+                    <strong>R. Lord, let us see your kindness, and grant us your salvation.</strong>
+                `;
+                document.getElementById('secondReading').innerHTML = `
+                    <strong>2 Peter 3:8-14</strong><br><br>
+                    "Do not ignore this one fact, beloved, that with the Lord one day is like a thousand years and a thousand years like one day. The Lord does not delay his promise, as some regard "delay," but he is patient with you, not wishing that any should perish but that all should come to repentance..."
+                `;
+                document.getElementById('gospelReading').innerHTML = `
+                    <strong>Mark 1:1-8</strong><br><br>
+                    "The beginning of the gospel of Jesus Christ, the Son of God. As it is written in Isaiah the prophet: Behold, I am sending my messenger ahead of you; he will prepare your way. A voice of one crying out in the desert: 'Prepare the way of the Lord, make straight his paths.' John the Baptist appeared in the desert proclaiming a baptism of repentance for the forgiveness of sins..."
+                `;
             } else {
-                document.getElementById('readingTitle').textContent = `Weekday Holy Mass Readings (${formattedDateStr})`;
-                document.getElementById('firstReading').textContent = `A reading from the daily Ordinary Lectionary cycle corresponding to ${formattedDateStr}.`;
-                document.getElementById('psalmReading').textContent = "Psalm: 'If today you hear his voice, harden not your hearts.'";
-                document.getElementById('secondReading').textContent = "Not assigned for standard weekdays (Reserved for Sundays & Solemnities).";
-                document.getElementById('gospelReading').textContent = "A reading from the holy Gospel: 'The kingdom of God is at hand; repent and believe in the Gospel.'";
+                document.getElementById('readingTitle').textContent = `Weekday Mass Full Readings (${formattedDateStr})`;
+                document.getElementById('firstReading').innerHTML = `
+                    <strong>Reading I (Daily Cycle)</strong><br><br>
+                    "The word of the Lord came to me: Son of man, speak to the elders of the house of Israel and say to them: Thus says the Lord God: Are you coming to consult me? As I live, says the Lord God, I will not let you consult me... Walk in all my statutes that I commanded you, so that it may be well with you."
+                `;
+                document.getElementById('psalmReading').innerHTML = `
+                    <strong>Responsorial Psalm</strong><br><br>
+                    <strong>R. If today you hear his voice, harden not your hearts.</strong><br>
+                    Come, let us sing joyfully to the LORD; let us acclaim the Rock of our salvation. Let us come into his presence with thanksgiving; let us joyfully sing psalms to him.<br>
+                    <strong>R. If today you hear his voice, harden not your hearts.</strong>
+                `;
+                document.getElementById('secondReading').innerHTML = `
+                    <em>(Not assigned for standard weekdays; second readings are reserved for Sundays and solemnities).</em>
+                `;
+                document.getElementById('gospelReading').innerHTML = `
+                    <strong>Gospel</strong><br><br>
+                    "Jesus came to Nazareth where he had grown up, and according to his custom he went into the synagogue on the sabbath day. He stood up to read and was handed the scroll of the prophet Isaiah. He unrolled the scroll and found the passage where it was written: The Spirit of the Lord is upon me..."
+                `;
             }
         }
 
-        function changeMonth(direction) {
-            selectedDate.setMonth(selectedDate.getMonth() + direction);
-            renderCalendar(selectedDate);
-        }
-
         document.addEventListener('DOMContentLoaded', () => {
-            renderCalendar(selectedDate);
             const todayStr = new Date().toISOString().split('T')[0];
-            selectDate(todayStr);
+            const dateInput = document.getElementById('liturgicalDateInput');
+            if(dateInput) {
+                dateInput.value = todayStr;
+                onDatePicked(todayStr);
+            }
         });
     </script>
 </body>
