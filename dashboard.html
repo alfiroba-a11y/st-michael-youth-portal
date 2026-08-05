@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Member Dashboard - St. Michael Kasaini Youth</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js CDN for 11 Jumuiyas Graph -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-light d-flex flex-column min-vh-100">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 shadow-sm">
@@ -78,17 +80,26 @@
 
             <!-- Right Column: Daily Reflections & Patron Saint Reminder -->
             <div class="col-lg-4">
-                <!-- Patron Saint Reminder Card (Locked to St. Aloysius Gonzaga) -->
+                <!-- Patron Saint Reminder Card -->
                 <div class="card shadow-sm p-4 mb-4 border-warning-subtle">
                     <h5 class="text-warning-emphasis fw-bold mb-2">✨ Patron Saint Reminder</h5>
                     <div id="patronSaintWidget">Loading patron saint...</div>
                 </div>
 
-                <!-- Daily Spiritual Reflection Card (Automated Daily Verse) -->
+                <!-- Daily Spiritual Reflection Card -->
                 <div class="card shadow-sm p-4 mb-4 border-info-subtle">
                     <h5 class="text-info-emphasis fw-bold mb-2">📖 Daily Spiritual Reflection</h5>
                     <div id="textReflectionsWidget">Loading reflection...</div>
                 </div>
+            </div>
+        </div>
+
+        <!-- 11 Jumuiyas Graph Card (No Download Button) -->
+        <div class="card shadow-sm p-4 mb-4 border-0">
+            <h4 class="text-primary h5 fw-bold mb-1">📊 Eleven Jumuiyas Contributions Overview</h4>
+            <p class="text-muted small">Visual comparison of total collections across all 11 Jumuiyas in St. Michael Kasaini Youth.</p>
+            <div style="position: relative; height: 350px; width: 100%;">
+                <canvas id="memberPortalGraph"></canvas>
             </div>
         </div>
 
@@ -133,6 +144,44 @@
             document.getElementById('welcomeUser').textContent = `Signed in as: ${currentUser}`;
         }
 
+        let memberChartInstance = null;
+
+        async function loadMemberPortalGraph() {
+            try {
+                const res = await fetch('/api/analytics/jumuiya-graph');
+                const data = await res.json();
+                if (data.success) {
+                    const ctx = document.getElementById('memberPortalGraph').getContext('2d');
+                    
+                    if (memberChartInstance) {
+                        memberChartInstance.destroy();
+                    }
+
+                    memberChartInstance = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.labels,
+                            datasets: [{
+                                label: 'Total Contributions (KES)',
+                                data: data.datasetsData,
+                                backgroundColor: '#0d6efd',
+                                borderRadius: 6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                y: { beginAtZero: true }
+                            }
+                        }
+                    });
+                }
+            } catch (err) {
+                console.error('Error loading member portal graph:', err);
+            }
+        }
+
         async function loadDashboardData() {
             try {
                 const res = await fetch('/api/youth/directory');
@@ -146,14 +195,14 @@
                         document.getElementById('userAnnouncement').textContent = 'Welcome to St. Michael Kasaini Youth Portal.';
                     }
 
-                    // 1.1 Patron Saint Reminder Widget (Permanently St. Aloysius Gonzaga)
+                    // 1.1 Patron Saint Reminder Widget
                     document.getElementById('patronSaintWidget').innerHTML = `
                         <h6 class="fw-bold text-dark">St. Aloysius Gonzaga</h6>
                         <p class="small text-muted mb-1"><strong>Feast Day:</strong> June 21</p>
                         <p class="small mb-0 fst-italic">"I am a piece of iron, and I am drawn by a magnet; my desire is to go to God."</p>
                     `;
 
-                    // 1.2 Text Reflections Widget (Automated Backend Rotation)
+                    // 1.2 Text Reflections Widget
                     if (data.textReflection) {
                         document.getElementById('textReflectionsWidget').innerHTML = `
                             <h6 class="fw-bold text-dark">${data.textReflection.title || 'Daily Word'}</h6>
@@ -353,7 +402,9 @@
             window.location.href = '/login';
         }
 
+        // Initial loads
         loadDashboardData();
+        loadMemberPortalGraph();
         setInterval(loadDashboardData, 5000);
     </script>
 </body>
