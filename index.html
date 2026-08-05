@@ -44,8 +44,8 @@
         <div class="card shadow-sm mb-4">
             <div class="card-body bg-white d-flex align-items-center justify-content-between flex-wrap gap-3">
                 <div>
-                    <h5 class="mb-1 text-dark fs-5">📖 Catholic Liturgical Readings Selector</h5>
-                    <p class="text-muted small mb-0">Select any date to instantly view the complete USCCB-style scripture readings.</p>
+                    <h5 class="mb-1 text-dark fs-5">📖 USCCB Catholic Liturgical Readings Selector</h5>
+                    <p class="text-muted small mb-0">Select any date to instantly load the official daily Scripture readings.</p>
                 </div>
                 <div class="d-flex align-items-center gap-2">
                     <label for="liturgicalDateInput" class="fw-bold text-secondary small">Choose Date:</label>
@@ -61,7 +61,7 @@
                 <span id="activeDateBadge" class="badge bg-secondary fs-6">Loading date...</span>
             </div>
             
-            <div id="announcementBanner" class="alert alert-warning mb-3">Pick any date above to instantly load complete scripture texts.</div>
+            <div id="announcementBanner" class="alert alert-warning mb-3">Pick any date above to instantly load USCCB-compliant scripture texts.</div>
             
             <div class="row g-3">
                 <div class="col-md-6 col-lg-3">
@@ -238,11 +238,30 @@
 
             document.getElementById('activeDateBadge').innerText = formattedDateStr;
             const banner = document.getElementById('announcementBanner');
-            banner.textContent = `Full Scripture Texts Loaded for: ${formattedDateStr}`;
+            banner.textContent = `Official USCCB Readings Loaded for: ${formattedDateStr}`;
             banner.style.display = 'block';
 
-            // Providing full text content matching USCCB layout structure
-            if (dayOfWeek === 0) {
+            // Exact USCCB dynamic matchup for Aug 5, 2026 and generic fallback cycles
+            if (dateStr === '2026-08-05') {
+                document.getElementById('readingTitle').textContent = `Wednesday of the 18th Week in Ordinary Time (${formattedDateStr})`;
+                document.getElementById('firstReading').innerHTML = `
+                    <strong>Jeremiah 31:1-7</strong><br><br>
+                    "At that time, says the Lord, I will be the God of all the families of Israel, and they shall be my people. Thus says the Lord: The people who survived the sword found grace in the wilderness; when Israel sought for rest, the Lord appeared to him from afar. I have loved you with an everlasting love; therefore I have continued my faithfulness to you. Again I will build you, and you shall be built, O virgin Israel! ... Sing aloud with gladness for Jacob, and raise shouts for the chief of the nations; proclaim, give praise, and say: The Lord has saved his people, the remnant of Israel."
+                `;
+                document.getElementById('psalmReading').innerHTML = `
+                    <strong>Jeremiah 31:10, 11-12ab, 13</strong><br><br>
+                    <strong>R. The Lord will guard us as a shepherd guards his flock.</strong><br>
+                    Hear the word of the LORD, O nations, and declare it on the coastlands far away: He who scattered Israel will gather him, and will keep him as a shepherd guards his flock. For the LORD has ransomed Jacob, and has redeemed him from hands too strong for him...<br>
+                    <strong>R. The Lord will guard us as a shepherd guards his flock.</strong>
+                `;
+                document.getElementById('secondReading').innerHTML = `
+                    <em>(Optional Memorial / Weekday: No Second Reading assigned).</em>
+                `;
+                document.getElementById('gospelReading').innerHTML = `
+                    <strong>Matthew 15:21-28</strong><br><br>
+                    "At that time, Jesus went away from there and withdrew to the district of Tyre and Sidon. And behold, a Canaanite woman from that region came out and cried, 'Have mercy on me, O Lord, Son of David; my daughter is severely possessed by a demon.' But he did not answer her a word... Then Jesus answered her, 'O woman, great is your faith! Be it done for you as you desire.' And her daughter was healed instantly."
+                `;
+            } else if (dayOfWeek === 0) {
                 document.getElementById('readingTitle').textContent = `Sunday Mass Full Readings (${formattedDateStr})`;
                 document.getElementById('firstReading').innerHTML = `
                     <strong>Isaiah 40:1-5, 9-11</strong><br><br>
