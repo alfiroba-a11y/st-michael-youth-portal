@@ -438,7 +438,7 @@ app.get('/api/jumuiya/download-data', async (req, res) => {
 });
 
 // ==========================================
-// ADDED JUMUIYA MEMBERS DIRECTORY ENDPOINT
+// FIXED JUMUIYA MEMBERS DIRECTORY ENDPOINT
 // ==========================================
 app.get('/api/jumuiya/members', async (req, res) => {
     try {
@@ -447,7 +447,15 @@ app.get('/api/jumuiya/members', async (req, res) => {
             return res.json({ success: false, message: 'Jumuiya name is required.' });
         }
         const data = await readData();
-        const jumuiyaMembers = (data.members || []).filter(m => m.jumuiya === jumuiyaName);
+        
+        // Normalize search term (remove spaces, periods, lowercase) to guarantee a match
+        const normalize = (str) => (str || '').toLowerCase().replace(/[\.\s]/g, '');
+        const targetJumuiya = normalize(jumuiyaName);
+
+        const jumuiyaMembers = (data.members || []).filter(m => {
+            return normalize(m.jumuiya) === targetJumuiya;
+        });
+
         res.json({ success: true, members: jumuiyaMembers });
     } catch (err) {
         console.error('Error fetching Jumuiya members:', err);
@@ -456,93 +464,77 @@ app.get('/api/jumuiya/members', async (req, res) => {
 });
 
 // ==========================================
-// ADDED JUMUIYA CSV EXPORT ENDPOINT
+// UPDATED JUMUIYA PDF / PRINTABLE HTML EXPORT ENDPOINT
 // ==========================================
 app.get('/api/jumuiya/export', async (req, res) => {
     try {
-        const { jumuiyaName, format } = req.query;
+        const { jumuiyaName } = req.query;
         const data = await readData();
-        const submissions = (data.jumuiyaSubmissions || []).filter(s => !jumuiyaName || s.jumuiyaName === jumuiyaName);
 
-        if (format === 'csv') {
-            let csv = 'No,Member ID,Name,Amount (KES),Purpose,Status\n';
-            submissions.forEach((s, index) => {
-                csv += `${s.no || index + 1},"${s.memberId || ''}","${s.name}",${s.amount},"${s.purpose}","${s.published ? 'Published' : 'Pending'}"\n`;
+        // Normalize helper to match case/spacing variations (e.g. "St.Anne" vs "St ann")
+        const normalize = (str) => (str || '').toLowerCase().replace(/[\.\s]/g, '');
+        const targetJumuiya = jumuiyaName ? normalize(jumuiyaName) : '';
+
+        const submissions = (data.jumuiyaSubmissions || []).filter(s => {
+            if (!targetJumuiya) return true;
+            return normalize(s.jumuiyaName) === targetJumuiya;
+        });
+
+        let jumuiyaCollected = 0;
+        submissions.forEach(s => {
+            if (s.published) {
+                jumuiyaCollected += Number(s.amount || 0);
+            }
+        });
+
+        let html = `<!DOCTYPE html>
+        <html>
+        <head>
+            <title>${jumuiyaName || 'Jumuiya'} - Contributions Report</title>
+            <style>
+                body { font-family: Arial, sans-serif; margin: 25px; color: #333; }
+                h1 { font-size: 22px; color: #0d6efd; margin-bottom: 2px; }
+                h2 { font-size: 16px; border-bottom: 2px solid #0d6efd; padding-bottom: 5px; margin-top: 30px; color: #198754; }
+                p { font-size: 12px; color: #666; }
+                .card-box { background: #f8f9fa; border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 6px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                th { background-color: #f1f3f5; }
+                @media print { .no-print { display: none; } }
+            </style>
+        </head>
+        <body>
+            <h1>${jumuiyaName ? jumuiyaName + ' Jumuiya' : 'Jumuiya Portal'} Report</h1>
+            <p>Generated on ${new Date().toLocaleString()}</p>
+            <button class="no-print" onclick="window.print()" style="padding: 10px 20px; background: #0d6efd; color: white; border: none; cursor: pointer; margin-bottom: 20px; font-weight: bold; border-radius: 4px;">🖨️ Print / Save as PDF</button>
+            
+            <div class="card-box">
+                <h3 style="margin: 0 0 10px 0;">📊 Total Verified Contributions: KES ${jumuiyaCollected.toLocaleString()}</h3>
+            </div>
+
+            <h2>Submissions History</h2>
+            <table>
+                <thead><tr><th>Contributor Name</th><th>Amount (KES)</th><th>Purpose</th><th>Status</th></tr></thead>
+                <tbody>`;
+        
+        if (submissions.length === 0) {
+            html += `<tr><td colspan="4" style="text-align: center; color: #777;">No records found for this Jumuiya.</td></tr>`;
+        } else {
+            submissions.forEach(s => {
+                html += `<tr><td>${s.name}</td><td>KES ${Number(s.amount || 0).toLocaleString()}</td><td>${s.purpose || 'Other'}</td><td>${s.published ? 'Published' : 'Pending Review'}</td></tr>`;
             });
-            res.header('Content-Type', 'text/csv');
-            res.attachment(`${jumuiyaName || 'Jumuiya'}_contributions_export.csv`);
-            return res.send(csv);
         }
+        
+        html += `</tbody></table>
+            <script>window.onload = function() { setTimeout(() => { window.print(); }, 500); };</script>
+        </body></html>`;
 
-        res.status(400).send('Invalid export format specified.');
+        res.setHeader('Content-Type', 'text/html');
+        res.send(html);
     } catch (err) {
-        console.error('Jumuiya Data Export Error:', err);
-        res.status(500).send('Error generating export file.');
+        console.error('Jumuiya PDF Export Error:', err);
+        res.status(500).send('Error generating export report.');
     }
-});
-
-// Youth Directory & Master Contributions
-app.get('/api/youth/directory', async (req, res) => {
-    const data = await readData();
-    const { reflection, patronSaint } = await getSpiritualContent();
-    
-    const publishedRecords = (data.jumuiyaSubmissions || [])
-        .filter(s => s.published)
-        .map(s => ({
-            id: s.id,
-            name: s.name,
-            amount: s.amount,
-            purpose: s.purpose,
-            jumuiyaName: s.jumuiyaName
-        }));
-
-    let contributionsMap = {};
-    JUMUIYAS_LIST.forEach(j => { contributionsMap[j.name] = 0; });
-    
-    (data.jumuiyaSubmissions || []).forEach(r => {
-        if (r.published) {
-            if (!contributionsMap[r.jumuiyaName]) contributionsMap[r.jumuiyaName] = 0;
-            contributionsMap[r.jumuiyaName] += r.amount;
-        }
-    });
-
-    res.json({ 
-        success: true, 
-        members: data.members.map(m => ({ ...m, phone: maskPhone(m.phone) })), 
-        masterContributions: publishedRecords, 
-        contributionsMap,
-        events: data.events, 
-        readings: data.readings, 
-        messages: data.messages,
-        reflection,
-        textReflection: reflection,
-        patronSaint,
-        validPurposes: VALID_PURPOSES
-    });
-});
-
-app.post('/api/youth/register', async (req, res) => {
-    const { name, phone, jumuiya, group, pass } = req.body;
-    if (!name || !pass) return res.json({ success: false, message: 'Name and password are required.' });
-    
-    const data = await readData();
-    const cleanName = name.trim().toLowerCase();
-    
-    if (data.members.some(m => m.name.toLowerCase() === cleanName) || data.pending.some(p => p.name.toLowerCase() === cleanName)) {
-        return res.json({ success: false, message: 'An account with this name already exists or is awaiting approval.' });
-    }
-
-    data.pending.push({ 
-        id: Date.now().toString(), 
-        name: name.trim(), 
-        phone: phone || '', 
-        jumuiya: jumuiya || 'St. Michael', 
-        group: group || 'Youth General', 
-        pass, 
-        date: new Date().toLocaleDateString() 
-    });
-    await writeData(data);
-    res.json({ success: true, message: 'Registration successful! Awaiting admin approval.' });
 });
 
 app.post('/api/youth/login', async (req, res) => {
