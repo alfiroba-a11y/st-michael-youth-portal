@@ -365,7 +365,8 @@ app.post('/api/jumuiya/submit-record', async (req, res) => {
 });
 
 // ==========================================
-// ENABLED JUMUIYA PORTAL DOWNLOAD / EXPORT API
+// FULLY WORKING JUMUIYA PORTAL DOWNLOAD API 
+// (Includes specific Jumuiya submissions + full multi-Jumuiya summary overview)
 // ==========================================
 app.get('/api/jumuiya/download-data', async (req, res) => {
     try {
@@ -373,58 +374,74 @@ app.get('/api/jumuiya/download-data', async (req, res) => {
         const data = await readData();
         
         let jumuiyaCollected = 0;
-        let purposeMap = {};
-        VALID_PURPOSES.forEach(p => { purposeMap[p] = 0; });
+        let allJumuiyasMap = {};
+        JUMUIYAS_LIST.forEach(j => { allJumuiyasMap[j.name] = 0; });
+
+        // Calculate specific jumuiya total and full summary across all jumuiyas
+        (data.jumuiyaSubmissions || []).forEach(s => {
+            if (s.published && s.jumuiyaName) {
+                const amt = Number(s.amount || 0);
+                if (allJumuiyasMap[s.jumuiyaName] !== undefined) {
+                    allJumuiyasMap[s.jumuiyaName] += amt;
+                }
+                if (jumuiyaName && s.jumuiyaName === jumuiyaName) {
+                    jumuiyaCollected += amt;
+                }
+            }
+        });
 
         const submissions = (data.jumuiyaSubmissions || []).filter(s => {
             if (jumuiyaName && s.jumuiyaName !== jumuiyaName) return false;
-            if (s.published) {
-                const amt = Number(s.amount || 0);
-                jumuiyaCollected += amt;
-                const pur = VALID_PURPOSES.includes(s.purpose) ? s.purpose : 'Other';
-                purposeMap[pur] = (purposeMap[pur] || 0) + amt;
-            }
             return true;
         });
 
         let html = `<!DOCTYPE html>
         <html>
         <head>
-            <title>${jumuiyaName || 'Jumuiya'} - Activity & Contributions Report</title>
+            <title>${jumuiyaName || 'Jumuiya'} - Comprehensive Report & Summary</title>
             <style>
                 body { font-family: Arial, sans-serif; margin: 25px; color: #333; }
                 h1 { font-size: 22px; color: #0d6efd; margin-bottom: 2px; }
-                h2 { font-size: 16px; border-bottom: 2px solid #0d6efd; padding-bottom: 5px; margin-top: 30px; color: #198754; }
+                h2 { font-size: 15px; border-bottom: 2px solid #0d6efd; padding-bottom: 5px; margin-top: 25px; color: #198754; }
                 p { font-size: 12px; color: #666; }
-                .card-box { background: #f8f9fa; border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 6px; }
-                table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
-                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+                .card-box { background: #f8f9fa; border: 1px solid #ddd; padding: 15px; margin-bottom: 15px; border-radius: 6px; }
+                table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 11px; }
+                th, td { border: 1px solid #ddd; padding: 7px; text-align: left; }
                 th { background-color: #f1f3f5; }
                 @media print { .no-print { display: none; } }
             </style>
         </head>
         <body>
-            <h1>${jumuiyaName ? jumuiyaName + ' Jumuiya' : 'Jumuiya Portal'} Report</h1>
+            <h1>${jumuiyaName ? jumuiyaName + ' Jumuiya Portal Report' : 'Jumuiya Portal Report'}</h1>
             <p>Generated on ${new Date().toLocaleString()}</p>
-            <button class="no-print" onclick="window.print()" style="padding: 10px 20px; background: #0d6efd; color: white; border: none; cursor: pointer; margin-bottom: 20px; font-weight: bold; border-radius: 4px;">🖨️ Print / Save as PDF</button>
+            <button class="no-print" onclick="window.print()" style="padding: 9px 18px; background: #0d6efd; color: white; border: none; cursor: pointer; margin-bottom: 15px; font-weight: bold; border-radius: 4px;">🖨️ Print / Save as PDF</button>
             
-            <div class="card-box">
-                <h3 style="margin: 0 0 10px 0;">📊 Total Verified Contributions: KES ${jumuiyaCollected.toLocaleString()}</h3>
-            </div>
+            ${jumuiyaName ? `<div class="card-box"><strong>${jumuiyaName} Total Verified Contributions:</strong> KES ${jumuiyaCollected.toLocaleString()}</div>` : ''}
 
-            <h2>Submissions History</h2>
+            <h2>1. Submissions List (${jumuiyaName || 'All'})</h2>
             <table>
-                <thead><tr><th>Contributor Name</th><th>Amount (KES)</th><th>Purpose</th><th>Status</th></tr></thead>
+                <thead><tr><th>Jumuiya Name</th><th>ID</th><th>Contributor Name</th><th>Amount (KES)</th><th>Purpose</th><th>Status</th></tr></thead>
                 <tbody>`;
         
         if (submissions.length === 0) {
-            html += `<tr><td colspan="4" style="text-align: center; color: #777;">No records found.</td></tr>`;
+            html += `<tr><td colspan="6" style="text-align: center; color: #777;">No submission records found.</td></tr>`;
         } else {
-            submissions.forEach(s => {
-                html += `<tr><td>${s.name}</td><td>KES ${Number(s.amount || 0).toLocaleString()}</td><td>${s.purpose || 'Other'}</td><td>${s.published ? 'Published' : 'Pending Review'}</td></tr>`;
+            submissions.forEach((s, idx) => {
+                html += `<tr><td>${s.jumuiyaName || 'N/A'}</td><td>${s.id || idx + 1}</td><td>${s.name}</td><td>KES ${Number(s.amount || 0).toLocaleString()}</td><td>${s.purpose || 'Other'}</td><td>${s.published ? 'Published' : 'Pending'}</td></tr>`;
             });
         }
         
+        html += `</tbody></table>
+
+            <h2>2. Full Summary Breakdown (All Jumuiyas Comparison)</h2>
+            <table>
+                <thead><tr><th>Jumuiya Name</th><th>Total Collected (KES)</th></tr></thead>
+                <tbody>`;
+        
+        for (const [jName, totalAmt] of Object.entries(allJumuiyasMap)) {
+            html += `<tr><td><strong>${jName}</strong></td><td>KES ${Number(totalAmt).toLocaleString()}</td></tr>`;
+        }
+
         html += `</tbody></table>
             <script>window.onload = function() { setTimeout(() => { window.print(); }, 500); };</script>
         </body></html>`;
@@ -612,42 +629,24 @@ app.post('/api/admin/close-cycle', async (req, res) => {
 });
 
 // ==========================================
-// ENABLED MASTER ADMIN PDF / HTML EXPORT API
+// MASTER ADMIN DOWNLOAD API (Two separate download options requested)
+// ?type=financial -> Jumuiya performance / contribution summary
+// ?type=people    -> List of people (Members directory with phone numbers hidden)
 // ==========================================
 app.get('/api/admin/download-data', async (req, res) => {
     try {
+        const { type } = req.query; // Expecting ?type=financial or ?type=people
         const data = await readData();
         
-        let totalCollected = 0;
-        let contributionsMap = {};
-        JUMUIYAS_LIST.forEach(j => { contributionsMap[j.name] = 0; });
-
-        (data.jumuiyaSubmissions || []).forEach(r => {
-            if (r.published) {
-                const amt = Number(r.amount || 0);
-                totalCollected += amt;
-                if (contributionsMap[r.jumuiyaName] !== undefined) {
-                    contributionsMap[r.jumuiyaName] += amt;
-                } else {
-                    contributionsMap[r.jumuiyaName] = amt;
-                }
-            }
-        });
-
-        const targetAmount = data.targetAmount || 50000;
-        const percentage = Math.min(Math.round((totalCollected / targetAmount) * 100), 100);
-
         let html = `<!DOCTYPE html>
         <html>
         <head>
-            <title>St. Michael Kasaini Youth Portal Master Report</title>
+            <title>St. Michael Kasaini Youth Portal - Master Report</title>
             <style>
                 body { font-family: Arial, sans-serif; margin: 25px; color: #333; }
                 h1 { font-size: 22px; color: #0d6efd; margin-bottom: 2px; }
-                h2 { font-size: 16px; border-bottom: 2px solid #0d6efd; padding-bottom: 5px; margin-top: 30px; color: #198754; }
+                h2 { font-size: 16px; border-bottom: 2px solid #0d6efd; padding-bottom: 5px; margin-top: 25px; color: #198754; }
                 p { font-size: 12px; color: #666; }
-                .card-box { background: #f8f9fa; border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 6px; }
-                .metrics { display: flex; justify-content: space-between; margin-top: 10px; font-weight: bold; font-size: 14px; }
                 table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
                 th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
                 th { background-color: #f1f3f5; }
@@ -656,45 +655,66 @@ app.get('/api/admin/download-data', async (req, res) => {
         </head>
         <body>
             <h1>St. Michael Kasaini Youth Portal</h1>
-            <p>Master Admin Comprehensive & Analytics Report — Generated on ${new Date().toLocaleString()}</p>
-            <button class="no-print" onclick="window.print()" style="padding: 10px 20px; background: #0d6efd; color: white; border: none; cursor: pointer; margin-bottom: 20px; font-weight: bold; border-radius: 4px;">🖨️ Print / Save as PDF</button>
-            
-            <div class="card-box">
-                <h3 style="margin: 0 0 10px 0; color: #333;">📊 Financial & Target Summary</h3>
-                <div class="metrics">
-                    <div>Total Collected: KES ${totalCollected.toLocaleString()}</div>
-                    <div>Monthly Target: KES ${targetAmount.toLocaleString()}</div>
-                    <div>Achievement: ${percentage}%</div>
-                </div>
-            </div>
+            <p>Generated on ${new Date().toLocaleString()}</p>
+            <button class="no-print" onclick="window.print()" style="padding: 10px 20px; background: #0d6efd; color: white; border: none; cursor: pointer; margin-bottom: 20px; font-weight: bold; border-radius: 4px;">🖨️ Print / Save as PDF</button>`;
 
-            <h2>Jumuiya Performance Analytics Breakdown</h2>
-            <table>
-                <thead><tr><th>Jumuiya Name</th><th>Total Submissions / Contributions (KES)</th></tr></thead>
-                <tbody>`;
-        
-        for (const [jumuiyaName, amount] of Object.entries(contributionsMap)) {
-            html += `<tr><td><strong>${jumuiyaName}</strong></td><td>KES ${Number(amount).toLocaleString()}</td></tr>`;
-        }
+        if (type === 'financial') {
+            // Option 1: Jumuiya Performance / Contribution Summary & Submissions
+            let contributionsMap = {};
+            JUMUIYAS_LIST.forEach(j => { contributionsMap[j.name] = 0; });
 
-        html += `</tbody></table>
-
-            <h2>Registered Members Directory</h2>
-            <table>
-                <thead><tr><th>#</th><th>ID</th><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th></tr></thead>
-                <tbody>`;
-        
-        const members = data.members || [];
-        if (members.length === 0) {
-            html += `<tr><td colspan="6" style="text-align: center; color: #777;">No registered members found.</td></tr>`;
-        } else {
-            members.forEach((m, idx) => {
-                html += `<tr><td>${idx + 1}</td><td>${m.customId || 'N/A'}</td><td>${m.name}</td><td>${m.phone || 'N/A'}</td><td>${m.jumuiya || 'N/A'}</td><td>${m.group || 'N/A'}</td></tr>`;
+            (data.jumuiyaSubmissions || []).forEach(r => {
+                if (r.published && contributionsMap[r.jumuiyaName] !== undefined) {
+                    contributionsMap[r.jumuiyaName] += Number(r.amount || 0);
+                }
             });
+
+            html += `<h2>Jumuiya Contribution Summary (Performance)</h2>
+            <table>
+                <thead><tr><th>Jumuiya Name</th><th>Total Verified Contributions (KES)</th></tr></thead>
+                <tbody>`;
+            
+            for (const [jName, amt] of Object.entries(contributionsMap)) {
+                html += `<tr><td><strong>${jName}</strong></td><td>KES ${Number(amt).toLocaleString()}</td></tr>`;
+            }
+            html += `</tbody></table>`;
+
+            html += `<h2>Jumuiya Submissions List</h2>
+            <table>
+                <thead><tr><th>Jumuiya Name</th><th>Number / ID</th><th>Name</th><th>Amount (KES)</th><th>Purpose</th><th>Status</th></tr></thead>
+                <tbody>`;
+            
+            const submissions = data.jumuiyaSubmissions || [];
+            if (submissions.length === 0) {
+                html += `<tr><td colspan="6" style="text-align: center; color: #777;">No submissions found.</td></tr>`;
+            } else {
+                submissions.forEach((s, idx) => {
+                    html += `<tr><td>${s.jumuiyaName || 'N/A'}</td><td>${s.id || idx + 1}</td><td>${s.name}</td><td>KES ${Number(s.amount || 0).toLocaleString()}</td><td>${s.purpose || 'Other'}</td><td>${s.published ? 'Published' : 'Pending'}</td></tr>`;
+                });
+            }
+            html += `</tbody></table>`;
+
+        } else if (type === 'people') {
+            // Option 2: List of People (Directory with Phone Number hidden entirely)
+            html += `<h2>Registered Members List (Directory)</h2>
+            <table>
+                <thead><tr><th>#</th><th>ID</th><th>Name</th><th>Jumuiya</th><th>Group</th></tr></thead>
+                <tbody>`;
+            
+            const members = data.members || [];
+            if (members.length === 0) {
+                html += `<tr><td colspan="5" style="text-align: center; color: #777;">No registered members found.</td></tr>`;
+            } else {
+                members.forEach((m, idx) => {
+                    html += `<tr><td>${idx + 1}</td><td>${m.customId || 'N/A'}</td><td>${m.name}</td><td>${m.jumuiya || 'N/A'}</td><td>${m.group || 'N/A'}</td></tr>`;
+                });
+            }
+            html += `</tbody></table>`;
+        } else {
+            html += `<p>Please select a valid report option from the admin dashboard (Financial Data or List of People).</p>`;
         }
-        
-        html += `</tbody></table>
-            <script>window.onload = function() { setTimeout(() => { window.print(); }, 500); };</script>
+
+        html += `<script>window.onload = function() { setTimeout(() => { window.print(); }, 500); };</script>
         </body></html>`;
 
         res.setHeader('Content-Type', 'text/html');
