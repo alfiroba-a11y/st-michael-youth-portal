@@ -2,8 +2,6 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
 const { MongoClient } = require('mongodb');
-const axios = require('axios');
-const cheerio = require('cheerio');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -21,7 +19,6 @@ async function initDB() {
             const client = new MongoClient(MONGO_URI);
             await client.connect();
             db = client.db('kasaini_youth_db');
-            app.locals.db = db; // Exposes db instance globally for routes
             console.log('Connected successfully to MongoDB Atlas.');
         } catch (err) {
             console.error('MongoDB connection error:', err.message);
@@ -182,139 +179,9 @@ app.post('/api/jumuiya/submit-record', async (req, res) => {
     res.json({ success: true, message: 'Contribution recorded successfully and sent for Master Admin review!' });
 });
 
-// Updated Automated USCCB Scraper Helper for Daily Readings (With Precise Date Handling)
-async function getAutomatedDailyReadings(targetDateStr = null) {
-    try {
-        let targetDate = new Date();
-        if (targetDateStr) {
-            const parts = targetDateStr.split('-');
-            if (parts.length === 3) {
-                targetDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
-            } else {
-                targetDate = new Date(targetDateStr);
-            }
-        }
-        
-        const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
-        const dd = String(targetDate.getDate()).padStart(2, '0');
-        const yy = String(targetDate.getFullYear()).slice(-2);
-        const usccbDateStr = `${mm}${dd}${yy}`; // Exact MMDDYY format required by USCCB URL
-        const mongoDateStr = `${targetDate.getFullYear()}-${mm}-${dd}`;
-
-        if (!db) return null;
-        const readingsCol = db.collection('automated_readings');
-
-        // Check if cached for this date in MongoDB
-        let cached = await readingsCol.findOne({ readingDate: mongoDateStr });
-        if (cached) {
-            return {
-                success: true,
-                reading: {
-                    id: cached._id.toString(),
-                    title: cached.title,
-                    firstReading: cached.firstReading,
-                    psalm: cached.psalm,
-                    secondReading: cached.secondReading,
-                    gospel: cached.gospel
-                }
-            };
-        }
-
-        // Scrape live from USCCB website
-        const targetUrl = `https://bible.usccb.org/bible/readings/${usccbDateStr}.cfm`;
-        const { data: html } = await axios.get(targetUrl, { 
-            timeout: 10000,
-            headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-            }
-        });
-        const $ = cheerio.load(html);
-
-        let title = $('.date_calendar div').text().trim() || $('.content-title').text().trim() || $('h1').first().text().trim() || "Daily Mass Readings";
-        let readingsList = [];
-
-        // Updated selector targets matching USCCB layout components
-        $('.card__space, .field--name-field-readings-body, .b-readings__content, div.ta-left').each((index, element) => {
-            const text = $(element).text().trim();
-            if (text && !readingsList.includes(text)) {
-                readingsList.push(text);
-            }
-        });
-
-        if (readingsList.length === 0) {
-            $('.content-body p, article p').each((index, element) => {
-                const text = $(element).text().trim();
-                if (text.length > 15 && !readingsList.includes(text)) {
-                    readingsList.push(text);
-                }
-            });
-        }
-
-        const scrapedData = {
-            readingDate: mongoDateStr,
-            title: title,
-            firstReading: readingsList[0] || 'First reading details loading or unavailable.',
-            psalm: readingsList[1] || 'Responsorial psalm unavailable.',
-            secondReading: readingsList[2] || 'None specified for this day.',
-            gospel: readingsList[3] || readingsList[2] || 'Gospel text unavailable.',
-            createdAt: new Date()
-        };
-
-        await readingsCol.updateOne(
-            { readingDate: mongoDateStr },
-            { $set: scrapedData },
-            { upsert: true }
-        );
-
-        return {
-            success: true,
-            reading: {
-                id: 'auto',
-                title: scrapedData.title,
-                firstReading: scrapedData.firstReading,
-                psalm: scrapedData.psalm,
-                secondReading: scrapedData.secondReading,
-                gospel: scrapedData.gospel
-            }
-        };
-    } catch (err) {
-        console.error('USCCB Automated Scraper Error:', err.message);
-        return { success: false, message: 'Could not fetch live readings for this date.' };
-    }
-}
-
-// Dedicated API endpoint for Calendar Date-Specific Readings Lookup
-app.get('/api/readings/date', async (req, res) => {
-    const { date } = req.query; // Expects YYYY-MM-DD format
-    if (!date) return res.json({ success: false, message: 'Date parameter is required.' });
-
-    const automatedResult = await getAutomatedDailyReadings(date);
-    if (automatedResult && automatedResult.success) {
-        return res.json(automatedResult);
-    }
-
-    // Fallback to static stored readings if scraper/database fails
-    const data = await readData();
-    const fallbackReading = (data.readings && data.readings.length > 0) ? data.readings[0] : null;
-    if (fallbackReading) {
-        return res.json({ success: true, reading: fallbackReading });
-    }
-
-    res.json({ success: false, message: 'No readings found for this date.' });
-});
-
 // Youth Directory & Master Contributions List for Members Portal
 app.get('/api/youth/directory', async (req, res) => {
     const data = await readData();
-    
-    // Automatically attempt fetching live USCCB readings for today
-    let activeReadings = [];
-    const autoToday = await getAutomatedDailyReadings();
-    if (autoToday && autoToday.success) {
-        activeReadings = [autoToday.reading];
-    } else {
-        activeReadings = data.readings; // fallback to admin-set readings if scraper fails
-    }
     
     const publishedRecords = (data.jumuiyaSubmissions || [])
         .filter(s => s.published)
@@ -342,7 +209,7 @@ app.get('/api/youth/directory', async (req, res) => {
         masterContributions: publishedRecords, 
         contributionsMap,
         events: data.events, 
-        readings: activeReadings, 
+        readings: data.readings, 
         messages: data.messages 
     });
 });
@@ -471,6 +338,7 @@ app.post('/api/admin/login', (req, res) => {
 app.get('/api/admin/data', async (req, res) => {
     const data = await readData();
     
+    // Filter members who requested a password reset
     const passwordResets = (data.members || []).filter(m => m.passwordResetRequested);
 
     let contributionsMap = {};
@@ -524,6 +392,7 @@ app.post('/api/admin/remove-member', async (req, res) => {
     res.json({ success: true });
 });
 
+// Master Admin Endpoint to Edit Member Details (Name, Phone, Jumuiya, Group)
 app.post('/api/admin/edit-member', async (req, res) => {
     try {
         const { id, name, phone, jumuiya, group } = req.body;
@@ -547,6 +416,7 @@ app.post('/api/admin/edit-member', async (req, res) => {
     }
 });
 
+// Master Admin Endpoint to Approve Password Reset
 app.post('/api/admin/approve-password-reset', async (req, res) => {
     try {
         const { id } = req.body;
@@ -567,6 +437,7 @@ app.post('/api/admin/approve-password-reset', async (req, res) => {
     }
 });
 
+// Master Admin: Publish or Unpublish Jumuiya Record
 app.post('/api/admin/toggle-publish', async (req, res) => {
     const { id } = req.body;
     const data = await readData();
@@ -578,6 +449,7 @@ app.post('/api/admin/toggle-publish', async (req, res) => {
     res.json({ success: true });
 });
 
+// Master Admin: Edit Jumuiya Record (Name, Amount, Purpose)
 app.post('/api/admin/edit-jumuiya-record', async (req, res) => {
     const { id, name, amount, purpose } = req.body;
     const data = await readData();
@@ -591,6 +463,7 @@ app.post('/api/admin/edit-jumuiya-record', async (req, res) => {
     res.json({ success: true });
 });
 
+// Master Admin: Delete Jumuiya Submission Record
 app.post('/api/admin/delete-jumuiya-record', async (req, res) => {
     const { id } = req.body;
     const data = await readData();
@@ -601,6 +474,7 @@ app.post('/api/admin/delete-jumuiya-record', async (req, res) => {
     res.json({ success: true });
 });
 
+// Master Admin: Render printable report for browser Print-to-PDF
 app.get('/api/admin/download-data', async (req, res) => {
     try {
         const data = await readData();
@@ -693,6 +567,7 @@ app.get('/api/admin/download-data', async (req, res) => {
     }
 });
 
+// Events Management Endpoints
 app.post('/api/admin/events', async (req, res) => {
     const { title, date, description } = req.body;
     const data = await readData();
@@ -712,6 +587,7 @@ app.post('/api/admin/events/delete', async (req, res) => {
     res.json({ success: true });
 });
 
+// Mass Readings Management Endpoints
 app.post('/api/admin/readings', async (req, res) => {
     const { title, firstReading, psalm, secondReading, gospel } = req.body;
     const data = await readData();
@@ -741,6 +617,7 @@ app.post('/api/admin/readings/delete', async (req, res) => {
     res.json({ success: true });
 });
 
+// Legacy handler support
 app.post('/api/admin/update-readings', async (req, res) => {
     const data = await readData();
     data.readings = [req.body];
