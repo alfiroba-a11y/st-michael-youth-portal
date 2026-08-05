@@ -105,10 +105,13 @@
             </div>
 
             <!-- Table showing data filled by this Jumuiya -->
-            <div class="card shadow-sm p-4">
+            <div class="card shadow-sm p-4 mb-4">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h4 class="mb-0 text-secondary">📋 Contribution Records</h4>
-                    <button class="btn btn-outline-primary btn-sm" onclick="downloadPDF()">📄 Download PDF Report</button>
+                    <div>
+                        <button class="btn btn-outline-success btn-sm me-2" onclick="downloadJumuiyaData('csv')">📊 Export CSV</button>
+                        <button class="btn btn-outline-primary btn-sm" onclick="downloadPDF()">📄 Download PDF Report</button>
+                    </div>
                 </div>
                 <div class="table-responsive">
                     <table class="table table-bordered table-striped align-middle">
@@ -128,6 +131,29 @@
                     </table>
                 </div>
             </div>
+
+            <!-- Registered Members Directory for this specific Jumuiya -->
+            <div class="card shadow-sm p-4 mb-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4 class="mb-0 text-primary">👥 Registered Members Directory</h4>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped align-middle">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Custom ID</th>
+                                <th>Name</th>
+                                <th>Phone</th>
+                                <th>Group</th>
+                            </tr>
+                        </thead>
+                        <tbody id="jumuiyaMembersDirectoryList">
+                            <tr><td colspan="4" class="text-muted text-center">Loading members...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
         </div>
 
     </div>
@@ -213,24 +239,49 @@
         });
 
         async function loadJumuiyaData() {
-            const res = await fetch(`/api/jumuiya/data?jumuiyaName=${encodeURIComponent(currentJumuiyaName)}`);
-            const data = await res.json();
-            const tbody = document.getElementById('jumuiyaRecordsList');
-            if (data.success && data.submissions.length > 0) {
-                tbody.innerHTML = data.submissions.map(s => `
-                    <tr>
-                        <td>${s.no || ''}</td>
-                        <td>${s.memberId || ''}</td>
-                        <td>${s.name}</td>
-                        <td><strong>KES ${Number(s.amount || 0).toLocaleString()}</strong></td>
-                        <td>${s.purpose}</td>
-                        <td>${s.published ? '<span class="badge bg-success">Published on Portal</span>' : '<span class="badge bg-warning text-dark">Pending Master Approval</span>'}</td>
-                    </tr>
-                `).join('');
-            } else {
-                tbody.innerHTML = `<tr><td colspan="6" class="text-muted text-center">No contributions recorded yet for ${currentJumuiyaName}.</td></tr>`;
+            try {
+                // 1. Fetch contributions/submissions
+                const res = await fetch(`/api/jumuiya/data?jumuiyaName=${encodeURIComponent(currentJumuiyaName)}`);
+                const data = await res.json();
+                const tbody = document.getElementById('jumuiyaRecordsList');
+                
+                if (data.success && data.submissions && data.submissions.length > 0) {
+                    tbody.innerHTML = data.submissions.map(s => `
+                        <tr>
+                            <td>${s.no || ''}</td>
+                            <td>${s.memberId || ''}</td>
+                            <td>${s.name}</td>
+                            <td><strong>KES ${Number(s.amount || 0).toLocaleString()}</strong></td>
+                            <td>${s.purpose}</td>
+                            <td>${s.published ? '<span class="badge bg-success">Published on Portal</span>' : '<span class="badge bg-warning text-dark">Pending Master Approval</span>'}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = `<tr><td colspan="6" class="text-muted text-center">No contributions recorded yet for ${currentJumuiyaName}.</td></tr>`;
+                }
+
+                // 2. Fetch registered members from the main directory matching this Jumuiya
+                const membersRes = await fetch(`/api/jumuiya/members?jumuiyaName=${encodeURIComponent(currentJumuiyaName)}`);
+                const membersData = await membersRes.json();
+                const membersTbody = document.getElementById('jumuiyaMembersDirectoryList');
+
+                if (membersData.success && membersData.members && membersData.members.length > 0) {
+                    membersTbody.innerHTML = membersData.members.map(m => `
+                        <tr>
+                            <td><strong class="text-primary">${m.customId || 'N/A'}</strong></td>
+                            <td>${m.name}</td>
+                            <td>${m.phone ? m.phone.replace(/.(?=.{4})/g, '*') : '-'}</td>
+                            <td>${m.group || '-'}</td>
+                        </tr>
+                    `).join('');
+                } else {
+                    membersTbody.innerHTML = `<tr><td colspan="4" class="text-muted text-center">No registered members found under ${currentJumuiyaName} in the main directory.</td></tr>`;
+                }
+
+                loadAllJumuiyasGraph();
+            } catch (err) {
+                console.error("Error loading Jumuiya dashboard data:", err);
             }
-            loadAllJumuiyasGraph();
         }
 
         async function loadAllJumuiyasGraph() {
@@ -276,6 +327,10 @@
 
         function downloadPDF() {
             window.open(`/api/jumuiya/pdf?jumuiyaName=${encodeURIComponent(currentJumuiyaName)}`, '_blank');
+        }
+
+        function downloadJumuiyaData(format = 'csv') {
+            window.open(`/api/jumuiya/export?jumuiyaName=${encodeURIComponent(currentJumuiyaName)}&format=${format}`, '_blank');
         }
 
         document.getElementById('recordForm').addEventListener('submit', async (e) => {
