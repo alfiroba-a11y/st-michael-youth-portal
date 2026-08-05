@@ -1,5 +1,35 @@
+const express = require('express');
+const fs = require('fs').promises;
+const path = require('path');
+const app = express();
+
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Database Helper Functions
+async function readData() {
+    try {
+        const fileData = await fs.readFile(path.join(__dirname, 'db.json'), 'utf8');
+        return JSON.parse(fileData);
+    } catch (err) {
+        // Fallback default structure if db.json doesn't exist yet
+        return {
+            members: [],
+            jumuiyaSubmissions: [],
+            messages: [],
+            archives: [],
+            targetAmount: 50000,
+            readings: { announcement: "", verse: "", verseRef: "" }
+        };
+    }
+}
+
+async function writeData(data) {
+    await fs.writeFile(path.join(__dirname, 'db.json'), JSON.stringify(data, null, 2));
+}
+
 // ==========================================
-// TARGET MANAGEMENT & ENHANCED EXPORT API UPDATES
+// TARGET MANAGEMENT & ADMIN API ROUTES
 // ==========================================
 
 // API to get Global Stats & Target Amount
@@ -97,7 +127,6 @@ app.get('/api/admin/download-data', async (req, res) => {
                 if (contributionsMap[r.jumuiyaName] !== undefined) {
                     contributionsMap[r.jumuiyaName] += amt;
                 } else {
-                    // Gracefully handle any dynamic or custom entry outside standard list
                     contributionsMap[r.jumuiyaName] = amt;
                 }
             }
@@ -172,4 +201,12 @@ app.get('/api/admin/download-data', async (req, res) => {
         console.error('Export Error:', e);
         res.status(500).send('Error generating printable report.');
     }
+});
+
+// ==========================================
+// SERVER INITIALIZATION & LISTENER
+// ==========================================
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`St. Michael Kasaini Portal Server running successfully on port ${PORT}`);
 });
