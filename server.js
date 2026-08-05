@@ -437,6 +437,50 @@ app.get('/api/jumuiya/download-data', async (req, res) => {
     }
 });
 
+// ==========================================
+// ADDED JUMUIYA MEMBERS DIRECTORY ENDPOINT
+// ==========================================
+app.get('/api/jumuiya/members', async (req, res) => {
+    try {
+        const { jumuiyaName } = req.query;
+        if (!jumuiyaName) {
+            return res.json({ success: false, message: 'Jumuiya name is required.' });
+        }
+        const data = await readData();
+        const jumuiyaMembers = (data.members || []).filter(m => m.jumuiya === jumuiyaName);
+        res.json({ success: true, members: jumuiyaMembers });
+    } catch (err) {
+        console.error('Error fetching Jumuiya members:', err);
+        res.status(500).json({ success: false, message: 'Server error fetching members.' });
+    }
+});
+
+// ==========================================
+// ADDED JUMUIYA CSV EXPORT ENDPOINT
+// ==========================================
+app.get('/api/jumuiya/export', async (req, res) => {
+    try {
+        const { jumuiyaName, format } = req.query;
+        const data = await readData();
+        const submissions = (data.jumuiyaSubmissions || []).filter(s => !jumuiyaName || s.jumuiyaName === jumuiyaName);
+
+        if (format === 'csv') {
+            let csv = 'No,Member ID,Name,Amount (KES),Purpose,Status\n';
+            submissions.forEach((s, index) => {
+                csv += `${s.no || index + 1},"${s.memberId || ''}","${s.name}",${s.amount},"${s.purpose}","${s.published ? 'Published' : 'Pending'}"\n`;
+            });
+            res.header('Content-Type', 'text/csv');
+            res.attachment(`${jumuiyaName || 'Jumuiya'}_contributions_export.csv`);
+            return res.send(csv);
+        }
+
+        res.status(400).send('Invalid export format specified.');
+    } catch (err) {
+        console.error('Jumuiya Data Export Error:', err);
+        res.status(500).send('Error generating export file.');
+    }
+});
+
 // Youth Directory & Master Contributions
 app.get('/api/youth/directory', async (req, res) => {
     const data = await readData();
