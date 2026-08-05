@@ -202,29 +202,35 @@ app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard
 app.get('/secret-admin-portal-kasaini-2026', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('/jumuiya-portal', (req, res) => res.sendFile(path.join(__dirname, 'jumuiya-portal.html')));
 
+// Helper to fetch spiritual content safely
+async function getSpiritualContent() {
+    let reflection = null;
+    let patronSaint = null;
+
+    if (db) {
+        try {
+            reflection = await db.collection('settings').findOne({ type: 'reflection' });
+            patronSaint = await db.collection('settings').findOne({ type: 'patronSaint' });
+        } catch (err) {
+            console.error('Error fetching settings collection:', err);
+        }
+    }
+
+    if (!reflection) reflection = automatedReflections[0];
+    if (!patronSaint) {
+        patronSaint = {
+            name: "St. Aloysius Gonzaga",
+            feastDay: "June 21",
+            message: "Model of purity, youth, and selfless charity. Patron saint of Christian youth."
+        };
+    }
+    return { reflection, patronSaint };
+}
+
 // Spiritual Content APIs (Daily Reflection & Patron Saint)
 app.get('/api/spiritual/content', async (req, res) => {
     try {
-        let reflection = null;
-        let patronSaint = null;
-
-        if (db) {
-            reflection = await db.collection('settings').findOne({ type: 'reflection' });
-            patronSaint = await db.collection('settings').findOne({ type: 'patronSaint' });
-        }
-
-        // Fallback if DB isn't ready
-        if (!reflection) {
-            reflection = automatedReflections[0];
-        }
-        if (!patronSaint) {
-            patronSaint = {
-                name: "St. Aloysius Gonzaga",
-                feastDay: "June 21",
-                message: "Model of purity, youth, and selfless charity. Patron saint of Christian youth."
-            };
-        }
-
+        const { reflection, patronSaint } = await getSpiritualContent();
         res.json({ success: true, reflection, patronSaint });
     } catch (err) {
         console.error('Error fetching spiritual content:', err);
@@ -292,6 +298,7 @@ app.post('/api/jumuiya/submit-record', async (req, res) => {
 // Youth Directory & Master Contributions List for Members Portal
 app.get('/api/youth/directory', async (req, res) => {
     const data = await readData();
+    const { reflection, patronSaint } = await getSpiritualContent();
     
     const publishedRecords = (data.jumuiyaSubmissions || [])
         .filter(s => s.published)
@@ -320,7 +327,10 @@ app.get('/api/youth/directory', async (req, res) => {
         contributionsMap,
         events: data.events, 
         readings: data.readings, 
-        messages: data.messages 
+        messages: data.messages,
+        reflection,       // Included for dashboards
+        textReflection: reflection, // Alias just in case frontend uses this key
+        patronSaint       // Included for dashboards
     });
 });
 
@@ -447,6 +457,7 @@ app.post('/api/admin/login', (req, res) => {
 
 app.get('/api/admin/data', async (req, res) => {
     const data = await readData();
+    const { reflection, patronSaint } = await getSpiritualContent();
     
     const passwordResets = (data.members || []).filter(m => m.passwordResetRequested);
 
@@ -468,7 +479,10 @@ app.get('/api/admin/data', async (req, res) => {
         contributionsMap,
         readings: data.readings, 
         events: data.events, 
-        messages: data.messages 
+        messages: data.messages,
+        reflection,
+        textReflection: reflection,
+        patronSaint
     });
 });
 
