@@ -365,28 +365,40 @@ app.post('/api/jumuiya/submit-record', async (req, res) => {
 });
 
 // ==========================================
-// ENABLED JUMUIYA PORTAL DOWNLOAD / EXPORT API
+// FIXED JUMUIYA PORTAL DOWNLOAD / EXPORT API
 // ==========================================
 app.get('/api/jumuiya/download-data', async (req, res) => {
     try {
         const { jumuiyaName } = req.query;
         const data = await readData();
         
+        // Normalize helper to eliminate case, space, and punctuation mismatches (e.g. "St. Anne" vs "stanne")
+        const normalize = (str) => (str || '').toLowerCase().replace(/[\.\s]/g, '');
+        const targetJumuiya = jumuiyaName ? normalize(jumuiyaName) : '';
+
+        // 1. Safely filter submissions using normalized matching
+        const submissions = (data.jumuiyaSubmissions || []).filter(s => {
+            if (!targetJumuiya) return true;
+            return normalize(s.jumuiyaName) === targetJumuiya;
+        });
+
+        // 2. Calculate metrics accurately from the filtered subset
         let jumuiyaCollected = 0;
         let purposeMap = {};
-        VALID_PURPOSES.forEach(p => { purposeMap[p] = 0; });
+        if (typeof VALID_PURPOSES !== 'undefined' && Array.isArray(VALID_PURPOSES)) {
+            VALID_PURPOSES.forEach(p => { purposeMap[p] = 0; });
+        }
 
-        const submissions = (data.jumuiyaSubmissions || []).filter(s => {
-            if (jumuiyaName && s.jumuiyaName !== jumuiyaName) return false;
+        submissions.forEach(s => {
             if (s.published) {
                 const amt = Number(s.amount || 0);
                 jumuiyaCollected += amt;
-                const pur = VALID_PURPOSES.includes(s.purpose) ? s.purpose : 'Other';
+                const pur = (typeof VALID_PURPOSES !== 'undefined' && VALID_PURPOSES.includes(s.purpose)) ? s.purpose : 'Other';
                 purposeMap[pur] = (purposeMap[pur] || 0) + amt;
             }
-            return true;
         });
 
+        // 3. Build HTML Output for Browser Printing / PDF Saving
         let html = `<!DOCTYPE html>
         <html>
         <head>
@@ -418,7 +430,7 @@ app.get('/api/jumuiya/download-data', async (req, res) => {
                 <tbody>`;
         
         if (submissions.length === 0) {
-            html += `<tr><td colspan="4" style="text-align: center; color: #777;">No records found.</td></tr>`;
+            html += `<tr><td colspan="4" style="text-align: center; color: #777;">No records found for this Jumuiya.</td></tr>`;
         } else {
             submissions.forEach(s => {
                 html += `<tr><td>${s.name}</td><td>KES ${Number(s.amount || 0).toLocaleString()}</td><td>${s.purpose || 'Other'}</td><td>${s.published ? 'Published' : 'Pending Review'}</td></tr>`;
@@ -436,7 +448,6 @@ app.get('/api/jumuiya/download-data', async (req, res) => {
         res.status(500).send('Error generating jumuiya report.');
     }
 });
-
 // ==========================================
 // FIXED JUMUIYA MEMBERS DIRECTORY ENDPOINT
 // ==========================================
