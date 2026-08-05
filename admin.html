@@ -3,243 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Admin Portal - St. Michael Kasaini Youth</title>
+    <title>Master Admin Portal</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        :root {
-            --primary-color: #1b4332;
-            --accent-color: #d8f3dc;
-            --dark-bg: #f8f9fa;
-        }
-        body {
-            background-color: var(--dark-bg);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .sidebar {
-            background-color: var(--primary-color);
-            color: white;
-            min-height: 100vh;
-            padding-top: 20px;
-        }
-        .sidebar a {
-            color: #d8f3dc;
-            text-decoration: none;
-            padding: 10px 20px;
-            display: block;
-            transition: 0.2s;
-        }
-        .sidebar a:hover, .sidebar a.active {
-            background-color: #2d6a4f;
-            color: white;
-            border-left: 4px solid #95d5b2;
-        }
-        .card {
-            border: none;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            border-radius: 10px;
-            margin-bottom: 20px;
-        }
-        .stat-card {
-            border-left: 4px solid var(--primary-color);
-        }
-        .chart-container {
-            position: relative;
-            height: 300px;
-            width: 100%;
-        }
-    </style>
 </head>
-<body>
+<body class="bg-light">
 
-    <div class="container-fluid">
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Master Admin Portal</h2>
+            <div>
+                <button class="btn btn-outline-primary btn-sm me-2" onclick="loadMasterData()"><i class="fas fa-sync-alt"></i> Refresh</button>
+                <button class="btn btn-success btn-sm" onclick="downloadPortalData()"><i class="fas fa-download"></i> Download Data</button>
+            </div>
+        </div>
+
+        <!-- Graph Section Added -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card shadow-sm p-3">
+                    <h5 class="card-title">Jumuiya Performance Analytics</h5>
+                    <div style="position: relative; height: 280px; width: 100%;">
+                        <canvas id="jumuiyaPerformanceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Original Sections and Code Below -->
         <div class="row">
-            <!-- Sidebar -->
-            <nav class="col-md-3 col-lg-2 d-md-block sidebar collapse">
-                <div class="position-sticky">
-                    <h4 class="text-center text-white mb-4"><i class="fas fa-church"></i> Master Admin</h4>
-                    <ul class="nav flex-column">
-                        <li class="nav-item"><a class="nav-link active" href="#overview"><i class="fas fa-tachometer-alt me-2"></i> Overview</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#jumuiya-management"><i class="fas fa-users-cog me-2"></i> Jumuiyas & Targets</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#financials"><i class="fas fa-wallet me-2"></i> Financial Records</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#readings"><i class="fas fa-book-bible me-2"></i> Readings & Polls</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#members"><i class="fas fa-id-card me-2"></i> Member Directory</a></li>
-                        <li class="nav-item mt-5"><a class="nav-link text-danger" href="/api/auth/logout"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
-                    </ul>
+            <div class="col-md-6 mb-4">
+                <div class="card shadow-sm p-4">
+                    <h4 class="mb-3">Post Weekly Readings</h4>
+                    <form id="readingForm">
+                        <div class="mb-2"><input type="text" class="form-control" id="readingTitle" placeholder="Sunday Title / Date" required></div>
+                        <div class="mb-2"><textarea class="form-control" id="firstReading" placeholder="First Reading" rows="2" required></textarea></div>
+                        <div class="mb-2"><textarea class="form-control" id="psalm" placeholder="Responsorial Psalm" rows="2" required></textarea></div>
+                        <div class="mb-2"><textarea class="form-control" id="secondReading" placeholder="Second Reading" rows="2"></textarea></div>
+                        <div class="mb-3"><textarea class="form-control" id="gospel" placeholder="Gospel" rows="2" required></textarea></div>
+                        <button type="submit" class="btn btn-success w-100">Publish Readings</button>
+                    </form>
                 </div>
-            </nav>
+            </div>
 
-            <!-- Main Content -->
-            <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4 py-4">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                    <h1 class="h2">St. Michael Kasaini Youth Dashboard</h1>
-                    <div class="btn-toolbar mb-2 mb-md-0">
-                        <button type="button" class="btn btn-sm btn-outline-success me-2" onclick="loadMasterData()"><i class="fas fa-sync-alt"></i> Refresh Data</button>
-                        <button type="button" class="btn btn-sm btn-success" onclick="downloadPortalData()"><i class="fas fa-file-pdf"></i> Export Report</button>
-                    </div>
+            <div class="col-md-6 mb-4">
+                <div class="card shadow-sm p-4">
+                    <h4 class="mb-3">Create New Poll</h4>
+                    <form id="pollForm">
+                        <div class="mb-3"><input type="text" class="form-control" id="pollQuestion" placeholder="Poll Question" required></div>
+                        <div class="mb-3"><input type="text" class="form-control" id="pollOptions" placeholder="Options separated by comma (e.g. Yes, No, Maybe)" required></div>
+                        <button type="submit" class="btn btn-primary w-100">Launch Poll</button>
+                    </form>
                 </div>
-
-                <!-- Overview Metrics & Graph Row -->
-                <div class="row" id="overview">
-                    <div class="col-xl-4 col-md-6 mb-4">
-                        <div class="card stat-card p-3">
-                            <h6 class="text-muted">Total Contributions</h6>
-                            <h3 id="totalContributionsVal" class="fw-bold">KES 0</h3>
-                            <div class="progress mt-2" style="height: 6px;">
-                                <div id="targetProgressBar" class="progress-bar bg-success" role="progressbar" style="width: 0%;"></div>
-                            </div>
-                            <small class="text-muted mt-1" id="targetProgressText">Target: KES 0</small>
-                        </div>
-                    </div>
-                    <div class="col-xl-4 col-md-6 mb-4">
-                        <div class="card stat-card p-3">
-                            <h6 class="text-muted">Registered Members</h6>
-                            <h3 id="totalMembersVal" class="fw-bold">0</h3>
-                        </div>
-                    </div>
-                    <div class="col-xl-4 col-md-12 mb-4">
-                        <div class="card stat-card p-3">
-                            <h6 class="text-muted">Active Jumuiyas</h6>
-                            <h3 id="totalJumuiyasVal" class="fw-bold">11</h3>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Global Chart Section -->
-                <div class="row">
-                    <div class="col-lg-8 mb-4">
-                        <div class="card p-3">
-                            <h5 class="card-title">Jumuiya Performance Analytics</h5>
-                            <div class="chart-container">
-                                <canvas id="jumuiyaPerformanceChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-lg-4 mb-4">
-                        <div class="card p-3">
-                            <h5 class="card-title">Pending Approvals</h5>
-                            <div id="pendingApprovalsList" class="list-group list-group-flush" style="max-height: 280px; overflow-y: auto;">
-                                <p class="text-muted">No pending registrations.</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Jumuiya Targets Management Section -->
-                <div class="row" id="jumuiya-management">
-                    <div class="col-12 mb-4">
-                        <div class="card p-4">
-                            <h4 class="mb-3">Manage Jumuiyas & Contribution Targets</h4>
-                            <form id="jumuiyaTargetForm" class="row g-3 mb-4">
-                                <div class="col-md-4">
-                                    <input type="text" class="form-control" id="newJumuiyaName" placeholder="Jumuiya Name" required>
-                                </div>
-                                <div class="col-md-4">
-                                    <input type="number" class="form-control" id="newJumuiyaTarget" placeholder="Target Amount (KES)" required>
-                                </div>
-                                <div class="col-md-4">
-                                    <button type="submit" class="btn btn-primary w-100"><i class="fas fa-plus"></i> Add / Update Target</button>
-                                </div>
-                            </form>
-                            <div class="table-responsive">
-                                <table class="table table-striped align-middle" id="jumuiyaTargetsTable">
-                                    <thead>
-                                        <tr>
-                                            <th>Jumuiya Name</th>
-                                            <th>Target Amount</th>
-                                            <th>Current Raised</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <!-- Dynamically injected -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Financial Records & Submissions -->
-                <div class="row" id="financials">
-                    <div class="col-12 mb-4">
-                        <div class="card p-4">
-                            <h4 class="mb-3">Jumuiya Financial Submissions</h4>
-                            <div class="table-responsive">
-                                <table class="table table-hover align-middle" id="financialRecordsTable">
-                                    <thead>
-                                        <tr>
-                                            <th>Member Name</th>
-                                            <th>Jumuiya</th>
-                                            <th>Amount</th>
-                                            <th>Purpose</th>
-                                            <th>Status</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <!-- Dynamically injected -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Readings & Polls Section -->
-                <div class="row" id="readings">
-                    <div class="col-md-6 mb-4">
-                        <div class="card p-4">
-                            <h4 class="mb-3">Post Weekly Readings</h4>
-                            <form id="readingForm">
-                                <div class="mb-2"><input type="text" class="form-control" id="readingTitle" placeholder="Sunday Title / Date" required></div>
-                                <div class="mb-2"><textarea class="form-control" id="firstReading" placeholder="First Reading" rows="2" required></textarea></div>
-                                <div class="mb-2"><textarea class="form-control" id="psalm" placeholder="Responsorial Psalm" rows="2" required></textarea></div>
-                                <div class="mb-2"><textarea class="form-control" id="secondReading" placeholder="Second Reading" rows="2"></textarea></div>
-                                <div class="mb-3"><textarea class="form-control" id="gospel" placeholder="Gospel" rows="2" required></textarea></div>
-                                <button type="submit" class="btn btn-success w-100">Publish Readings</button>
-                            </form>
-                        </div>
-                    </div>
-                    <div class="col-md-6 mb-4">
-                        <div class="card p-4">
-                            <h4 class="mb-3">Create New Poll</h4>
-                            <form id="pollForm">
-                                <div class="mb-3"><input type="text" class="form-control" id="pollQuestion" placeholder="Poll Question" required></div>
-                                <div class="mb-3"><input type="text" class="form-control" id="pollOptions" placeholder="Options separated by comma (e.g. Yes, No, Maybe)" required></div>
-                                <button type="submit" class="btn btn-primary w-100">Launch Poll</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Member Directory -->
-                <div class="row" id="members">
-                    <div class="col-12 mb-4">
-                        <div class="card p-4">
-                            <h4 class="mb-3">Youth Member Directory</h4>
-                            <div class="table-responsive">
-                                <table class="table table-bordered align-middle" id="memberDirectoryTable">
-                                    <thead>
-                                        <tr>
-                                            <th>Name</th>
-                                            <th>Phone</th>
-                                            <th>Jumuiya</th>
-                                            <th>Group</th>
-                                            <th>Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <!-- Dynamically injected -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-            </main>
+            </div>
         </div>
     </div>
 
@@ -290,13 +107,13 @@
         </div>
     </div>
 
-    <!-- JavaScript Handling Control Flow -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         let performanceChart = null;
 
         document.addEventListener('DOMContentLoaded', () => {
-            loadMasterData();
             initChart();
+            loadMasterData();
         });
 
         function initChart() {
@@ -308,8 +125,8 @@
                     datasets: [{
                         label: 'Amount Raised (KES)',
                         data: [],
-                        backgroundColor: '#2d6a4f',
-                        borderColor: '#1b4332',
+                        backgroundColor: '#198754',
+                        borderColor: '#146c43',
                         borderWidth: 1
                     }]
                 },
@@ -327,113 +144,16 @@
             try {
                 const res = await fetch('/api/admin/master-data');
                 const data = await res.json();
-                if (!data.success) return;
-
-                // Update Overview Counters
-                document.getElementById('totalContributionsVal').innerText = `KES ${data.totalContributions || 0}`;
-                document.getElementById('totalMembersVal').innerText = data.totalMembers || 0;
-                document.getElementById('totalJumuiyasVal').innerText = data.jumuiyas ? data.jumuiyas.length : 11;
-                
-                const percentage = data.targetGoal ? Math.min(Math.round((data.totalContributions / data.targetGoal) * 100), 100) : 0;
-                document.getElementById('targetProgressBar').style.width = `${percentage}%`;
-                document.getElementById('targetProgressText').innerText = `Target: KES ${data.targetGoal || 0} (${percentage}% achieved)`;
-
-                // Render Chart Updates
-                if (performanceChart && data.jumuiyaStats) {
+                if (data && data.jumuiyaStats && performanceChart) {
                     performanceChart.data.labels = data.jumuiyaStats.map(j => j.name);
                     performanceChart.data.datasets[0].data = data.jumuiyaStats.map(j => j.raised);
                     performanceChart.update();
                 }
-
-                // Render Jumuiya Targets Table
-                const targetsTableBody = document.querySelector('#jumuiyaTargetsTable tbody');
-                targetsTableBody.innerHTML = '';
-                if (data.jumuiyas) {
-                    data.jumuiyas.forEach(j => {
-                        targetsTableBody.innerHTML += `
-                            <tr>
-                                <td>${j.name}</td>
-                                <td>KES ${j.target}</td>
-                                <td>KES ${j.raised || 0}</td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="openJumuiyaEdit('${j.id}', '${j.name}', '${j.target}')"><i class="fas fa-edit"></i></button>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteJumuiyaTarget('${j.id}')"><i class="fas fa-trash"></i></button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                }
-
-                // Render Financial Records
-                const financialTableBody = document.querySelector('#financialRecordsTable tbody');
-                financialTableBody.innerHTML = '';
-                if (data.financialRecords) {
-                    data.financialRecords.forEach(rec => {
-                        financialTableBody.innerHTML += `
-                            <tr>
-                                <td>${rec.name}</td>
-                                <td>${rec.jumuiya}</td>
-                                <td>KES ${rec.amount}</td>
-                                <td>${rec.purpose}</td>
-                                <td><span class="badge bg-${rec.published ? 'success' : 'warning'}">${rec.published ? 'Published' : 'Pending'}</span></td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-secondary me-1" onclick="togglePublish('${rec.id}')"><i class="fas fa-eye"></i></button>
-                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditModal('${rec.id}', '${rec.name}', '${rec.amount}', '${rec.purpose}')"><i class="fas fa-edit"></i></button>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="deleteJumuiyaRecord('${rec.id}')"><i class="fas fa-trash"></i></button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                }
-
-                // Render Pending Users
-                const pendingList = document.getElementById('pendingApprovalsList');
-                pendingList.innerHTML = '';
-                if (data.pendingUsers && data.pendingUsers.length > 0) {
-                    data.pendingUsers.forEach(user => {
-                        pendingList.innerHTML += `
-                            <div class="list-group-item d-flex justify-content-between align-items-center px-0">
-                                <div>
-                                    <h6 class="mb-0">${user.name}</h6>
-                                    <small class="text-muted">${user.jumuiya}</small>
-                                </div>
-                                <div>
-                                    <button class="btn btn-sm btn-success me-1" onclick="approveUser('${user.id}')"><i class="fas fa-check"></i></button>
-                                    <button class="btn btn-sm btn-danger" onclick="rejectUser('${user.id}')"><i class="fas fa-times"></i></button>
-                                </div>
-                            </div>
-                        `;
-                    });
-                } else {
-                    pendingList.innerHTML = '<p class="text-muted mb-0">No pending registrations.</p>';
-                }
-
-                // Render Member Directory
-                const memberTableBody = document.querySelector('#memberDirectoryTable tbody');
-                memberTableBody.innerHTML = '';
-                if (data.members) {
-                    data.members.forEach(m => {
-                        memberTableBody.innerHTML += `
-                            <tr>
-                                <td>${m.name}</td>
-                                <td>${m.phone}</td>
-                                <td>${m.jumuiya}</td>
-                                <td>${m.group}</td>
-                                <td>
-                                    <button class="btn btn-sm btn-outline-primary me-1" onclick="openEditMemberModal('${m.id}', '${m.name}', '${m.phone}', '${m.jumuiya}', '${m.group}')"><i class="fas fa-edit"></i></button>
-                                    <button class="btn btn-sm btn-outline-danger" onclick="removeMember('${m.id}')"><i class="fas fa-user-minus"></i></button>
-                                </td>
-                            </tr>
-                        `;
-                    });
-                }
-
             } catch (err) {
-                console.error('Failed to load master admin data:', err);
+                console.error('Failed to load chart stats:', err);
             }
         }
 
-        // Readings Handler
         document.getElementById('readingForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const payload = {
@@ -448,7 +168,13 @@
             loadMasterData();
         });
 
-        // Polls Handler
+        async function deleteReading(id) {
+            if (confirm('Delete this reading?')) {
+                await fetch('/api/admin/readings/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+                loadMasterData();
+            }
+        }
+
         document.getElementById('pollForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const question = document.getElementById('pollQuestion').value;
@@ -469,21 +195,9 @@
             }
         });
 
-        // Jumuiya Target Form Handler
-        document.getElementById('jumuiyaTargetForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const payload = {
-                name: document.getElementById('newJumuiyaName').value,
-                target: document.getElementById('newJumuiyaTarget').value
-            };
-            await fetch('/api/admin/jumuiyas/target', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            document.getElementById('jumuiyaTargetForm').reset();
-            loadMasterData();
-        });
-
-        async function deleteJumuiyaTarget(id) {
-            if (confirm('Delete this Jumuiya target configuration?')) {
-                await fetch('/api/admin/jumuiyas/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+        async function deletePoll(id) {
+            if (confirm('Delete this poll?')) {
+                await fetch('/api/admin/polls/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
                 loadMasterData();
             }
         }
@@ -536,6 +250,20 @@
             loadMasterData();
         });
 
+        async function approvePasswordReset(id) {
+            if (confirm('Approve this new password request?')) {
+                await fetch('/api/admin/approve-password-reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+                loadMasterData();
+            }
+        }
+
+        async function deleteJumuiyaRecord(id) {
+            if (confirm('Are you sure you want to permanently delete this submission record?')) {
+                await fetch('/api/admin/delete-jumuiya-record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+                loadMasterData();
+            }
+        }
+
         async function approveUser(id) {
             await fetch('/api/admin/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
             loadMasterData();
@@ -555,14 +283,7 @@
             }
         }
 
-        async function deleteJumuiyaRecord(id) {
-            if (confirm('Are you sure you want to permanently delete this submission record?')) {
-                await fetch('/api/admin/delete-jumuiya-record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                loadMasterData();
-            }
-        }
-
-        function downloadPortalData() {
+        async function downloadPortalData() {
             try {
                 window.open('/api/admin/download-data', '_blank');
             } catch (error) {
