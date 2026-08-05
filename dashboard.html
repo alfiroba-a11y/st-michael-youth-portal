@@ -5,8 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Member Dashboard - St. Michael Kasaini Youth</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Chart.js for graphs -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-light d-flex flex-column min-vh-100">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
@@ -16,7 +14,7 @@
             <!-- Profile Tab Toggle Button -->
             <button class="btn btn-outline-light btn-sm me-2" type="button" data-bs-toggle="collapse" data-bs-target="#profileTabSection" aria-expanded="false" aria-controls="profileTabSection" style="display: flex; align-items: center; gap: 6px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm6.9 3.5c-.42-.3-1.12-.3-1.54 0l-.65.46a7.96 7.96 0 0 1-1.12-.65l-.01-.81a1.11 1.11 0 0 0-1.11-1.11h-.94a1.11 1.11 0 0 0-1.11 1.11l-.01.81c-.41.26-.78.47-1.12.65l-.65-.46c-.42-.3-1.12-.3-1.54 0l-.92.65c-.42.3-.53.88-.26 1.3l.53.79c-.19.39-.34.8-.46 1.22h-.94c-.5 0-.91.41-.91.91v1.11c0 .5.41.91.91.91h.94c.12.42.27.83.46 1.22l-.53.79c-.27.42-.16 1 .26 1.3l.92.65c.42.3 1.12.3 1.54 0l.65-.46c.34.18.71.39 1.12.65l.01.81c0 .5.41.91.11 1.11h.94c.5 0 .91-.41.91-.91l.01-.81c.41-.26.78-.47 1.12-.65l.65.46c.42.3 1.12.3 1.54 0l.92-.65c.42-.3.53-.88.26-1.3l-.53-.79c.19-.39.34-.8.46-1.22h-.94c-.5 0 .91-.41.91-.91v-1.11c0-.5-.41-.91-.91-.91h-.94c-.12-.42-.27-.83-.46-1.22l.53-.79c.27-.42.16-1-.26-1.3l-.92-.65zM12 21.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm6.9 3.5c-.42-.3-1.12-.3-1.54 0l-.65.46a7.96 7.96 0 0 1-1.12-.65l-.01-.81a1.11 1.11 0 0 0-1.11-1.11h-.94a1.11 1.11 0 0 0-1.11 1.11l-.01.81c-.41.26-.78.47-1.12.65l-.65-.46c-.42-.3-1.12-.3-1.54 0l-.92.65c-.42.3-.53.88-.26 1.3l.53.79c-.19.39-.34.8-.46 1.22h-.94c-.5 0-.91.41-.91.91v1.11c0 .5.41.91.91.91h.94c.12.42.27.83.46 1.22l-.53.79c-.27.42-.16 1 .26 1.3l.92.65c.42.3 1.12.3 1.54 0l.65-.46c.34.18.71.39 1.12.65l.01.81c0 .5.41.91.11 1.11h.94c.5 0 .91-.41.91-.91l.01-.81c.41-.26.78-.47 1.12-.65l.65.46c.42.3 1.12.3 1.54 0l.92-.65c.42-.3.53-.88.26-1.3l-.53-.79c.19-.39.34-.8.46-1.22h.94c.5 0 .91-.41.91-.91v-1.11c0-.5-.41-.91-.91-.91h-.94c-.12-.42-.27-.83-.46-1.22l.53-.79c.27-.42.16-1-.26-1.3l-.92-.65zM12 21.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                 </svg>
                 Profile Tab
             </button>
@@ -61,45 +59,10 @@
             <p class="mb-0 fw-bold" id="userAnnouncement">Loading community announcements...</p>
         </div>
 
-        <!-- Patron Saint Section -->
-        <div class="card shadow-sm p-4 mb-4 border-warning">
-            <div class="row align-items-center">
-                <div class="col-md-9">
-                    <h4 class="text-warning text-dark mb-2">🛡️ Our Patron Saint: St. Aloysius Gonzaga</h4>
-                    <p class="mb-1 text-secondary"><em>"I am a piece of wax, to be molded by God."</em> – Patron Saint of Christian Youth.</p>
-                    <p class="small text-muted mb-0">Feast Day: June 21. St. Aloysius Gonzaga inspires our youth community with his deep purity, dedication to prayer, and selfless service to the sick, showing us how to live a life totally devoted to Christ.</p>
-                </div>
-                <div class="col-md-3 text-center mt-3 mt-md-0">
-                    <div class="p-3 bg-light rounded border">
-                        <span class="fs-1">🕊️</span>
-                        <div class="small fw-bold text-dark mt-1">Model for Youth</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Daily Spiritual Reflection & Verse -->
-        <div class="card shadow-sm p-4 mb-4 bg-white border-primary">
-            <h4 class="text-primary mb-2">📖 Daily Spiritual Reflection</h4>
-            <blockquote class="blockquote fs-6 mb-2 text-dark">
-                <p id="dailyVerseText" class="mb-1"><em>"Don't let anyone look down on you because you are young, but set an example for the believers in speech, in conduct, in love, in faith and in purity."</em></p>
-                <footer id="dailyVerseRef" class="blockquote-footer mt-1">1 Timothy 4:12</footer>
-            </blockquote>
-            <p id="dailyReflectionText" class="small text-muted mb-0">Reflection: As young people following the example of St. Aloysius Gonzaga, let us pursue holiness and purity in our daily actions, supporting one another in faith.</p>
-        </div>
-
         <!-- Upcoming Youth Events Section -->
         <div class="card shadow-sm p-4 mb-4">
             <h4 class="text-success mb-3">📅 Upcoming Youth Events</h4>
             <div id="eventsList" class="row g-3">Loading upcoming events...</div>
-        </div>
-
-        <!-- Analytics Graph Section -->
-        <div class="card shadow-sm p-4 mb-4">
-            <h4 class="text-primary mb-3">📊 Approved Contributions Overview</h4>
-            <div style="position: relative; height: 250px; width: 100%;">
-                <canvas id="memberContributionChart"></canvas>
-            </div>
         </div>
 
         <!-- Master Approved Contributions List -->
@@ -137,8 +100,6 @@
 
     <script>
         const currentUser = localStorage.getItem('youth_user');
-        let memberChartInstance = null;
-
         if (!currentUser) {
             window.location.href = '/login';
         } else {
@@ -156,12 +117,6 @@
                         document.getElementById('userAnnouncement').textContent = data.readings.announcement;
                     } else {
                         document.getElementById('userAnnouncement').textContent = 'Welcome to St. Michael Kasaini Youth Portal.';
-                    }
-
-                    // Optional dynamic daily verse handling if provided by API
-                    if (data.readings && data.readings.verse) {
-                        document.getElementById('dailyVerseText').innerHTML = `<em>"${data.readings.verse}"</em>`;
-                        document.getElementById('dailyVerseRef').textContent = data.readings.verseRef || '';
                     }
 
                     // Pre-populate profile settings form if members data is available
@@ -184,7 +139,7 @@
                     }
                     document.getElementById('eventsList').innerHTML = eHtml;
 
-                    // 3. Render Master Approved Contributions List & Graph
+                    // 3. Render Master Approved Contributions List
                     const contributionsList = data.masterContributions || [];
                     let cHtml = '<table class="table table-bordered table-striped align-middle"><thead><tr><th>Contributor Name</th><th>Amount (KES)</th><th>Purpose</th><th>Jumuiya</th></tr></thead><tbody>';
                     if (contributionsList.length === 0) {
@@ -196,7 +151,6 @@
                     }
                     cHtml += '</tbody></table>';
                     document.getElementById('masterContributionsList').innerHTML = cHtml;
-                    renderMemberChart(contributionsList);
 
                     // 4. Render Registered Members Directory
                     let html = '<table class="table table-bordered table-striped"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Group</th><th>Phone</th></tr></thead><tbody>';
@@ -224,44 +178,6 @@
             } catch (err) {
                 console.error("Error loading dashboard data:", err);
             }
-        }
-
-        function renderMemberChart(contributions) {
-            const ctx = document.getElementById('memberContributionChart').getContext('2d');
-            const totalsByPurpose = {};
-
-            contributions.forEach(item => {
-                const purpose = item.purpose || 'General';
-                totalsByPurpose[purpose] = (totalsByPurpose[purpose] || 0) + Number(item.amount || 0);
-            });
-
-            const labels = Object.keys(totalsByPurpose);
-            const values = Object.values(totalsByPurpose);
-
-            if (memberChartInstance) {
-                memberChartInstance.destroy();
-            }
-
-            memberChartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels.length > 0 ? labels : ['No Contributions'],
-                    datasets: [{
-                        label: 'Total Amount (KES)',
-                        data: values.length > 0 ? values : [0],
-                        backgroundColor: 'rgba(25, 135, 84, 0.7)',
-                        borderColor: 'rgba(25, 135, 84, 1)',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
-                }
-            });
         }
 
         // Handle Profile Form Submission
