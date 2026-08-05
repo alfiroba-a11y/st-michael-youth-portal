@@ -182,18 +182,23 @@ app.post('/api/jumuiya/submit-record', async (req, res) => {
     res.json({ success: true, message: 'Contribution recorded successfully and sent for Master Admin review!' });
 });
 
-// Automated USCCB Scraper Helper for Daily Readings (With Date Support)
+// Updated Automated USCCB Scraper Helper for Daily Readings (With Precise Date Handling)
 async function getAutomatedDailyReadings(targetDateStr = null) {
     try {
         let targetDate = new Date();
         if (targetDateStr) {
-            targetDate = new Date(targetDateStr);
+            const parts = targetDateStr.split('-');
+            if (parts.length === 3) {
+                targetDate = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+            } else {
+                targetDate = new Date(targetDateStr);
+            }
         }
         
         const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
         const dd = String(targetDate.getDate()).padStart(2, '0');
         const yy = String(targetDate.getFullYear()).slice(-2);
-        const usccbDateStr = `${mm}${dd}${yy}`; // MMDDYY format for USCCB URL
+        const usccbDateStr = `${mm}${dd}${yy}`; // Exact MMDDYY format required by USCCB URL
         const mongoDateStr = `${targetDate.getFullYear()}-${mm}-${dd}`;
 
         if (!db) return null;
@@ -228,27 +233,18 @@ async function getAutomatedDailyReadings(targetDateStr = null) {
         let title = $('.date_calendar div').text().trim() || $('.content-title').text().trim() || $('h1').first().text().trim() || "Daily Mass Readings";
         let readingsList = [];
 
-        const selectors = [
-            '.field--name-field-readings-body',
-            '.b-readings__content',
-            '.content-body .field__item',
-            'div.ta-left'
-        ];
-
-        for (const selector of selectors) {
-            $(selector).each((index, element) => {
-                const text = $(element).text().trim();
-                if (text && !readingsList.includes(text)) {
-                    readingsList.push(text);
-                }
-            });
-            if (readingsList.length >= 2) break;
-        }
+        // Updated selector targets matching USCCB layout components
+        $('.card__space, .field--name-field-readings-body, .b-readings__content, div.ta-left').each((index, element) => {
+            const text = $(element).text().trim();
+            if (text && !readingsList.includes(text)) {
+                readingsList.push(text);
+            }
+        });
 
         if (readingsList.length === 0) {
             $('.content-body p, article p').each((index, element) => {
                 const text = $(element).text().trim();
-                if (text.length > 20 && !readingsList.includes(text)) {
+                if (text.length > 15 && !readingsList.includes(text)) {
                     readingsList.push(text);
                 }
             });
@@ -257,10 +253,10 @@ async function getAutomatedDailyReadings(targetDateStr = null) {
         const scrapedData = {
             readingDate: mongoDateStr,
             title: title,
-            firstReading: readingsList[0] || 'First reading unavailable.',
+            firstReading: readingsList[0] || 'First reading details loading or unavailable.',
             psalm: readingsList[1] || 'Responsorial psalm unavailable.',
-            secondReading: readingsList[2] || 'None (Weekday)',
-            gospel: readingsList[3] || readingsList[2] || 'Gospel unavailable.',
+            secondReading: readingsList[2] || 'None specified for this day.',
+            gospel: readingsList[3] || readingsList[2] || 'Gospel text unavailable.',
             createdAt: new Date()
         };
 
