@@ -1,6 +1,11 @@
+// ==========================================
+// ST. MICHAEL KASAINI YOUTH PORTAL - COMPLETE SERVER
+// ==========================================
+
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
+const fs = require('fs');
 const { MongoClient } = require('mongodb');
 const cron = require('node-cron');
 
@@ -207,10 +212,20 @@ function maskPhone(phone) {
 
 let activeUsers = {};
 
-// HTML Routes
+// HTML Routes - Robust handling to ensure member/dashboard files load seamlessly
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
-app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'member.html')));
+app.get('/dashboard', (req, res) => {
+    const memberPath = path.join(__dirname, 'member.html');
+    const dashboardPath = path.join(__dirname, 'dashboard.html');
+
+    if (fs.existsSync(memberPath)) {
+        return res.sendFile(memberPath);
+    } else if (fs.existsSync(dashboardPath)) {
+        return res.sendFile(dashboardPath);
+    }
+    res.status(404).send('Dashboard file (member.html or dashboard.html) missing in project directory.');
+});
 app.get('/secret-admin-portal-kasaini-2026', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('/jumuiya-portal', (req, res) => res.sendFile(path.join(__dirname, 'jumuiya-portal.html')));
 
@@ -249,7 +264,7 @@ app.get('/api/spiritual/content', async (req, res) => {
     }
 });
 
-// Unified Analytics API for 11 Jumuiyas
+// Unified Analytics API guaranteeing all 11 Jumuiyas populate graph datasets
 app.get('/api/analytics/jumuiya-graph', async (req, res) => {
     try {
         const data = await readData();
@@ -292,141 +307,7 @@ app.get('/api/analytics/jumuiya-graph', async (req, res) => {
     }
 });
 
-// PDF / Print Report Route with Embedded Chart & Tables
-app.get('/api/admin/download-graph-report', async (req, res) => {
-    try {
-        const data = await readData();
-        const labels = JUMUIYAS_LIST.map(j => j.name);
-        const totalsMap = {};
-        labels.forEach(name => { totalsMap[name] = 0; });
-
-        let grandTotal = 0;
-        (data.jumuiyaSubmissions || []).forEach(record => {
-            if (record.published && record.jumuiyaName) {
-                if (totalsMap[record.jumuiyaName] !== undefined) {
-                    const amt = Number(record.amount || 0);
-                    totalsMap[record.jumuiyaName] += amt;
-                    grandTotal += amt;
-                }
-            }
-        });
-
-        const chartDataValues = labels.map(name => totalsMap[name]);
-
-        let html = `<!DOCTYPE html>
-        <html>
-        <head>
-            <title>St. Michael Kasaini Youth - Analytics & Contributions Report</title>
-            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 30px; color: #333; }
-                h1 { font-size: 22px; color: #0d6efd; margin-bottom: 5px; }
-                h2 { font-size: 16px; border-bottom: 2px solid #ccc; padding-bottom: 5px; margin-top: 30px; }
-                p { font-size: 13px; color: #666; }
-                .summary-box { background: #f8f9fa; padding: 15px; border-radius: 6px; margin: 20px 0; border: 1px solid #ddd; }
-                table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; }
-                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                th { background-color: #f8f9fa; }
-                .chart-container { width: 100%; max-width: 700px; margin: 30px auto; }
-                @media print {
-                    .no-print { display: none; }
-                    body { margin: 10px; }
-                }
-            </style>
-        </head>
-        <body>
-            <h1>St. Michael Kasaini Youth Portal</h1>
-            <p>Comprehensive Graphical & Summary Report - Generated on ${new Date().toLocaleString()}</p>
-            
-            <button class="no-print" onclick="window.print()" style="padding: 10px 20px; background: #0d6efd; color: white; border: none; cursor: pointer; margin-bottom: 20px; font-weight: bold; border-radius: 4px;">🖨️ Print / Save as PDF</button>
-
-            <div class="summary-box">
-                <strong>Grand Total Collected (Published):</strong> KES ${grandTotal.toLocaleString()}
-            </div>
-
-            <div class="chart-container">
-                <canvas id="jumuiyaChart"></canvas>
-            </div>
-
-            <h2>Jumuiya Performance Breakdown</h2>
-            <table>
-                <thead>
-                    <tr><th>#</th><th>Jumuiya Name</th><th>Total Contributions (KES)</th></tr>
-                </thead>
-                <tbody>`;
-
-        labels.forEach((name, idx) => {
-            html += `<tr><td>${idx + 1}</td><td>${name}</td><td>KES ${totalsMap[name].toLocaleString()}</td></tr>`;
-        });
-
-        html += `</tbody></table>
-
-            <h2>Detailed Published Contributions Submissions</h2>
-            <table>
-                <thead>
-                    <tr><th>#</th><th>Jumuiya</th><th>Contributor</th><th>Amount (KES)</th><th>Purpose</th></tr>
-                </thead>
-                <tbody>`;
-
-        const publishedSubs = (data.jumuiyaSubmissions || []).filter(s => s.published);
-        if (publishedSubs.length === 0) {
-            html += `<tr><td colspan="5" style="text-align: center; color: #777;">No published contributions recorded.</td></tr>`;
-        } else {
-            publishedSubs.forEach((s, idx) => {
-                html += `<tr>
-                    <td>${idx + 1}</td>
-                    <td>${s.jumuiyaName}</td>
-                    <td>${s.name}</td>
-                    <td>${Number(s.amount || 0).toLocaleString()}</td>
-                    <td>${s.purpose || 'General'}</td>
-                </tr>`;
-            });
-        }
-
-        html += `</tbody></table>
-
-            <script>
-                const ctx = document.getElementById('jumuiyaChart').getContext('2d');
-                new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: ${JSON.stringify(labels)},
-                        datasets: [{
-                            label: 'Total Contributions (KES)',
-                            data: ${JSON.stringify(chartDataValues)},
-                            backgroundColor: 'rgba(13, 110, 253, 0.7)',
-                            borderColor: 'rgba(13, 110, 253, 1)',
-                            borderWidth: 1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: {
-                            legend: { display: true, position: 'top' },
-                            title: { display: true, text: 'Contributions per Jumuiya' }
-                        },
-                        scales: {
-                            y: { beginAtZero: true }
-                        }
-                    }
-                });
-
-                window.onload = function() {
-                    setTimeout(() => { window.print(); }, 800);
-                };
-            </script>
-        </body>
-        </html>`;
-
-        res.setHeader('Content-Type', 'text/html');
-        res.send(html);
-    } catch (e) {
-        console.error('Graph Report Export Error:', e);
-        res.status(500).send('Error generating graphical report.');
-    }
-});
-
-// Presence API
+// Presence APIs
 app.post('/api/ping', (req, res) => {
     const { username } = req.body;
     if (username) activeUsers[username] = Date.now();
@@ -564,65 +445,6 @@ app.post('/api/youth/login', async (req, res) => {
     res.json({ success: false, message: 'Member not found.' });
 });
 
-app.post('/api/youth/forgot-password', async (req, res) => {
-    try {
-        const { name, phone, newPassword } = req.body;
-        if (!name || !phone || !newPassword) {
-            return res.json({ success: false, message: 'All fields are required.' });
-        }
-
-        const data = await readData();
-        const cleanName = name.trim().toLowerCase();
-        const cleanPhone = phone.trim();
-
-        const member = data.members.find(m => m.name.toLowerCase() === cleanName && (m.phone || '').trim() === cleanPhone);
-        if (!member) {
-            return res.json({ success: false, message: 'Member not found with this name and phone number.' });
-        }
-
-        member.pendingNewPassword = newPassword;
-        member.passwordResetRequested = true;
-        await writeData(data);
-
-        res.json({ success: true, message: 'Password reset request sent to admin successfully.' });
-    } catch (err) {
-        console.error('Password reset request error:', err);
-        res.status(500).json({ success: false, message: 'Server error processing request.' });
-    }
-});
-
-app.post('/api/youth/update-profile', async (req, res) => {
-    try {
-        const { currentUser, name, group, password } = req.body;
-        if (!currentUser) return res.json({ success: false, message: 'Current user session missing.' });
-
-        const data = await readData();
-        const cleanCurrent = currentUser.trim().toLowerCase();
-
-        const member = data.members.find(m => m.name.toLowerCase() === cleanCurrent || m.customId?.toLowerCase() === cleanCurrent);
-        if (!member) {
-            return res.json({ success: false, message: 'Member not found.' });
-        }
-
-        if (name && name.trim().toLowerCase() !== cleanCurrent) {
-            const nameExists = data.members.some(m => m.name.toLowerCase() === name.trim().toLowerCase());
-            if (nameExists) {
-                return res.json({ success: false, message: 'An account with this name already exists.' });
-            }
-            member.name = name.trim();
-        }
-
-        if (group) member.group = group.trim();
-        if (password && password.trim() !== '') member.pass = password;
-
-        await writeData(data);
-        res.json({ success: true, message: 'Profile updated successfully!' });
-    } catch (err) {
-        console.error('Error updating profile:', err);
-        res.json({ success: false, message: 'Server error updating profile.' });
-    }
-});
-
 app.post('/api/youth/message', async (req, res) => {
     const { sender, text } = req.body;
     if (!sender || !text) return res.json({ success: false });
@@ -669,132 +491,6 @@ app.get('/api/admin/data', async (req, res) => {
         patronSaint,
         validPurposes: VALID_PURPOSES
     });
-});
-
-app.get('/api/admin/global-stats', async (req, res) => {
-    try {
-        const data = await readData();
-        
-        let totalCollected = 0;
-        (data.jumuiyaSubmissions || []).forEach(r => {
-            if (r.published) {
-                totalCollected += Number(r.amount) || 0;
-            }
-        });
-
-        let targetAmount = 50000;
-        if (db) {
-            const settings = await db.collection('settings').findOne({ type: 'monthly_target' });
-            if (settings && settings.targetAmount) {
-                targetAmount = Number(settings.targetAmount);
-            }
-        } else if (data.targetAmount) {
-            targetAmount = Number(data.targetAmount);
-        }
-
-        res.json({ success: true, totalCollected, targetAmount });
-    } catch (err) {
-        console.error('Error fetching global stats:', err);
-        res.status(500).json({ success: false, message: 'Server error fetching global stats.' });
-    }
-});
-
-app.post('/api/admin/set-target', async (req, res) => {
-    try {
-        const { targetAmount } = req.body;
-        if (!targetAmount || isNaN(targetAmount)) {
-            return res.json({ success: false, message: 'Valid target amount is required.' });
-        }
-
-        const parsedTarget = Number(targetAmount);
-
-        if (db) {
-            await db.collection('settings').updateOne(
-                { type: 'monthly_target' },
-                { $set: { targetAmount: parsedTarget, updatedAt: new Date() } },
-                { upsert: true }
-            );
-        } else {
-            fallbackData.targetAmount = parsedTarget;
-        }
-
-        res.json({ success: true, message: 'Monthly target updated successfully!' });
-    } catch (err) {
-        console.error('Error setting target:', err);
-        res.status(500).json({ success: false, message: 'Server error updating target.' });
-    }
-});
-
-app.post('/api/admin/close-cycle', async (req, res) => {
-    try {
-        const { cycleName } = req.body;
-        const data = await readData();
-
-        const archiveRecord = {
-            id: Date.now().toString(),
-            cycleName: cycleName || `Cycle ${new Date().toLocaleDateString()}`,
-            closedAt: new Date(),
-            submissions: data.jumuiyaSubmissions || []
-        };
-
-        if (db) {
-            await db.collection('cycle_history').insertOne(archiveRecord);
-            await db.collection('portal_data').updateOne(
-                { _id: 'main_store' },
-                { $set: { jumuiyaSubmissions: [] } }
-            );
-        }
-
-        data.jumuiyaSubmissions = [];
-        await writeData(data);
-
-        res.json({ success: true, message: `Cycle "${archiveRecord.cycleName}" closed successfully. Board cleared!` });
-    } catch (err) {
-        console.error('Error closing cycle:', err);
-        res.status(500).json({ success: false, message: 'Server error closing cycle.' });
-    }
-});
-
-app.post('/api/admin/polls', async (req, res) => {
-    try {
-        const { question, options } = req.body;
-        if (!question || !options || !Array.isArray(options)) {
-            return res.json({ success: false, message: 'Question and options are required.' });
-        }
-
-        const data = await readData();
-        if (!data.polls) data.polls = [];
-
-        const newPoll = {
-            id: Date.now().toString(),
-            question: question.trim(),
-            options: options.map(opt => ({ text: opt, votes: 0 })),
-            createdAt: new Date()
-        };
-
-        data.polls.push(newPoll);
-        await writeData(data);
-
-        res.json({ success: true, message: 'Poll published successfully!' });
-    } catch (err) {
-        console.error('Error creating poll:', err);
-        res.status(500).json({ success: false, message: 'Server error creating poll.' });
-    }
-});
-
-app.post('/api/admin/polls/delete', async (req, res) => {
-    try {
-        const { id } = req.body;
-        const data = await readData();
-        if (data.polls) {
-            data.polls = data.polls.filter(p => p.id !== id && p._id !== id);
-            await writeData(data);
-        }
-        res.json({ success: true });
-    } catch (err) {
-        console.error('Error deleting poll:', err);
-        res.status(500).json({ success: false, message: 'Server error deleting poll.' });
-    }
 });
 
 app.post('/api/admin/approve', async (req, res) => {
@@ -1042,4 +738,7 @@ app.post('/api/admin/reply-query', async (req, res) => {
     res.json({ success: true });
 });
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+// Start Server
+app.listen(PORT, () => {
+    console.log(`St. Michael Kasaini Youth Server running on http://localhost:${PORT}`);
+});
