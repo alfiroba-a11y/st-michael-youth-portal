@@ -66,24 +66,24 @@
         </div>
 
         <!-- Target Configuration & Cycle Management -->
-<div class="row g-3 mb-4">
-    <div class="col-md-6">
-        <div class="card shadow-sm p-3 h-100">
-            <h5 class="text-primary mb-3">⚙️ Set Contribution Target</h5>
-            <form id="targetForm" class="d-flex gap-2" onsubmit="event.preventDefault(); saveTarget();">
-                <input type="number" id="targetInput" class="form-control" placeholder="Enter target amount (e.g. 50000)" required>
-                <button type="submit" class="btn btn-outline-primary text-nowrap">Save Target</button>
-            </form>
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="card shadow-sm p-3 h-100">
+                    <h5 class="text-primary mb-3">⚙️ Set Contribution Target</h5>
+                    <form id="targetForm" class="d-flex gap-2" onsubmit="event.preventDefault(); saveTarget();">
+                        <input type="number" id="targetInput" class="form-control" placeholder="Enter target amount (e.g. 50000)" required>
+                        <button type="submit" class="btn btn-outline-primary text-nowrap">Save Target</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card shadow-sm p-3 h-100 border-danger">
+                    <h5 class="text-danger mb-2">🔄 Close & Archive Current Cycle</h5>
+                    <p class="text-muted small mb-3">Moves active contributions to history and clears the board for a fresh cycle.</p>
+                    <button onclick="closeAndResetCycle()" class="btn btn-danger btn-sm mt-auto">Close Cycle & Start Fresh</button>
+                </div>
+            </div>
         </div>
-    </div>
-    <div class="col-md-6">
-        <div class="card shadow-sm p-3 h-100 border-danger">
-            <h5 class="text-danger mb-2">🔄 Close & Archive Current Cycle</h5>
-            <p class="text-muted small mb-3">Moves active contributions to history and clears the board for a fresh cycle.</p>
-            <button onclick="closeAndResetCycle()" class="btn btn-danger btn-sm mt-auto">Close Cycle & Start Fresh</button>
-        </div>
-    </div>
-</div>
 
         <!-- All Jumuiyas Performance Graph Section -->
         <div class="card shadow-sm p-4 mb-4">
@@ -138,7 +138,7 @@
                     <div id="eventsListAdmin" class="small text-muted">Loading active events...</div>
                 </div>
             </div>
-</div>
+
             <!-- Readings Management -->
             <div class="col-lg-4 mb-3">
                 <div class="card shadow-sm p-4 h-100">
@@ -313,6 +313,39 @@
             initChart();
         });
 
+        function initChart() {
+            const ctx = document.getElementById('jumuiyaPerformanceChart').getContext('2d');
+            performanceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        label: 'Total Raised (KES)',
+                        data: [],
+                        backgroundColor: '#198754',
+                        borderColor: '#146c43',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function updatePerformanceChart(contributionsMap) {
+            if (!performanceChart) return;
+            const labels = Object.keys(contributionsMap || {});
+            const values = Object.values(contributionsMap || {});
+            performanceChart.data.labels = labels;
+            performanceChart.data.datasets[0].data = values;
+            performanceChart.update();
+        }
+    </script>
         function initChart() {
             const ctx = document.getElementById('jumuiyaPerformanceChart').getContext('2d');
             performanceChart = new Chart(ctx, {
