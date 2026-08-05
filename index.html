@@ -84,6 +84,16 @@
             </div>
         </div>
 
+        <!-- Daily Spiritual Reflection Card -->
+        <div class="card shadow-sm p-4 mb-4 border-info-subtle bg-white">
+            <h3 class="text-primary mb-3">📖 Daily Spiritual Reflection</h3>
+            <div id="textReflectionsWidget">
+                <h6 id="reflectionTitle" class="fw-bold text-dark">Loading daily reflection...</h6>
+                <p id="reflectionRef" class="small text-muted mb-1"><strong>Ref:</strong> Loading...</p>
+                <p id="reflectionContent" class="small mb-0 text-secondary">Loading...</p>
+            </div>
+        </div>
+
         <!-- Catholic Prayers (Home & Mass) -->
         <div class="card shadow-sm p-4 mb-4">
             <h3 class="text-primary mb-3">Catholic Church Prayers (Mass & Home)</h3>
@@ -301,9 +311,23 @@
                         }
                     }
                 }
+
+                if (data.success && data.textReflection) {
+                    const tr = data.textReflection;
+                    document.getElementById('reflectionTitle').textContent = tr.title || 'Daily Word';
+                    document.getElementById('reflectionRef').innerHTML = `<strong>Ref:</strong> ${tr.reference || ''}`;
+                    document.getElementById('reflectionContent').textContent = tr.content || '';
+                } else {
+                    document.getElementById('reflectionTitle').textContent = 'Daily Spiritual Reflection';
+                    document.getElementById('reflectionRef').innerHTML = '<strong>Ref:</strong> -';
+                    document.getElementById('reflectionContent').textContent = 'No daily reflection posted yet.';
+                }
             } catch(e) {
                 console.error('Failed to load readings:', e);
                 document.getElementById('announcementBanner').textContent = 'Unable to load updates at this time.';
+                document.getElementById('reflectionTitle').textContent = 'Daily Spiritual Reflection';
+                document.getElementById('reflectionRef').innerHTML = '<strong>Ref:</strong> -';
+                document.getElementById('reflectionContent').textContent = 'Unable to load reflection at this time.';
             }
         }
         
