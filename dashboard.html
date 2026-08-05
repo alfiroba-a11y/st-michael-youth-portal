@@ -28,7 +28,7 @@
             <div class="card shadow-sm p-4" style="border: 1px solid #cfe2ff; border-radius: 8px;">
                 <h4 class="text-primary mb-3" style="display: flex; align-items: center; gap: 8px;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm6.9 3.5c-.42-.3-1.12-.3-1.54 0l-.65.46a7.96 7.96 0 0 1-1.12-.65l-.01-.81a1.11 1.11 0 0 0-1.11-1.11h-.94a1.11 1.11 0 0 0-1.11 1.11l-.01.81c-.41.26-.78.47-1.12.65l-.65-.46c-.42-.3-1.12-.3-1.54 0l-.92.65c-.42.3-.53.88-.26 1.3l.53.79c-.19.39-.34.8-.46 1.22h-.94c-.5 0-.91.41-.91.91v1.11c0 .5.41.91.91.91h.94c.12.42.27.83.46 1.22l-.53.79c-.27.42-.16 1 .26 1.3l.92.65c.42.3 1.12.3 1.54 0l.65-.46c.34.18.71.39 1.12.65l.01.81c0 .5.41.91.11 1.11h.94c.5 0 .91-.41.91-.91l.01-.81c.41-.26.78-.47 1.12-.65l.65.46c.42.3 1.12.3 1.54 0l.92-.65c.42-.3.53-.88.26-1.3l-.53-.79c.19-.39.34-.8.46-1.22h-.94c-.5 0 .91-.41.91-.91v-1.11c0-.5-.41-.91-.91-.91h-.94c-.12-.42-.27-.83-.46-1.22l.53-.79c.27-.42.16-1-.26-1.3l-.92-.65zM12 21.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm6.9 3.5c-.42-.3-1.12-.3-1.54 0l-.65.46a7.96 7.96 0 0 1-1.12-.65l-.01-.81a1.11 1.11 0 0 0-1.11-1.11h-.94a1.11 1.11 0 0 0-1.11 1.11l-.01.81c-.41.26-.78.47-1.12.65l-.65-.46c-.42-.3-1.12-.3-1.54 0l-.92.65c-.42-.3-.53.88-.26 1.3l.53.79c-.19.39-.34.8-.46 1.22h-.94c-.5 0-.91.41-.91.91v1.11c0 .5.41.91.91.91h.94c.12.42.27.83.46 1.22l-.53.79c-.27.42-.16 1 .26 1.3l.92.65c.42.3 1.12.3 1.54 0l.65-.46c.34.18.71.39 1.12.65l.01.81c0 .5.41.91.11 1.11h.94c.5 0 .91-.41.91-.91l.01-.81c.41-.26.78-.47 1.12-.65l.65.46c.42.3 1.12.3 1.54 0l.92-.65c.42-.3.53-.88.26-1.3l-.53-.79c.19-.39.34-.8.46-1.22h-.94c-.5 0 .91-.41.91-.91v-1.11c0-.5-.41-.91-.91-.91h-.94c-.12-.42-.27-.83-.46-1.22l.53-.79c.27-.42.16-1-.26-1.3l-.92-.65zM12 21.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                     </svg>
                     My Profile Settings
                 </h4>
@@ -53,18 +53,18 @@
             </div>
         </div>
 
-        <!-- Updates Banner -->
-        <div class="alert alert-info shadow-sm">
+        <!-- Updates Banner (Moved to Top) -->
+        <div class="alert alert-info shadow-sm mb-4">
             <h4 class="alert-heading">📢 Community Updates & Announcements</h4>
             <p class="mb-0 fw-bold" id="userAnnouncement">Loading community announcements...</p>
         </div>
 
         <div class="row">
-            <!-- Left Column: Events & Patron Saint -->
+            <!-- Left Column: Events (Reservations removed) -->
             <div class="col-lg-8">
-                <!-- Upcoming Youth Events & RSVP -->
+                <!-- Upcoming Youth Events (RSVP Removed) -->
                 <div class="card shadow-sm p-4 mb-4">
-                    <h4 class="text-success mb-3">📅 Upcoming Youth Events & RSVP</h4>
+                    <h4 class="text-success mb-3">📅 Upcoming Youth Events</h4>
                     <div id="eventsList" class="row g-3">Loading upcoming events...</div>
                 </div>
 
@@ -177,27 +177,19 @@
                         }
                     }
 
-                    // 2. Render Upcoming Events & RSVP
+                    // 2. Render Upcoming Events (Reservations / RSVP buttons removed)
                     let eHtml = '';
                     if (!data.events || data.events.length === 0) {
                         eHtml = '<div class="col-12 text-muted small">No upcoming events scheduled at the moment.</div>';
                     } else {
-                        data.events.forEach((ev, idx) => {
-                            const rsvpList = ev.rsvps || [];
-                            const hasRsvp = rsvpList.includes(currentUser);
+                        data.events.forEach((ev) => {
                             eHtml += `
                                 <div class="col-md-6">
                                     <div class="p-3 border rounded bg-white shadow-sm h-100 d-flex flex-column justify-content-between">
                                         <div>
                                             <h5 class="text-success">${ev.title}</h5>
                                             <p class="small text-muted mb-1"><strong>Time:</strong> ${ev.date || 'TBA'}</p>
-                                            <p class="small mb-2">${ev.description || ''}</p>
-                                        </div>
-                                        <div class="d-flex align-items-center justify-content-between mt-2 pt-2 border-top">
-                                            <span class="badge bg-light text-dark border">${rsvpList.length} Going</span>
-                                            <button class="btn btn-sm ${hasRsvp ? 'btn-success' : 'btn-outline-success'}" onclick="toggleRsvp(${idx})">
-                                                ${hasRsvp ? '✓ Attending (Cancel)' : 'RSVP / Attend'}
-                                            </button>
+                                            <p class="small mb-0">${ev.description || ''}</p>
                                         </div>
                                     </div>
                                 </div>`;
@@ -212,9 +204,8 @@
                         document.getElementById('votingSection').innerHTML = '<p class="text-muted small mb-0">Check back later when leadership opens a new vote.</p>';
                     } else {
                         document.getElementById('electionDescription').textContent = election.title || 'Cast your vote below:';
-                        const votesMap = election.votes || {}; // { candidateName: [voter1, voter2] }
+                        const votesMap = election.votes || {}; 
                         
-                        // Check if current user has already voted in this election
                         let userHasVoted = false;
                         let votedForCandidate = '';
                         for (let candidate in votesMap) {
@@ -297,7 +288,7 @@
                     html += '</tbody></table>';
                     document.getElementById('directoryList').innerHTML = html;
 
-                    // 6. Render Community Messages Board
+                    // 6. Render Community Messages Board & Auto-Scroll
                     let mHtml = '';
                     if (!data.messages || data.messages.length === 0) {
                         mHtml = '<p class="text-muted small">No community messages yet. Be the first to post!</p>';
@@ -306,26 +297,12 @@
                             mHtml += `<div class="border-bottom pb-2 mb-2"><small class="text-muted"><strong>${msg.sender}</strong> (${msg.time || ''}):</small><p class="mb-0 text-dark small">${msg.text}</p></div>`;
                         });
                     }
-                    document.getElementById('messageBoard').innerHTML = mHtml;
+                    const messageBoard = document.getElementById('messageBoard');
+                    messageBoard.innerHTML = mHtml;
+                    messageBoard.scrollTop = messageBoard.scrollHeight;
                 }
             } catch (err) {
                 console.error("Error loading dashboard data:", err);
-            }
-        }
-
-        async function toggleRsvp(eventIndex) {
-            try {
-                const res = await fetch('/api/youth/rsvp', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ currentUser, eventIndex })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    loadDashboardData();
-                }
-            } catch (err) {
-                console.error("Error toggling RSVP:", err);
             }
         }
 
