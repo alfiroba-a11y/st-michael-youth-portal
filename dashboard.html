@@ -5,18 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Member Dashboard - St. Michael Kasaini Youth</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Chart.js CDN for 11 Jumuiyas Graph -->
+    <!-- Chart.js for graphs -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-light d-flex flex-column min-vh-100">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 shadow-sm">
-        <a class="navbar-brand fw-bold" href="/">✝ St. Michael Kasaini Youth Portal</a>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
+        <a class="navbar-brand" href="/">✝ St. Michael Kasaini Youth Portal</a>
         <div class="ms-auto d-flex align-items-center">
             <span id="welcomeUser" class="text-light me-3 small"></span>
             <!-- Profile Tab Toggle Button -->
-            <button class="btn btn-outline-light btn-sm me-2 d-flex align-items-center gap-1" type="button" data-bs-toggle="collapse" data-bs-target="#profileTabSection" aria-expanded="false" aria-controls="profileTabSection">
+            <button class="btn btn-outline-light btn-sm me-2" type="button" data-bs-toggle="collapse" data-bs-target="#profileTabSection" aria-expanded="false" aria-controls="profileTabSection" style="display: flex; align-items: center; gap: 6px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm6.9 3.5c-.42-.3-1.12-.3-1.54 0l-.65.46a7.96 7.96 0 0 1-1.12-.65l-.01-.81a1.11 1.11 0 0 0-1.11-1.11h-.94a1.11 1.11 0 0 0-1.11 1.11l-.01.81c-.41.26-.78.47-1.12.65l-.65-.46c-.42-.3-1.12-.3-1.54 0l-.92.65c-.42-.3-.53.88-.26 1.3l.53.79c-.19.39-.34.8-.46 1.22h-.94c-.5 0-.91.41-.91.91v1.11c0 .5.41.91.91.91h.94c.12.42.27.83.46 1.22l-.53.79c-.27.42-.16 1 .26 1.3l.92.65c.42.3 1.12.3 1.54 0l.65-.46c.34.18.71.39 1.12.65l.01.81c0 .5.41.91.11 1.11h.94c.5 0 .91-.41.91-.91l.01-.81c.41-.26.78-.47 1.12-.65l.65.46c.42.3 1.12.3 1.54 0l.92-.65c.42-.3.53-.88.26-1.3l-.53-.79c.19-.39.34-.8.46-1.22h.94c.5 0 .91-.41.91-.91v-1.11c0-.5-.41-.91-.91-.91h-.94c-.12-.42-.27-.83-.46-1.22l.53-.79c.27-.42.16-1-.26-1.3l-.92-.65zM12 21.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm6.9 3.5c-.42-.3-1.12-.3-1.54 0l-.65.46a7.96 7.96 0 0 1-1.12-.65l-.01-.81a1.11 1.11 0 0 0-1.11-1.11h-.94a1.11 1.11 0 0 0-1.11 1.11l-.01.81c-.41.26-.78.47-1.12.65l-.65-.46c-.42-.3-1.12-.3-1.54 0l-.92.65c-.42.3-.53.88-.26 1.3l.53.79c-.19.39-.34.8-.46 1.22h-.94c-.5 0-.91.41-.91.91v1.11c0 .5.41.91.91.91h.94c.12.42.27.83.46 1.22l-.53.79c-.27.42-.16 1 .26 1.3l.92.65c.42.3 1.12.3 1.54 0l.65-.46c.34.18.71.39 1.12.65l.01.81c0 .5.41.91.11 1.11h.94c.5 0 .91-.41.91-.91l.01-.81c.41-.26.78-.47 1.12-.65l.65.46c.42.3 1.12.3 1.54 0l.92-.65c.42-.3.53-.88.26-1.3l-.53-.79c.19-.39.34-.8.46-1.22h.94c.5 0 .91-.41.91-.91v-1.11c0-.5-.41-.91-.91-.91h-.94c-.12-.42-.27-.83-.46-1.22l.53-.79c.27-.42.16-1-.26-1.3l-.92-.65zM12 21.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                 </svg>
                 Profile Tab
             </button>
@@ -27,10 +27,10 @@
     <div class="container my-4 flex-grow-1">
         <!-- Collapsible Profile Settings Tab Section -->
         <div class="collapse mb-4" id="profileTabSection">
-            <div class="card shadow-sm p-4 border-primary-subtle rounded-3">
-                <h4 class="text-primary mb-3 d-flex align-items-center gap-2">
+            <div class="card shadow-sm p-4" style="border: 1px solid #cfe2ff; border-radius: 8px;">
+                <h4 class="text-primary mb-3" style="display: flex; align-items: center; gap: 8px;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm6.9 3.5c-.42-.3-1.12-.3-1.54 0l-.65.46a7.96 7.96 0 0 1-1.12-.65l-.01-.81a1.11 1.11 0 0 0-1.11-1.11h-.94a1.11 1.11 0 0 0-1.11 1.11l-.01.81c-.41.26-.78.47-1.12.65l-.65-.46c-.42-.3-1.12-.3-1.54 0l-.92.65c-.42-.3-.53.88-.26 1.3l.53.79c-.19.39-.34.8-.46 1.22h-.94c-.5 0-.91.41-.91.91v1.11c0 .5.41.91.91.91h.94c.12.42.27.83.46 1.22l-.53.79c-.27.42-.16 1 .26 1.3l.92.65c.42.3 1.12.3 1.54 0l.65-.46c.34.18.71.39 1.12.65l.01.81c0 .5.41.91.11 1.11h.94c.5 0 .91-.41.91-.91l.01-.81c.41-.26.78-.47 1.12-.65l.65.46c.42.3 1.12.3 1.54 0l.92-.65c.42-.3.53-.88.26-1.3l-.53-.79c.19-.39.34-.8.46-1.22h.94c.5 0 .91-.41.91-.91v-1.11c0-.5-.41-.91-.91-.91h-.94c-.12-.42-.27-.83-.46-1.22l.53-.79c.27-.42.16-1-.26-1.3l-.92-.65zM12 21.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm6.9 3.5c-.42-.3-1.12-.3-1.54 0l-.65.46a7.96 7.96 0 0 1-1.12-.65l-.01-.81a1.11 1.11 0 0 0-1.11-1.11h-.94a1.11 1.11 0 0 0-1.11 1.11l-.01.81c-.41.26-.78.47-1.12.65l-.65-.46c-.42-.3-1.12-.3-1.54 0l-.92.65c-.42.3-.53.88-.26 1.3l.53.79c-.19.39-.34.8-.46 1.22h-.94c-.5 0-.91.41-.91.91v1.11c0 .5.41.91.91.91h.94c.12.42.27.83.46 1.22l-.53.79c-.27.42-.16 1 .26 1.3l.92.65c.42.3 1.12.3 1.54 0l.65-.46c.34.18.71.39 1.12.65l.01.81c0 .5.41.91.11 1.11h.94c.5 0 .91-.41.91-.91l.01-.81c.41-.26.78-.47 1.12-.65l.65.46c.42.3 1.12.3 1.54 0l.92-.65c.42-.3.53-.88.26-1.3l-.53-.79c.19-.39.34-.8.46-1.22h-.94c.5 0 .91-.41.91-.91v-1.11c0-.5-.41-.91-.91-.91h-.94c-.12-.42-.27-.83-.46-1.22l.53-.79c.27-.42.16-1-.26-1.3l-.92-.65zM12 21.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                     </svg>
                     My Profile Settings
                 </h4>
@@ -38,92 +38,91 @@
                 <form id="profileForm">
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label for="profileName" class="form-label small fw-semibold text-secondary">Full Name</label>
+                            <label for="profileName" class="form-label" style="font-size: 14px; color: #333;">Full Name</label>
                             <input type="text" id="profileName" class="form-control" required>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label for="profileGroup" class="form-label small fw-semibold text-secondary">Group</label>
+                            <label for="profileGroup" class="form-label" style="font-size: 14px; color: #333;">Group</label>
                             <input type="text" id="profileGroup" class="form-control" required>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label for="profilePassword" class="form-label small fw-semibold text-secondary">New Password (leave blank to keep current)</label>
+                            <label for="profilePassword" class="form-label" style="font-size: 14px; color: #333;">New Password (leave blank to keep current)</label>
                             <input type="password" id="profilePassword" class="form-control" placeholder="••••">
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary px-4 fw-medium">Save Profile Changes</button>
+                    <button type="submit" class="btn btn-primary" style="background-color: #0d6efd; border: none; padding: 8px 16px; font-weight: 500;">Save Profile Changes</button>
                 </form>
             </div>
         </div>
 
         <!-- Updates Banner -->
-        <div class="alert alert-info shadow-sm mb-4 border-0 bg-info-subtle text-info-emphasis">
-            <h4 class="alert-heading h5 fw-bold">📢 Community Updates & Announcements</h4>
-            <p class="mb-0 fw-medium" id="userAnnouncement">Loading community announcements...</p>
+        <div class="alert alert-info shadow-sm">
+            <h4 class="alert-heading">📢 Community Updates & Announcements</h4>
+            <p class="mb-0 fw-bold" id="userAnnouncement">Loading community announcements...</p>
         </div>
 
-        <div class="row">
-            <!-- Left Column: Events -->
-            <div class="col-lg-8">
-                <!-- Upcoming Youth Events -->
-                <div class="card shadow-sm p-4 mb-4 border-0">
-                    <h4 class="text-success h5 fw-bold mb-3">📅 Upcoming Youth Events</h4>
-                    <div id="eventsList" class="row g-3">Loading upcoming events...</div>
+        <!-- Patron Saint Section -->
+        <div class="card shadow-sm p-4 mb-4 border-warning">
+            <div class="row align-items-center">
+                <div class="col-md-9">
+                    <h4 class="text-warning text-dark mb-2">🛡️ Our Patron Saint: St. Aloysius Gonzaga</h4>
+                    <p class="mb-1 text-secondary"><em>"I am a piece of wax, to be molded by God."</em> – Patron Saint of Christian Youth.</p>
+                    <p class="small text-muted mb-0">Feast Day: June 21. St. Aloysius Gonzaga inspires our youth community with his deep purity, dedication to prayer, and selfless service to the sick, showing us how to live a life totally devoted to Christ.</p>
                 </div>
-
-                <!-- Election & Decision Making -->
-                <div class="card shadow-sm p-4 mb-4 border-primary-subtle">
-                    <h4 class="text-primary h5 fw-bold mb-2">🗳️ Active Youth Election / Ballot</h4>
-                    <p class="text-muted small" id="electionDescription">Loading active vote...</p>
-                    <div id="votingSection">Loading ballot...</div>
-                </div>
-            </div>
-
-            <!-- Right Column: Daily Reflections & Patron Saint Reminder -->
-            <div class="col-lg-4">
-                <!-- Patron Saint Reminder Card -->
-                <div class="card shadow-sm p-4 mb-4 border-warning-subtle">
-                    <h5 class="text-warning-emphasis fw-bold mb-2">✨ Patron Saint Reminder</h5>
-                    <div id="patronSaintWidget">Loading patron saint...</div>
-                </div>
-
-                <!-- Daily Spiritual Reflection Card -->
-                <div class="card shadow-sm p-4 mb-4 border-info-subtle">
-                    <h5 class="text-info-emphasis fw-bold mb-2">📖 Daily Spiritual Reflection</h5>
-                    <div id="textReflectionsWidget">Loading reflection...</div>
+                <div class="col-md-3 text-center mt-3 mt-md-0">
+                    <div class="p-3 bg-light rounded border">
+                        <span class="fs-1">🕊️</span>
+                        <div class="small fw-bold text-dark mt-1">Model for Youth</div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- 11 Jumuiyas Graph Card (No Download Button) -->
-        <div class="card shadow-sm p-4 mb-4 border-0">
-            <h4 class="text-primary h5 fw-bold mb-1">📊 Eleven Jumuiyas Contributions Overview</h4>
-            <p class="text-muted small">Visual comparison of total collections across all 11 Jumuiyas in St. Michael Kasaini Youth.</p>
-            <div style="position: relative; height: 350px; width: 100%;">
-                <canvas id="memberPortalGraph"></canvas>
+        <!-- Daily Spiritual Reflection & Verse -->
+        <div class="card shadow-sm p-4 mb-4 bg-white border-primary">
+            <h4 class="text-primary mb-2">📖 Daily Spiritual Reflection</h4>
+            <blockquote class="blockquote fs-6 mb-2 text-dark">
+                <p id="dailyVerseText" class="mb-1"><em>"Don't let anyone look down on you because you are young, but set an example for the believers in speech, in conduct, in love, in faith and in purity."</em></p>
+                <footer id="dailyVerseRef" class="blockquote-footer mt-1">1 Timothy 4:12</footer>
+            </blockquote>
+            <p id="dailyReflectionText" class="small text-muted mb-0">Reflection: As young people following the example of St. Aloysius Gonzaga, let us pursue holiness and purity in our daily actions, supporting one another in faith.</p>
+        </div>
+
+        <!-- Upcoming Youth Events Section -->
+        <div class="card shadow-sm p-4 mb-4">
+            <h4 class="text-success mb-3">📅 Upcoming Youth Events</h4>
+            <div id="eventsList" class="row g-3">Loading upcoming events...</div>
+        </div>
+
+        <!-- Analytics Graph Section -->
+        <div class="card shadow-sm p-4 mb-4">
+            <h4 class="text-primary mb-3">📊 Approved Contributions Overview</h4>
+            <div style="position: relative; height: 250px; width: 100%;">
+                <canvas id="memberContributionChart"></canvas>
             </div>
         </div>
 
         <!-- Master Approved Contributions List -->
-        <div class="card shadow-sm p-4 mb-4 border-0">
-            <h4 class="text-success h5 fw-bold mb-2">💰 Official Approved Contributions List</h4>
+        <div class="card shadow-sm p-4 mb-4">
+            <h4 class="text-success mb-2">💰 Official Approved Contributions List</h4>
             <p class="text-muted small">Combined contributions from all Jumuiyas approved by the administration.</p>
             <div id="masterContributionsList" class="table-responsive">Loading contributions...</div>
         </div>
 
         <!-- Youth Directory Table -->
-        <div class="card shadow-sm p-4 mb-4 border-0">
-            <h4 class="text-primary h5 fw-bold mb-3">Official Youth Directory & Members</h4>
+        <div class="card shadow-sm p-4 mb-4">
+            <h4 class="text-primary mb-3">Official Youth Directory & Members</h4>
             <div id="directoryList" class="table-responsive">Loading directory...</div>
         </div>
 
         <!-- Community Chat / Message Board -->
-        <div class="card shadow-sm p-4 mb-4 border-0">
-            <h4 class="text-primary h5 fw-bold mb-3">Youth Community Board & Queries</h4>
-            <div id="messageBoard" class="border p-3 mb-3 bg-white rounded-2 shadow-inner" style="height: 200px; overflow-y: auto;">Loading messages...</div>
+        <div class="card shadow-sm p-4 mb-4">
+            <h4 class="text-primary mb-3">Youth Community Board & Queries</h4>
+            <div id="messageBoard" class="border p-3 mb-3 bg-white rounded" style="height: 200px; overflow-y: auto;">Loading messages...</div>
             <form id="messageForm">
                 <div class="input-group">
                     <input type="text" id="messageInput" class="form-control" placeholder="Type a message or query for leaders..." required>
-                    <button class="btn btn-primary px-4" type="submit">Post Message</button>
+                    <button class="btn btn-primary" type="submit">Post Message</button>
                 </div>
             </form>
         </div>
@@ -133,53 +132,17 @@
         &copy; 2026 St. Michael Kasaini Youth Portal. Created and managed by Robert Wambua. All rights reserved.
     </footer>
 
-    <!-- Bootstrap JS Bundle -->
+    <!-- Bootstrap JS Bundle (Required for collapsible tabs/dropdowns) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         const currentUser = localStorage.getItem('youth_user');
+        let memberChartInstance = null;
+
         if (!currentUser) {
             window.location.href = '/login';
         } else {
             document.getElementById('welcomeUser').textContent = `Signed in as: ${currentUser}`;
-        }
-
-        let memberChartInstance = null;
-
-        async function loadMemberPortalGraph() {
-            try {
-                const res = await fetch('/api/analytics/jumuiya-graph');
-                const data = await res.json();
-                if (data.success) {
-                    const ctx = document.getElementById('memberPortalGraph').getContext('2d');
-                    
-                    if (memberChartInstance) {
-                        memberChartInstance.destroy();
-                    }
-
-                    memberChartInstance = new Chart(ctx, {
-                        type: 'bar',
-                        data: {
-                            labels: data.labels,
-                            datasets: [{
-                                label: 'Total Contributions (KES)',
-                                data: data.datasetsData,
-                                backgroundColor: '#0d6efd',
-                                borderRadius: 6
-                            }]
-                        },
-                        options: {
-                            responsive: true,
-                            maintainAspectRatio: false,
-                            scales: {
-                                y: { beginAtZero: true }
-                            }
-                        }
-                    });
-                }
-            } catch (err) {
-                console.error('Error loading member portal graph:', err);
-            }
         }
 
         async function loadDashboardData() {
@@ -195,25 +158,13 @@
                         document.getElementById('userAnnouncement').textContent = 'Welcome to St. Michael Kasaini Youth Portal.';
                     }
 
-                    // 1.1 Patron Saint Reminder Widget
-                    document.getElementById('patronSaintWidget').innerHTML = `
-                        <h6 class="fw-bold text-dark">St. Aloysius Gonzaga</h6>
-                        <p class="small text-muted mb-1"><strong>Feast Day:</strong> June 21</p>
-                        <p class="small mb-0 fst-italic">"I am a piece of iron, and I am drawn by a magnet; my desire is to go to God."</p>
-                    `;
-
-                    // 1.2 Text Reflections Widget
-                    if (data.textReflection) {
-                        document.getElementById('textReflectionsWidget').innerHTML = `
-                            <h6 class="fw-bold text-dark">${data.textReflection.title || 'Daily Word'}</h6>
-                            <p class="small text-muted mb-1"><strong>Ref:</strong> ${data.textReflection.reference || ''}</p>
-                            <p class="small mb-0">${data.textReflection.content || ''}</p>
-                        `;
-                    } else {
-                        document.getElementById('textReflectionsWidget').innerHTML = '<p class="small text-muted mb-0">No daily reflection posted yet.</p>';
+                    // Optional dynamic daily verse handling if provided by API
+                    if (data.readings && data.readings.verse) {
+                        document.getElementById('dailyVerseText').innerHTML = `<em>"${data.readings.verse}"</em>`;
+                        document.getElementById('dailyVerseRef').textContent = data.readings.verseRef || '';
                     }
 
-                    // Pre-populate profile settings form
+                    // Pre-populate profile settings form if members data is available
                     if (data.members && currentUser) {
                         const loggedInMember = data.members.find(m => m.name === currentUser || m.customId === currentUser);
                         if (loggedInMember) {
@@ -227,90 +178,15 @@
                     if (!data.events || data.events.length === 0) {
                         eHtml = '<div class="col-12 text-muted small">No upcoming events scheduled at the moment.</div>';
                     } else {
-                        data.events.forEach((ev) => {
-                            eHtml += `
-                                <div class="col-md-6">
-                                    <div class="p-3 border rounded-2 bg-white shadow-sm h-100 d-flex flex-column justify-content-between">
-                                        <div>
-                                            <h5 class="text-success h6 fw-bold">${ev.title}</h5>
-                                            <p class="small text-muted mb-1"><strong>Time:</strong> ${ev.date || 'TBA'}</p>
-                                            <p class="small mb-0">${ev.description || ''}</p>
-                                        </div>
-                                    </div>
-                                </div>`;
+                        data.events.forEach(ev => {
+                            eHtml += `<div class="col-md-4"><div class="p-3 border rounded bg-white shadow-sm h-100"><h5 class="text-success">${ev.title}</h5><p class="small text-muted mb-1"><strong>Time:</strong> ${ev.date || 'TBA'}</p><p class="small mb-0">${ev.description || ''}</p></div></div>`;
                         });
                     }
                     document.getElementById('eventsList').innerHTML = eHtml;
 
-                    // 3. Render Election & Voting Module
-                    const election = data.activeElection;
-                    if (!election || !election.active) {
-                        document.getElementById('electionDescription').textContent = 'No active elections or polls running at the moment.';
-                        document.getElementById('votingSection').innerHTML = '<p class="text-muted small mb-0">Check back later when leadership opens a new vote.</p>';
-                    } else {
-                        document.getElementById('electionDescription').textContent = election.title || 'Cast your vote below:';
-                        const votesMap = election.votes || {}; 
-                        
-                        let userHasVoted = false;
-                        let votedForCandidate = '';
-                        for (let candidate in votesMap) {
-                            if (votesMap[candidate].includes(currentUser)) {
-                                userHasVoted = true;
-                                votedForCandidate = candidate;
-                                break;
-                            }
-                        }
-
-                        if (userHasVoted) {
-                            let resultsHtml = `<div class="alert alert-success small mb-2 py-2">✓ You have successfully cast your vote for: <strong>${votedForCandidate}</strong></div>`;
-                            resultsHtml += '<h6 class="small fw-bold text-dark mt-3">Current Ballot Results:</h6><ul class="list-group list-group-flush small mb-0">';
-                            let totalVotesAll = 0;
-                            for (let cand of election.candidates) {
-                                const count = (votesMap[cand] || []).length;
-                                totalVotesAll += count;
-                            }
-                            election.candidates.forEach(cand => {
-                                const count = (votesMap[cand] || []).length;
-                                resultsHtml += `<li class="list-group-item d-flex justify-content-between align-items-center bg-transparent px-0"><span>${cand}</span><span class="badge bg-primary rounded-pill">${count} votes</span></li>`;
-                            });
-                            resultsHtml += `</ul><p class="text-muted small mt-2 mb-0">Total votes cast: ${totalVotesAll}</p>`;
-                            document.getElementById('votingSection').innerHTML = resultsHtml;
-                        } else {
-                            let ballotHtml = '<form id="ballotForm"><div class="vstack gap-2 mb-3">';
-                            election.candidates.forEach((cand, idx) => {
-                                ballotHtml += `
-                                    <div class="form-check p-2 border rounded-2 bg-white">
-                                        <input class="form-check-input ms-1" type="radio" name="voteCandidate" id="cand_${idx}" value="${cand}" required>
-                                        <label class="form-check-label fw-bold ms-2 text-dark" for="cand_${idx}">${cand}</label>
-                                    </div>`;
-                            });
-                            ballotHtml += '</div><button type="submit" class="btn btn-primary btn-sm px-3">Submit Secure Vote</button></form>';
-                            document.getElementById('votingSection').innerHTML = ballotHtml;
-
-                            document.getElementById('ballotForm').addEventListener('submit', async (evSub) => {
-                                evSub.preventDefault();
-                                const selected = document.querySelector('input[name="voteCandidate"]:checked');
-                                if (!selected) return;
-                                const candidateName = selected.value;
-
-                                const vRes = await fetch('/api/youth/vote', {
-                                    method: 'POST',
-                                    headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ currentUser, candidate: candidateName })
-                                });
-                                const vData = await vRes.json();
-                                if (vData.success) {
-                                    loadDashboardData();
-                                } else {
-                                    alert(vData.message || 'Error recording vote');
-                                }
-                            });
-                        }
-                    }
-
-                    // 4. Render Master Approved Contributions List
+                    // 3. Render Master Approved Contributions List & Graph
                     const contributionsList = data.masterContributions || [];
-                    let cHtml = '<table class="table table-bordered table-striped align-middle small"><thead><tr><th>Contributor Name</th><th>Amount (KES)</th><th>Purpose</th><th>Jumuiya</th></tr></thead><tbody>';
+                    let cHtml = '<table class="table table-bordered table-striped align-middle"><thead><tr><th>Contributor Name</th><th>Amount (KES)</th><th>Purpose</th><th>Jumuiya</th></tr></thead><tbody>';
                     if (contributionsList.length === 0) {
                         cHtml += '<tr><td colspan="4" class="text-muted text-center">No approved contributions published yet.</td></tr>';
                     } else {
@@ -320,9 +196,10 @@
                     }
                     cHtml += '</tbody></table>';
                     document.getElementById('masterContributionsList').innerHTML = cHtml;
+                    renderMemberChart(contributionsList);
 
-                    // 5. Render Registered Members Directory
-                    let html = '<table class="table table-bordered table-striped align-middle small"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Group</th><th>Phone</th></tr></thead><tbody>';
+                    // 4. Render Registered Members Directory
+                    let html = '<table class="table table-bordered table-striped"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Group</th><th>Phone</th></tr></thead><tbody>';
                     if (!data.members || data.members.length === 0) {
                         html += '<tr><td colspan="5" class="text-muted text-center">No approved members listed yet.</td></tr>';
                     } else {
@@ -333,7 +210,7 @@
                     html += '</tbody></table>';
                     document.getElementById('directoryList').innerHTML = html;
 
-                    // 6. Render Community Messages Board & Auto-Scroll
+                    // 5. Render Community Messages Board
                     let mHtml = '';
                     if (!data.messages || data.messages.length === 0) {
                         mHtml = '<p class="text-muted small">No community messages yet. Be the first to post!</p>';
@@ -342,13 +219,49 @@
                             mHtml += `<div class="border-bottom pb-2 mb-2"><small class="text-muted"><strong>${msg.sender}</strong> (${msg.time || ''}):</small><p class="mb-0 text-dark small">${msg.text}</p></div>`;
                         });
                     }
-                    const messageBoard = document.getElementById('messageBoard');
-                    messageBoard.innerHTML = mHtml;
-                    messageBoard.scrollTop = messageBoard.scrollHeight;
+                    document.getElementById('messageBoard').innerHTML = mHtml;
                 }
             } catch (err) {
                 console.error("Error loading dashboard data:", err);
             }
+        }
+
+        function renderMemberChart(contributions) {
+            const ctx = document.getElementById('memberContributionChart').getContext('2d');
+            const totalsByPurpose = {};
+
+            contributions.forEach(item => {
+                const purpose = item.purpose || 'General';
+                totalsByPurpose[purpose] = (totalsByPurpose[purpose] || 0) + Number(item.amount || 0);
+            });
+
+            const labels = Object.keys(totalsByPurpose);
+            const values = Object.values(totalsByPurpose);
+
+            if (memberChartInstance) {
+                memberChartInstance.destroy();
+            }
+
+            memberChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels.length > 0 ? labels : ['No Contributions'],
+                    datasets: [{
+                        label: 'Total Amount (KES)',
+                        data: values.length > 0 ? values : [0],
+                        backgroundColor: 'rgba(25, 135, 84, 0.7)',
+                        borderColor: 'rgba(25, 135, 84, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
         }
 
         // Handle Profile Form Submission
@@ -402,9 +315,7 @@
             window.location.href = '/login';
         }
 
-        // Initial loads
         loadDashboardData();
-        loadMemberPortalGraph();
         setInterval(loadDashboardData, 5000);
     </script>
 </body>
