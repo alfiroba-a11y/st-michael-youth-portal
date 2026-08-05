@@ -182,7 +182,7 @@ app.post('/api/jumuiya/submit-record', async (req, res) => {
     res.json({ success: true, message: 'Contribution recorded successfully and sent for Master Admin review!' });
 });
 
-// Automated USCCB Scraper Helper for Daily Readings
+// Automated USCCB Scraper Helper for Daily Readings (Updated with robust fallback selectors)
 async function getAutomatedDailyReadings() {
     try {
         const today = new Date();
@@ -210,15 +210,44 @@ async function getAutomatedDailyReadings() {
 
         // Scrape live from USCCB website
         const targetUrl = `https://bible.usccb.org/bible/readings/${dateStr}.cfm`;
-        const { data: html } = await axios.get(targetUrl, { timeout: 10000 });
+        const { data: html } = await axios.get(targetUrl, { 
+            timeout: 10000,
+            headers: {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+            }
+        });
         const $ = cheerio.load(html);
 
-        let title = $('.date_calendar div').text().trim() || $('.content-title').text().trim() || "Daily Mass Readings";
+        let title = $('.date_calendar div').text().trim() || $('.content-title').text().trim() || $('h1').first().text().trim() || "Daily Mass Readings";
         let readingsList = [];
 
-        $('.field--name-field-readings-body').each((index, element) => {
-            readingsList.push($(element).text().trim());
-        });
+        // Flexible multi-selector approach to capture readings even if class names shift
+        const selectors = [
+            '.field--name-field-readings-body',
+            '.b-readings__content',
+            '.content-body .field__item',
+            'div.ta-left'
+        ];
+
+        for (const selector of selectors) {
+            $(selector).each((index, element) => {
+                const text = $(element).text().trim();
+                if (text && !readingsList.includes(text)) {
+                    readingsList.push(text);
+                }
+            });
+            if (readingsList.length >= 2) break; // Exit loop if we successfully captured content
+        }
+
+        // Ultimate fallback if structured classes fail entirely
+        if (readingsList.length === 0) {
+            $('.content-body p, article p').each((index, element) => {
+                const text = $(element).text().trim();
+                if (text.length > 20 && !readingsList.includes(text)) {
+                    readingsList.push(text);
+                }
+            });
+        }
 
         const scrapedData = {
             readingDate: mongoDateStr,
