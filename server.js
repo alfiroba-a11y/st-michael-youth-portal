@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
 const { MongoClient } = require('mongodb');
+const cron = require('node-cron');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -13,6 +14,76 @@ app.use(express.static(path.join(__dirname)));
 const MONGO_URI = process.env.MONGO_URI;
 let db = null;
 
+// Automated Reflection Bank (Rotates daily based on the day of the year)
+const automatedReflections = [
+    {
+        title: "Walking in Divine Strength",
+        reference: "Philippians 4:13",
+        content: "I can do all things through Christ who strengthens me. No matter the challenges you face today, rely not on your own power, but on His infinite grace."
+    },
+    {
+        title: "Trusting the Journey",
+        reference: "Proverbs 3:5-6",
+        content: "Trust in the Lord with all your heart and lean not on your own understanding; in all your ways submit to him, and he will make your paths straight."
+    },
+    {
+        title: "A Heart of Pure Service",
+        reference: "Colossians 3:23",
+        content: "Whatever you do, work at it with all your heart, as working for the Lord, not for human masters, knowing that you will receive an inheritance."
+    },
+    {
+        title: "The Peace That Surpasses Understanding",
+        reference: "John 14:27",
+        content: "Peace I leave with you; my peace I give you. I do not give to you as the world gives. Do not let your hearts be troubled and do not be afraid."
+    },
+    {
+        title: "Renewed Hope",
+        reference: "Isaiah 40:31",
+        content: "Those who hope in the Lord will renew their strength. They will soar on wings like eagles; they will run and not grow weary, they will walk and not be faint."
+    }
+];
+
+// Function to automatically update the daily reflection in DB
+async function rotateDailyReflection() {
+    if (!db) return;
+    try {
+        const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+        const reflectionIndex = dayOfYear % automatedReflections.length;
+        const todayReflection = automatedReflections[reflectionIndex];
+
+        await db.collection('settings').updateOne(
+            { type: 'reflection' },
+            { $set: { ...todayReflection, updatedAt: new Date() } },
+            { upsert: true }
+        );
+        console.log(`[Automation] Daily reflection updated to: "${todayReflection.title}"`);
+    } catch (err) {
+        console.error('Error updating automated reflection:', err.message);
+    }
+}
+
+// Function to initialize St. Aloysius Gonzaga as the permanent Patron Saint
+async function initializePatronSaint() {
+    if (!db) return;
+    try {
+        const saintData = {
+            type: 'patronSaint',
+            name: "St. Aloysius Gonzaga",
+            feastDay: "June 21",
+            message: "Model of purity, youth, and selfless charity. Patron saint of Christian youth, who gave his life nursing the sick during the Roman plague."
+        };
+
+        await db.collection('settings').updateOne(
+            { type: 'patronSaint' },
+            { $set: saintData },
+            { upsert: true }
+        );
+        console.log('[Initialization] Patron Saint locked to St. Aloysius Gonzaga (June 21st).');
+    } catch (err) {
+        console.error('Error initializing patron saint:', err.message);
+    }
+}
+
 async function initDB() {
     if (MONGO_URI) {
         try {
@@ -20,12 +91,21 @@ async function initDB() {
             await client.connect();
             db = client.db('kasaini_youth_db');
             console.log('Connected successfully to MongoDB Atlas.');
+            
+            // Run initializations upon DB connection
+            await initializePatronSaint();
+            await rotateDailyReflection();
         } catch (err) {
             console.error('MongoDB connection error:', err.message);
         }
     }
 }
 initDB();
+
+// Schedule cron job to run every day at 00:00 (Midnight) to change reflection
+cron.schedule('0 0 * * *', () => {
+    rotateDailyReflection();
+});
 
 // 11 Defined Jumuiyas with Unique Default Credentials
 const JUMUIYAS_LIST = [
@@ -121,6 +201,36 @@ app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html'))
 app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
 app.get('/secret-admin-portal-kasaini-2026', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('/jumuiya-portal', (req, res) => res.sendFile(path.join(__dirname, 'jumuiya-portal.html')));
+
+// Spiritual Content APIs (Daily Reflection & Patron Saint)
+app.get('/api/spiritual/content', async (req, res) => {
+    try {
+        let reflection = null;
+        let patronSaint = null;
+
+        if (db) {
+            reflection = await db.collection('settings').findOne({ type: 'reflection' });
+            patronSaint = await db.collection('settings').findOne({ type: 'patronSaint' });
+        }
+
+        // Fallback if DB isn't ready
+        if (!reflection) {
+            reflection = automatedReflections[0];
+        }
+        if (!patronSaint) {
+            patronSaint = {
+                name: "St. Aloysius Gonzaga",
+                feastDay: "June 21",
+                message: "Model of purity, youth, and selfless charity. Patron saint of Christian youth."
+            };
+        }
+
+        res.json({ success: true, reflection, patronSaint });
+    } catch (err) {
+        console.error('Error fetching spiritual content:', err);
+        res.status(500).json({ success: false, message: 'Server error retrieving spiritual content.' });
+    }
+});
 
 // Presence API
 app.post('/api/ping', (req, res) => {
@@ -338,7 +448,6 @@ app.post('/api/admin/login', (req, res) => {
 app.get('/api/admin/data', async (req, res) => {
     const data = await readData();
     
-    // Filter members who requested a password reset
     const passwordResets = (data.members || []).filter(m => m.passwordResetRequested);
 
     let contributionsMap = {};
@@ -392,7 +501,6 @@ app.post('/api/admin/remove-member', async (req, res) => {
     res.json({ success: true });
 });
 
-// Master Admin Endpoint to Edit Member Details (Name, Phone, Jumuiya, Group)
 app.post('/api/admin/edit-member', async (req, res) => {
     try {
         const { id, name, phone, jumuiya, group } = req.body;
@@ -416,7 +524,6 @@ app.post('/api/admin/edit-member', async (req, res) => {
     }
 });
 
-// Master Admin Endpoint to Approve Password Reset
 app.post('/api/admin/approve-password-reset', async (req, res) => {
     try {
         const { id } = req.body;
@@ -437,7 +544,6 @@ app.post('/api/admin/approve-password-reset', async (req, res) => {
     }
 });
 
-// Master Admin: Publish or Unpublish Jumuiya Record
 app.post('/api/admin/toggle-publish', async (req, res) => {
     const { id } = req.body;
     const data = await readData();
@@ -449,7 +555,6 @@ app.post('/api/admin/toggle-publish', async (req, res) => {
     res.json({ success: true });
 });
 
-// Master Admin: Edit Jumuiya Record (Name, Amount, Purpose)
 app.post('/api/admin/edit-jumuiya-record', async (req, res) => {
     const { id, name, amount, purpose } = req.body;
     const data = await readData();
@@ -463,7 +568,6 @@ app.post('/api/admin/edit-jumuiya-record', async (req, res) => {
     res.json({ success: true });
 });
 
-// Master Admin: Delete Jumuiya Submission Record
 app.post('/api/admin/delete-jumuiya-record', async (req, res) => {
     const { id } = req.body;
     const data = await readData();
@@ -474,7 +578,6 @@ app.post('/api/admin/delete-jumuiya-record', async (req, res) => {
     res.json({ success: true });
 });
 
-// Master Admin: Render printable report for browser Print-to-PDF
 app.get('/api/admin/download-data', async (req, res) => {
     try {
         const data = await readData();
@@ -567,7 +670,6 @@ app.get('/api/admin/download-data', async (req, res) => {
     }
 });
 
-// Events Management Endpoints
 app.post('/api/admin/events', async (req, res) => {
     const { title, date, description } = req.body;
     const data = await readData();
@@ -587,7 +689,6 @@ app.post('/api/admin/events/delete', async (req, res) => {
     res.json({ success: true });
 });
 
-// Mass Readings Management Endpoints
 app.post('/api/admin/readings', async (req, res) => {
     const { title, firstReading, psalm, secondReading, gospel } = req.body;
     const data = await readData();
@@ -617,7 +718,6 @@ app.post('/api/admin/readings/delete', async (req, res) => {
     res.json({ success: true });
 });
 
-// Legacy handler support
 app.post('/api/admin/update-readings', async (req, res) => {
     const data = await readData();
     data.readings = [req.body];
