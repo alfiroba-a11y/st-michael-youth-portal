@@ -1,77 +1,77 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Master Admin Portal - St. Michael Kasaini Youth</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Master Admin Portal - St. Michael Kasaini Youth</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-light d-flex flex-column min-vh-100">
-    
-    <!-- Login Wrapper -->
-    <div class="container my-auto" style="max-width: 400px;" id="loginWrapper">
-        <div id="loginSection" class="card shadow-sm p-4">
-            <h3 class="mb-3 text-danger">Master Admin Login</h3>
-            <div id="adminAlert" class="alert d-none" role="alert"></div>
-            <form id="adminLoginForm">
-                <div class="mb-3">
-                    <label class="form-label">Username</label>
-                    <input type="text" id="adminUser" class="form-control" required placeholder="Enter username">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Password</label>
-                    <input type="password" id="adminPass" class="form-control" required placeholder="Enter password">
-                </div>
-                <button type="submit" class="btn btn-danger w-100 mb-2">Login to Master Portal</button>
-            </form>
-            <div class="mt-3 text-center"><a href="/" class="text-decoration-none small">Back to Home</a></div>
-        </div>
-    </div>
 
-   <!-- Main Dashboard Section -->
-    <div id="dashboardSection" class="container py-4 d-none flex-grow-1" style="max-width: 1200px;">
-        <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm flex-wrap gap-2">
-            <div>
-                <h2 class="mb-1">🛡️ Master Admin Control Panel</h2>
-                <small class="text-muted">Overseeing all 11 Jumuiyas, member registrations, events, readings, polls, and published feeds</small>
-            </div>
-            <div class="d-flex gap-2 flex-wrap">
-                <a href="/jumuiya-portal" class="btn btn-outline-primary btn-sm" target="_blank">🌐 View Jumuiya Portal Grid</a>
-                <button onclick="downloadPortalData()" class="btn btn-success btn-sm fw-bold">📥 Download Portal Data (PDF)</button>
-                <button class="btn btn-outline-secondary btn-sm" onclick="location.reload()">Logout</button>
-            </div>
-        </div>
+<!-- Login Wrapper -->
+<div class="container my-auto" style="max-width: 400px;" id="loginWrapper">
+<div id="loginSection" class="card shadow-sm p-4">
+<h3 class="mb-3 text-danger">Master Admin Login</h3>
+<div id="adminAlert" class="alert d-none" role="alert"></div>
+<form id="adminLoginForm">
+<div class="mb-3">
+<label class="form-label">Username</label>
+<input type="text" id="adminUser" class="form-control" required placeholder="Enter username">
+</div>
+<div class="mb-3">
+<label class="form-label">Password</label>
+<input type="password" id="adminPass" class="form-control" required placeholder="Enter password">
+</div>
+<button type="submit" class="btn btn-danger w-100 mb-2">Login to Master Portal</button>
+</form>
+<div class="mt-3 text-center"><a href="/" class="text-decoration-none small">Back to Home</a></div>
+</div>
+</div>
 
-        <!-- Global Grand Total & Live Target Management Widgets -->
-        <div class="card shadow-sm p-4 mb-4 bg-primary text-white">
-            <div class="row align-items-center">
-                <div class="col-md-6">
-                    <h6 class="text-uppercase tracking-wider text-white-50 fw-bold">Total Youth Contributions</h6>
-                    <div class="display-4 fw-bold my-2">
-                        KES <span id="grandTotalCounter">0</span>
-                    </div>
-                    <div class="mb-0 text-white-50" id="progressText">0% of Target Amount Reached</div>
-                </div>
-                <div class="col-md-6 mt-3 mt-md-0">
-                    <div class="progress bg-white bg-opacity-25" style="height: 12px;">
-                        <div id="progressBar" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
-                    </div>
-                    <div class="d-flex justify-content-between mt-2 small text-white-50">
-                        <span id="targetDisplay">Target: KES 0</span>
-                        <span>Live Status: Active Cycle</span>
-                    </div>
-                </div>
-            </div>
-        </div>
+<!-- Main Dashboard Section -->
+<div id="dashboardSection" class="container py-4 d-none flex-grow-1" style="max-width: 1200px;">
+<div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm flex-wrap gap-2">
+<div>
+<h2 class="mb-1">🛡️ Master Admin Control Panel</h2>
+<small class="text-muted">Overseeing all 11 Jumuiyas, member registrations, events, readings, polls, and published feeds</small>
+</div>
+<div class="d-flex gap-2 flex-wrap">
+<a href="/jumuiya-portal" class="btn btn-outline-primary btn-sm" target="_blank">🌐 View Jumuiya Portal Grid</a>
+<button onclick="downloadPortalData()" class="btn btn-success btn-sm fw-bold">📥 Download Portal Data (PDF)</button>
+<button class="btn btn-outline-secondary btn-sm" onclick="location.reload()">Logout</button>
+</div>
+</div>
 
-        <!-- Target Configuration & Cycle Management -->
+<!-- Global Grand Total & Live Target Management Widgets -->
+<div class="card shadow-sm p-4 mb-4 bg-primary text-white">
+<div class="row align-items-center">
+<div class="col-md-6">
+<h6 class="text-uppercase tracking-wider text-white-50 fw-bold">Total Youth Contributions</h6>
+<div class="display-4 fw-bold my-2">
+KES <span id="grandTotalCounter">0</span>
+</div>
+<div class="mb-0 text-white-50" id="progressText">0% of Monthly Target Reached</div>
+</div>
+<div class="col-md-6 mt-3 mt-md-0">
+<div class="progress bg-white bg-opacity-25" style="height: 12px;">
+<div id="progressBar" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+</div>
+<div class="d-flex justify-content-between mt-2 small text-white-50">
+<span id="targetDisplay">Target: KES 0</span>
+<span>Live Status: Active Cycle</span>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Target Configuration & Cycle Management -->
         <div class="row g-3 mb-4">
             <div class="col-md-6">
                 <div class="card shadow-sm p-3 h-100">
-                    <h5 class="text-primary mb-3">⚙️ Set Contribution Target</h5>
-                    <form id="targetForm" class="d-flex gap-2" onsubmit="event.preventDefault(); saveTarget();">
-                        <input type="number" id="targetInput" class="form-control" placeholder="Enter target amount (e.g. 50000)" required>
+                    <h5 class="text-primary mb-3">⚙️ Set Monthly Youth Target</h5>
+                    <form id="targetForm" class="d-flex gap-2">
+                        <input type="number" id="newTargetInput" class="form-control" placeholder="Enter target amount (e.g. 50000)" required>
                         <button type="submit" class="btn btn-outline-primary text-nowrap">Save Target</button>
                     </form>
                 </div>
@@ -83,423 +83,555 @@
                     <button onclick="closeAndResetCycle()" class="btn btn-danger btn-sm mt-auto">Close Cycle & Start Fresh</button>
                 </div>
             </div>
-        </div>
-
-        <!-- All Jumuiyas Performance Graph Section -->
-        <div class="card shadow-sm p-4 mb-4">
-            <h4 class="text-primary mb-3">📊 All Jumuiyas Performance Analytics</h4>
-            <div style="position: relative; height: 320px; width: 100%;">
-                <canvas id="jumuiyaPerformanceChart"></canvas>
-            </div>
-        </div>
-
-        <!-- Jumuiya Contributions Summary Table -->
-        <div class="card shadow-sm p-4 mb-4">
-            <h4 class="text-primary mb-3">📊 Contributors list</h4>
-            <div class="table-responsive">
-                <table class="table table-bordered table-striped align-middle">
-                    <thead class="table-dark">
-                        <tr>
-                            <th>Jumuiya Name</th>
-                            <th>ID</th>
-                            <th>Total Submissions / Contributions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="contributionsSummaryList">
-                        <tr><td colspan="3" class="text-muted text-center">Loading contributions summary...</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Manage Portal Events, Readings & Polls Section -->
-        <div class="row mb-4">
-            <!-- Events Management -->
-            <div class="col-lg-4 mb-3">
-                <div class="card shadow-sm p-4 h-100">
-                    <h4 class="text-info mb-3">📅 Post / Update Events</h4>
-                    <form id="eventForm">
-                        <input type="hidden" id="eventId">
-                        <div class="mb-3">
-                            <label class="form-label">Event Title</label>
-                            <input type="text" id="eventTitle" class="form-control" required placeholder="e.g. Youth Sunday Mass">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Event Date & Time</label>
-                            <input type="text" id="eventDate" class="form-control" required placeholder="e.g. Next Sunday at 10:00 AM">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Description / Details</label>
-                            <textarea id="eventDesc" class="form-control" rows="3" required placeholder="Enter event details..."></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-info text-white btn-sm w-100">Save / Publish Event</button>
-                    </form>
-                    <hr class="my-3">
-                    <div id="eventsListAdmin" class="small text-muted">Loading active events...</div>
-                </div>
-            </div>
-
-            <!-- Readings Management -->
-            <div class="col-lg-4 mb-3">
-                <div class="card shadow-sm p-4 h-100">
-                    <h4 class="text-warning mb-3">📖 Post / Update Readings</h4>
-                    <form id="readingForm">
-                        <input type="hidden" id="readingId">
-                        <div class="mb-3">
-                            <label class="form-label">Mass Theme / Sunday Title</label>
-                            <input type="text" id="readingTitle" class="form-control" required placeholder="e.g. Seventeenth Sunday">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">1. First Reading</label>
-                            <textarea id="firstReading" class="form-control" rows="2" required placeholder="1 Kings 3:5..."></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">2. Responsorial Psalm</label>
-                            <textarea id="psalm" class="form-control" rows="2" required placeholder="Psalm 119..."></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">3. Second Reading</label>
-                            <textarea id="secondReading" class="form-control" rows="2" required placeholder="Romans 8:28..."></textarea>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">4. Gospel</label>
-                            <textarea id="gospel" class="form-control" rows="2" required placeholder="Matthew 13:44..."></textarea>
-                        </div>
-                        <button type="submit" class="btn btn-warning btn-sm w-100">Save / Publish Reading</button>
-                    </form>
-                    <hr class="my-3">
-                    <div id="readingsListAdmin" class="small text-muted">Loading active readings...</div>
-                </div>
-            </div>
-
-            <!-- Polls Management -->
-            <div class="col-lg-4 mb-3">
-                <div class="card shadow-sm p-4 h-100">
-                    <h4 class="text-secondary mb-3">📊 Create & Manage Polls</h4>
-                    <form id="pollForm">
-                        <div class="mb-3">
-                            <label class="form-label">Poll Question</label>
-                            <input type="text" id="pollQuestion" class="form-control" required placeholder="e.g. Cleanup date?">
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Options (Comma separated)</label>
-                            <input type="text" id="pollOptions" class="form-control" required placeholder="Saturday, Sunday, Next Weekend">
-                        </div>
-                        <button type="submit" class="btn btn-secondary btn-sm w-100">Publish New Poll</button>
-                    </form>
-                    <hr class="my-3">
-                    <div id="pollsListAdmin" class="small text-muted">Loading active polls...</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Password Reset Approvals -->
-        <div class="card shadow-sm p-4 mb-4">
-            <h4 class="text-danger mb-3">🔑 Password Reset Requests</h4>
-            <p class="text-muted small">Members who forgot their passwords and have submitted new ones awaiting admin approval.</p>
-            <div id="passwordResetList" class="table-responsive">Loading password requests...</div>
-        </div>
-
-        <!-- All Submissions from Every Jumuiya -->
-        <div class="card shadow-sm p-4 mb-4">
-            <h4 class="text-success mb-3">📥 Review & Publish Jumuiya Submissions</h4>
-            <p class="text-muted small">Review records fed by each Jumuiya admin. Toggle "Publish" to display them on the members portal, or use "Edit" / "Delete" to manage entries.</p>
-            <div class="table-responsive">
-                <table class="table table-bordered align-middle">
-                    <thead class="table-secondary">
-                        <tr>
-                            <th>Jumuiya Name</th>
-                            <th>No</th>
-                            <th>ID</th>
-                            <th>Name / Amount</th>
-                            <th>Purpose</th>
-                            <th>Status</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="masterJumuiyaRecordsList">
-                        <tr><td colspan="7" class="text-muted text-center">No submissions received yet.</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Pending Youth Registrations -->
-        <div class="card shadow-sm p-4 mb-4">
-            <h4 class="mb-3">👤 Pending Youth Registrations</h4>
-            <div id="pendingList" class="table-responsive">Loading...</div>
-        </div>
-
-        <!-- Registered Youth Directory -->
-        <div class="card shadow-sm p-4 mb-4">
-            <h4 class="mb-3">👥 Registered Youth Directory (Edit Names, Phone & Group)</h4>
-            <div id="memberList" class="table-responsive">Loading...</div>
-        </div>
-
-    </div>
-
-    <!-- Edit Record Modal -->
-    <div class="modal fade" id="editModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Edit Jumuiya Record</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <input type="hidden" id="editRecId">
-                    <div class="mb-3">
-                        <label class="form-label">Name</label>
-                        <input type="text" id="editName" class="form-control">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Amount</label>
-                        <input type="number" id="editAmount" class="form-control">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Purpose</label>
-                        <input type="text" id="editPurpose" class="form-control">
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary btn-sm" onclick="saveEditedRecord()">Save Changes</button>
-                </div>
-            </div>
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm p-3 h-100">
+            <h5 class="text-primary mb-3">⚙️ Set Contribution Target</h5>
+            <form id="targetForm" class="d-flex gap-2" onsubmit="event.preventDefault(); saveTarget();">
+                <input type="number" id="targetInput" class="form-control" placeholder="Enter target amount (e.g. 50000)" required>
+                <button type="submit" class="btn btn-outline-primary text-nowrap">Save Target</button>
+            </form>
         </div>
     </div>
-
-    <!-- Edit Member Details Modal (Names, Phone, Group) -->
-    <div class="modal fade" id="editMemberModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content p-4">
-                <h4 class="mb-3">Edit Member Details</h4>
-                <form id="editMemberForm">
-                    <input type="hidden" id="editUserId">
-                    <div class="mb-3">
-                        <label class="form-label">Full Name</label>
-                        <input type="text" id="editMemberName" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Phone Number</label>
-                        <input type="text" id="editMemberPhone" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Jumuiya</label>
-                        <input type="text" id="editMemberJumuiya" class="form-control">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Group</label>
-                        <input type="text" id="editMemberGroup" class="form-control" required placeholder="e.g. Choir, Youth, Main">
-                    </div>
-                    <div class="d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm p-3 h-100 border-danger">
+            <h5 class="text-danger mb-2">🔄 Close & Archive Current Cycle</h5>
+            <p class="text-muted small mb-3">Moves active contributions to history and clears the board for a fresh cycle.</p>
+            <button onclick="closeAndResetCycle()" class="btn btn-danger btn-sm mt-auto">Close Cycle & Start Fresh</button>
+</div>
     </div>
+</div>
 
-    <footer class="text-center py-3 mt-auto text-muted small border-top bg-white">
-        &copy; 2026 St. Michael Kasaini Youth Portal. Created and managed by Robert Wambua. All rights reserved.
-    </footer>
+<!-- All Jumuiyas Performance Graph Section -->
+<div class="card shadow-sm p-4 mb-4">
+<h4 class="text-primary mb-3">📊 All Jumuiyas Performance Analytics</h4>
+<div style="position: relative; height: 320px; width: 100%;">
+<canvas id="jumuiyaPerformanceChart"></canvas>
+</div>
+</div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        let performanceChart = null;
+<!-- Jumuiya Contributions Summary Table -->
+<div class="card shadow-sm p-4 mb-4">
+<h4 class="text-primary mb-3">📊 Jumuiya Contributions Summary</h4>
+<div class="table-responsive">
+<table class="table table-bordered table-striped align-middle">
+<thead class="table-dark">
+<tr>
+<th>Jumuiya Name</th>
+<th>Total Submissions / Contributions</th>
+</tr>
+</thead>
+<tbody id="contributionsSummaryList">
+<tr><td colspan="2" class="text-muted text-center">Loading contributions summary...</td></tr>
+</tbody>
+</table>
+</div>
+</div>
 
-        document.addEventListener('DOMContentLoaded', () => {
-            initChart();
-        });
+<!-- Manage Portal Events, Readings & Polls Section -->
+<div class="row mb-4">
+<!-- Events Management -->
+<div class="col-lg-4 mb-3">
+<div class="card shadow-sm p-4 h-100">
+<h4 class="text-info mb-3">📅 Post / Update Events</h4>
+<form id="eventForm">
+<input type="hidden" id="eventId">
+<div class="mb-3">
+<label class="form-label">Event Title</label>
+<input type="text" id="eventTitle" class="form-control" required placeholder="e.g. Youth Sunday Mass">
+</div>
+<div class="mb-3">
+<label class="form-label">Event Date & Time</label>
+<input type="text" id="eventDate" class="form-control" required placeholder="e.g. Next Sunday at 10:00 AM">
+</div>
+<div class="mb-3">
+<label class="form-label">Description / Details</label>
+<textarea id="eventDesc" class="form-control" rows="3" required placeholder="Enter event details..."></textarea>
+</div>
+<button type="submit" class="btn btn-info text-white btn-sm w-100">Save / Publish Event</button>
+</form>
+<hr class="my-3">
+<div id="eventsListAdmin" class="small text-muted">Loading active events...</div>
+</div>
+</div>
 
-        function initChart() {
-            const ctx = document.getElementById('jumuiyaPerformanceChart').getContext('2d');
-            performanceChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Total Raised (KES)',
-                        data: [],
-                        backgroundColor: '#198754',
-                        borderColor: '#146c43',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
-                }
-            });
-        }
+<!-- Readings Management -->
+<div class="col-lg-4 mb-3">
+<div class="card shadow-sm p-4 h-100">
+<h4 class="text-warning mb-3">📖 Post / Update Readings</h4>
+<form id="readingForm">
+<input type="hidden" id="readingId">
+<div class="mb-3">
+<label class="form-label">Mass Theme / Sunday Title</label>
+<input type="text" id="readingTitle" class="form-control" required placeholder="e.g. Seventeenth Sunday">
+</div>
+<div class="mb-3">
+<label class="form-label">1. First Reading</label>
+<textarea id="firstReading" class="form-control" rows="2" required placeholder="1 Kings 3:5..."></textarea>
+</div>
+<div class="mb-3">
+<label class="form-label">2. Responsorial Psalm</label>
+<textarea id="psalm" class="form-control" rows="2" required placeholder="Psalm 119..."></textarea>
+</div>
+<div class="mb-3">
+<label class="form-label">3. Second Reading</label>
+<textarea id="secondReading" class="form-control" rows="2" required placeholder="Romans 8:28..."></textarea>
+</div>
+<div class="mb-3">
+<label class="form-label">4. Gospel</label>
+<textarea id="gospel" class="form-control" rows="2" required placeholder="Matthew 13:44..."></textarea>
+</div>
+<button type="submit" class="btn btn-warning btn-sm w-100">Save / Publish Reading</button>
+</form>
+<hr class="my-3">
+<div id="readingsListAdmin" class="small text-muted">Loading active readings...</div>
+</div>
+</div>
 
-        function updatePerformanceChart(contributionsMap) {
-            if (!performanceChart) return;
-            const labels = Object.keys(contributionsMap || {});
-            const values = Object.values(contributionsMap || {});
-            performanceChart.data.labels = labels;
-            performanceChart.data.datasets[0].data = values;
-            performanceChart.update();
-        }
-    </script>
-        function initChart() {
-            const ctx = document.getElementById('jumuiyaPerformanceChart').getContext('2d');
-            performanceChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        label: 'Total Raised (KES)',
-                        data: [],
-                        backgroundColor: '#198754',
-                        borderColor: '#146c43',
-                        borderWidth: 1
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: { beginAtZero: true }
-                    }
-                }
-            });
-        }
+<!-- Polls Management -->
+<div class="col-lg-4 mb-3">
+<div class="card shadow-sm p-4 h-100">
+<h4 class="text-secondary mb-3">📊 Create & Manage Polls</h4>
+<form id="pollForm">
+<div class="mb-3">
+<label class="form-label">Poll Question</label>
+<input type="text" id="pollQuestion" class="form-control" required placeholder="e.g. Cleanup date?">
+</div>
+<div class="mb-3">
+<label class="form-label">Options (Comma separated)</label>
+<input type="text" id="pollOptions" class="form-control" required placeholder="Saturday, Sunday, Next Weekend">
+</div>
+<button type="submit" class="btn btn-secondary btn-sm w-100">Publish New Poll</button>
+</form>
+<hr class="my-3">
+<div id="pollsListAdmin" class="small text-muted">Loading active polls...</div>
+</div>
+</div>
+</div>
 
-        function updatePerformanceChart(contributionsMap) {
-            if (!performanceChart) return;
-            const labels = Object.keys(contributionsMap || {});
-            const values = Object.values(contributionsMap || {});
-            performanceChart.data.labels = labels;
-            performanceChart.data.datasets[0].data = values;
-            performanceChart.update();
-        }
+<!-- Password Reset Approvals -->
+<div class="card shadow-sm p-4 mb-4">
+<h4 class="text-danger mb-3">🔑 Password Reset Requests</h4>
+<p class="text-muted small">Members who forgot their passwords and have submitted new ones awaiting admin approval.</p>
+<div id="passwordResetList" class="table-responsive">Loading password requests...</div>
+</div>
 
-        function maskPhoneNumber(phone) {
-            if (!phone || phone === '-') return '-';
-            const str = String(phone).trim();
-            if (str.length <= 6) return '***';
-            const start = str.slice(0, 4);
-            const end = str.slice(-3);
-            return `${start}***${end}`;
-        }
+<!-- All Submissions from Every Jumuiya -->
+<div class="card shadow-sm p-4 mb-4">
+<h4 class="text-success mb-3">📥 Review & Publish Jumuiya Submissions</h4>
+<p class="text-muted small">Review records fed by each Jumuiya admin. Toggle "Publish" to display them on the members portal, or use "Edit" / "Delete" to manage entries.</p>
+<div class="table-responsive">
+<table class="table table-bordered align-middle">
+<thead class="table-secondary">
+<tr>
+<th>Jumuiya Name</th>
+<th>No</th>
+<th>ID</th>
+<th>Name / Amount</th>
+<th>Purpose</th>
+<th>Status</th>
+<th>Actions</th>
+</tr>
+</thead>
+<tbody id="masterJumuiyaRecordsList">
+<tr><td colspan="7" class="text-muted text-center">No submissions received yet.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
 
-        document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const username = document.getElementById('adminUser').value;
-            const password = document.getElementById('adminPass').value;
-            const alertBox = document.getElementById('adminAlert');
+<!-- Pending Youth Registrations -->
+<div class="card shadow-sm p-4 mb-4">
+<h4 class="mb-3">👤 Pending Youth Registrations</h4>
+<div id="pendingList" class="table-responsive">Loading...</div>
+</div>
 
+<!-- Registered Youth Directory -->
+<div class="card shadow-sm p-4 mb-4">
+<h4 class="mb-3">👥 Registered Youth Directory (Edit Names, Phone & Group)</h4>
+<div id="memberList" class="table-responsive">Loading...</div>
+</div>
+
+</div>
+
+<!-- Edit Record Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+<div class="modal-dialog">
+<div class="modal-content">
+<div class="modal-header">
+<h5 class="modal-title">Edit Jumuiya Record</h5>
+<button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+</div>
+<div class="modal-body">
+<input type="hidden" id="editRecId">
+<div class="mb-3">
+<label class="form-label">Name</label>
+<input type="text" id="editName" class="form-control">
+</div>
+<div class="mb-3">
+<label class="form-label">Amount</label>
+<input type="number" id="editAmount" class="form-control">
+</div>
+<div class="mb-3">
+<label class="form-label">Purpose</label>
+<input type="text" id="editPurpose" class="form-control">
+</div>
+</div>
+<div class="modal-footer">
+<button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+<button type="button" class="btn btn-primary btn-sm" onclick="saveEditedRecord()">Save Changes</button>
+</div>
+</div>
+</div>
+</div>
+
+<!-- Edit Member Details Modal (Names, Phone, Group) -->
+<div class="modal fade" id="editMemberModal" tabindex="-1">
+<div class="modal-dialog">
+<div class="modal-content p-4">
+<h4 class="mb-3">Edit Member Details</h4>
+<form id="editMemberForm">
+<input type="hidden" id="editUserId">
+<div class="mb-3">
+<label class="form-label">Full Name</label>
+<input type="text" id="editMemberName" class="form-control" required>
+</div>
+<div class="mb-3">
+<label class="form-label">Phone Number</label>
+<input type="text" id="editMemberPhone" class="form-control" required>
+</div>
+<div class="mb-3">
+<label class="form-label">Jumuiya</label>
+<input type="text" id="editMemberJumuiya" class="form-control">
+</div>
+<div class="mb-3">
+<label class="form-label">Group</label>
+<input type="text" id="editMemberGroup" class="form-control" required placeholder="e.g. Choir, Youth, Main">
+</div>
+<div class="d-flex justify-content-end gap-2">
+<button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+<button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
+</div>
+</form>
+</div>
+</div>
+</div>
+
+<footer class="text-center py-3 mt-auto text-muted small border-top bg-white">
+&copy; 2026 St. Michael Kasaini Youth Portal. Created and managed by Robert Wambua. All rights reserved.
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+let performanceChart = null;
+
+document.addEventListener('DOMContentLoaded', () => {
+initChart();
+});
+
+function initChart() {
+const ctx = document.getElementById('jumuiyaPerformanceChart').getContext('2d');
+performanceChart = new Chart(ctx, {
+type: 'bar',
+data: {
+labels: [],
+datasets: [{
+label: 'Total Raised (KES)',
+data: [],
+backgroundColor: '#198754',
+borderColor: '#146c43',
+borderWidth: 1
+}]
+},
+options: {
+responsive: true,
+maintainAspectRatio: false,
+scales: {
+y: { beginAtZero: true }
+}
+}
+});
+}
+
+function updatePerformanceChart(contributionsMap) {
+if (!performanceChart) return;
+const labels = Object.keys(contributionsMap || {});
+const values = Object.values(contributionsMap || {});
+performanceChart.data.labels = labels;
+performanceChart.data.datasets[0].data = values;
+performanceChart.update();
+}
+
+function maskPhoneNumber(phone) {
+if (!phone || phone === '-') return '-';
+const str = String(phone).trim();
+if (str.length <= 6) return '***';
+const start = str.slice(0, 4);
+const end = str.slice(-3);
+return `${start}***${end}`;
+}
+
+document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+e.preventDefault();
+const username = document.getElementById('adminUser').value;
+const password = document.getElementById('adminPass').value;
+const alertBox = document.getElementById('adminAlert');
+
+try {
+const res = await fetch('/api/admin/login', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ username, password })
+});
+const data = await res.json();
+
+if (data.success) {
+document.getElementById('loginWrapper').classList.remove('my-auto');
+document.getElementById('loginWrapper').classList.add('d-none');
+document.getElementById('dashboardSection').classList.remove('d-none');
+loadMasterData();
+fetchGlobalStats();
+} else {
+alertBox.textContent = data.message || 'Invalid credentials';
+alertBox.className = 'alert alert-danger small';
+alertBox.classList.remove('d-none');
+}
+} catch (err) {
+alertBox.textContent = 'Network or server error during login.';
+alertBox.className = 'alert alert-danger small';
+alertBox.classList.remove('d-none');
+}
+});
+
+function animateCounter(elementId, finalValue, duration = 1200) {
+const element = document.getElementById(elementId);
+if (!element) return;
+let startTimestamp = null;
+const startValue = 0;
+
+const step = (timestamp) => {
+if (!startTimestamp) startTimestamp = timestamp;
+const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+const easeOutQuad = progress * (2 - progress);
+const currentVal = Math.floor(easeOutQuad * (finalValue - startValue) + startValue);
+
+element.innerText = currentVal.toLocaleString();
+
+if (progress < 1) {
+window.requestAnimationFrame(step);
+}
+};
+window.requestAnimationFrame(step);
+}
+
+async function fetchGlobalStats() {
+try {
+const res = await fetch('/api/admin/global-stats');
+const data = await res.json();
+if (data.success) {
+animateCounter('grandTotalCounter', data.totalCollected);
+
+const target = data.targetAmount || 1;
+const percentage = Math.min(Math.round((data.totalCollected / target) * 100), 100);
+
+document.getElementById('progressBar').style.width = percentage + '%';
+document.getElementById('progressText').innerText = `${percentage}% of Monthly Target Reached`;
+document.getElementById('targetDisplay').innerText = `Target: KES ${target.toLocaleString()}`;
+}
+} catch (err) {
+console.error("Error fetching global stats:", err);
+}
+}
+
+document.getElementById('targetForm').addEventListener('submit', async (e) => {
+e.preventDefault();
+const targetAmount = document.getElementById('newTargetInput').value;
+const res = await fetch('/api/admin/set-target', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ targetAmount })
+});
+const data = await res.json();
+if (data.success) {
+alert(data.message || 'Target updated successfully.');
+document.getElementById('targetForm').reset();
+fetchGlobalStats();
+} else {
+alert(data.message || 'Failed to update target.');
+}
+});
+
+async function closeAndResetCycle() {
+if (!confirm("Are you sure you want to close this cycle? This will archive all current contributions and clear the board for a new cycle.")) return;
+
+const cycleName = prompt("Enter a name for this cycle archive (e.g., August Collection):", `Cycle ${new Date().toLocaleDateString()}`);
+if (!cycleName) return;
+
+const res = await fetch('/api/admin/close-cycle', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ cycleName })
+});
+const data = await res.json();
+
+if (data.success) {
+alert(data.message || 'Cycle closed and archived successfully.');
+location.reload();
+} else {
+alert(data.message || 'Failed to close cycle.');
+}
+}
+
+async function loadMasterData() {
+            fetchGlobalStats();
             try {
-                const res = await fetch('/api/admin/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
+                const res = await fetch('/api/admin/data');
                 const data = await res.json();
-
                 if (data.success) {
-                    document.getElementById('loginWrapper').classList.remove('my-auto');
-                    document.getElementById('loginWrapper').classList.add('d-none');
-                    document.getElementById('dashboardSection').classList.remove('d-none');
-                    loadMasterData();
-                    fetchGlobalStats();
-                } else {
-                    alertBox.textContent = data.message || 'Invalid credentials';
-                    alertBox.className = 'alert alert-danger small';
-                    alertBox.classList.remove('d-none');
+                    let cHtml = '';
+                    for (const [jumuiya, count] of Object.entries(data.contributionsMap || {})) {
+                        cHtml += `<tr><td><strong>⛪ ${jumuiya}</strong></td><td><span class="badge bg-primary fs-6">KES ${Number(count).toLocaleString()}</span></td></tr>`;
+                    }
+                    document.getElementById('contributionsSummaryList').innerHTML = cHtml || '<tr><td colspan="2" class="text-muted text-center">No contributions recorded.</td></tr>';
+
+                    updatePerformanceChart(data.contributionsMap);
+
+                    let eHtml = '<ul class="list-group">';
+                    if (data.events && data.events.length > 0) {
+                        data.events.forEach(ev => {
+                            const eventId = ev.id || ev._id;
+                            eHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div><strong>${ev.title || 'Untitled Event'}</strong> (${ev.date || ''})<br><small>${ev.description || ''}</small></div>
+                                <button class="btn btn-outline-danger btn-sm" onclick="deleteEvent('${eventId}')">Delete</button>
+                            </li>`;
+                        });
+                    } else {
+                        eHtml += '<li class="list-group-item text-muted">No active events posted.</li>';
+                    }
+                    eHtml += '</ul>';
+                    document.getElementById('eventsListAdmin').innerHTML = eHtml;
+
+                    let rHtml = '<ul class="list-group">';
+                    if (data.readings && data.readings.length > 0) {
+                        data.readings.forEach(rd => {
+                            const readingId = rd.id || rd._id;
+                            rHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <strong>${rd.title || 'Mass Readings'}</strong><br>
+                                    <small><strong>1st:</strong> ${rd.firstReading || '-'}</small><br>
+                                    <small><strong>Psalm:</strong> ${rd.psalm || '-'}</small><br>
+                                    <small><strong>2nd:</strong> ${rd.secondReading || '-'}</small><br>
+                                    <small><strong>Gospel:</strong> ${rd.gospel || '-'}</small>
+                                </div>
+                                <button class="btn btn-outline-danger btn-sm" onclick="deleteReading('${readingId}')">Delete</button>
+                            </li>`;
+                        });
+                    } else {
+                        rHtml += '<li class="list-group-item text-muted">No active readings posted.</li>';
+                    }
+                    rHtml += '</ul>';
+                    document.getElementById('readingsListAdmin').innerHTML = rHtml;
+
+                    let pListHtml = '<ul class="list-group">';
+                    if (data.polls && data.polls.length > 0) {
+                        data.polls.forEach(pl => {
+                            const pollId = pl.id || pl._id;
+                            pListHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div><strong>${pl.question}</strong><br><small>${pl.options ? pl.options.length : 0} options available</small></div>
+                                <button class="btn btn-outline-danger btn-sm" onclick="deletePoll('${pollId}')">Delete</button>
+                            </li>`;
+                        });
+                    } else {
+                        pListHtml += '<li class="list-group-item text-muted">No active polls.</li>';
+                    }
+                    pListHtml += '</ul>';
+                    document.getElementById('pollsListAdmin').innerHTML = pListHtml;
+
+                    let prHtml = '<table class="table table-bordered align-middle"><thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+                    if (!data.passwordResets || data.passwordResets.length === 0) {
+                        prHtml += '<tr><td colspan="4" class="text-muted text-center">No pending password reset requests.</td></tr>';
+                    } else {
+                        data.passwordResets.forEach(pr => {
+                            const memberId = pr.id || pr._id;
+                            prHtml += `<tr>
+                                <td>${pr.name}</td>
+                                <td>${maskPhoneNumber(pr.phone)}</td>
+                                <td><span class="badge bg-warning text-dark">Forgot Password / Awaiting Approval</span></td>
+                                <td><button class="btn btn-success btn-sm" onclick="approvePasswordReset('${memberId}')">Approve New Password</button></td>
+                            </tr>`;
+                        });
+                    }
+                    prHtml += '</tbody></table>';
+                    document.getElementById('passwordResetList').innerHTML = prHtml;
+
+                    let sHtml = '';
+                    if (!data.jumuiyaSubmissions || data.jumuiyaSubmissions.length === 0) {
+                        sHtml = '<tr><td colspan="7" class="text-muted text-center">No submissions received yet from Jumuiya admins.</td></tr>';
+                    } else {
+                        data.jumuiyaSubmissions.forEach((s, index) => {
+                            const subId = s.id || s._id;
+                            sHtml += `
+                                <tr>
+                                    <td><strong>${s.jumuiyaName || 'N/A'}</strong></td>
+                                    <td>${index + 1}</td>
+                                    <td>${subId ? subId.slice(-6) : 'N/A'}</td>
+                                    <td>${s.name} <br><small class="text-muted">KES ${Number(s.amount || 0).toLocaleString()}</small></td>
+                                    <td>${s.purpose || '-'}</td>
+                                    <td>${s.published ? '<span class="badge bg-success">Published</span>' : '<span class="badge bg-warning text-dark">Draft / Hidden</span>'}</td>
+                                    <td>
+                                        <button class="btn btn-sm ${s.published ? 'btn-outline-secondary' : 'btn-success'} mb-1" onclick="togglePublish('${subId}')">
+                                            ${s.published ? 'Unpublish' : 'Publish'}
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-primary mb-1" onclick="openEditModal('${subId}', '${(s.name || '').replace(/'/g, "\\'")}', '${s.amount || 0}', '${(s.purpose || '').replace(/'/g, "\\'")}')">Edit</button>
+                                        <button class="btn btn-sm btn-outline-danger mb-1" onclick="deleteJumuiyaRecord('${subId}')">Delete</button>
+                                    </td>
+                                </tr>
+                            `;
+                        });
+                    }
+                    document.getElementById('masterJumuiyaRecordsList').innerHTML = sHtml;
+
+                    let pHtml = '<table class="table table-bordered align-middle"><thead><tr><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th><th>Action</th></tr></thead><tbody>';
+                    if (!data.pending || data.pending.length === 0) {
+                        pHtml += '<tr><td colspan="5" class="text-muted text-center">No pending registrations.</td></tr>';
+                    } else {
+                        data.pending.forEach(p => {
+                            const pId = p.id || p._id;
+                            pHtml += `<tr><td>${p.name}</td><td>${maskPhoneNumber(p.phone)}</td><td>${p.jumuiya}</td><td>${p.group}</td><td><button class="btn btn-success btn-sm me-1" onclick="approveUser('${pId}')">Approve</button> <button class="btn btn-outline-danger btn-sm" onclick="rejectUser('${pId}')">Reject</button></td></tr>`;
+                        });
+                    }
+                    pHtml += '</tbody></table>';
+                    document.getElementById('pendingList').innerHTML = pHtml;
+
+                    let mHtml = '<table class="table table-bordered table-striped align-middle"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Phone</th><th>Group</th><th>Action</th></tr></thead><tbody>';
+                    if (!data.members || data.members.length === 0) {
+                        mHtml += '<tr><td colspan="6" class="text-muted text-center">No registered members yet.</td></tr>';
+                    } else {
+                        data.members.forEach((m) => {
+                            const memberId = m.id || m._id;
+                            const safeName = (m.name || '').replace(/'/g, "\\'");
+                            const safePhone = (m.phone || '').replace(/'/g, "\\'");
+                            const safeJumuiya = (m.jumuiya || '').replace(/'/g, "\\'");
+                            const safeGroup = (m.group || '').replace(/'/g, "\\'");
+
+                            mHtml += `<tr>
+                                <td><strong class="text-primary">${m.customId || 'N/A'}</strong></td>
+                                <td>${m.name}</td>
+                                <td><span class="badge bg-info text-dark">${m.jumuiya || 'St. Michael'}</span></td>
+                                <td>${maskPhoneNumber(m.phone)}</td>
+                                <td>${m.group}</td>
+                                <td>
+                                    <button class="btn btn-outline-primary btn-sm mb-1" onclick="openEditMemberModal('${memberId}', '${safeName}', '${safePhone}', '${safeJumuiya}', '${safeGroup}')">Edit</button>
+                                    <button class="btn btn-danger btn-sm mb-1" onclick="removeMember('${memberId}')">Remove</button>
+                                </td>
+                            </tr>`;
+                        });
+                    }
+                    mHtml += '</tbody></table>';
+                    document.getElementById('memberList').innerHTML = mHtml;
                 }
             } catch (err) {
-                alertBox.textContent = 'Network or server error during login.';
-                alertBox.className = 'alert alert-danger small';
-                alertBox.classList.remove('d-none');
-            }
-        });
-
-        function animateCounter(elementId, finalValue, duration = 1200) {
-            const element = document.getElementById(elementId);
-            if (!element) return;
-            let startTimestamp = null;
-            const startValue = 0;
-
-            const step = (timestamp) => {
-                if (!startTimestamp) startTimestamp = timestamp;
-                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                const easeOutQuad = progress * (2 - progress);
-                const currentVal = Math.floor(easeOutQuad * (finalValue - startValue) + startValue);
-                
-                element.innerText = currentVal.toLocaleString();
-                
-                if (progress < 1) {
-                    window.requestAnimationFrame(step);
-                }
-            };
-            window.requestAnimationFrame(step);
-        }
-
-        async function fetchGlobalStats() {
-            try {
-                const res = await fetch('/api/admin/global-stats');
-                const data = await res.json();
-                if (data.success) {
-                    animateCounter('grandTotalCounter', data.totalCollected);
-                    
-                    const target = data.targetAmount || 1;
-                    const percentage = Math.min(Math.round((data.totalCollected / target) * 100), 100);
-                    
-                    document.getElementById('progressBar').style.width = percentage + '%';
-                    document.getElementById('progressText').innerText = `${percentage}% of Monthly Target Reached`;
-                    document.getElementById('targetDisplay').innerText = `Target: KES ${target.toLocaleString()}`;
-                }
-            } catch (err) {
-                console.error("Error fetching global stats:", err);
-            }
-        }
-
-        document.getElementById('targetForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const targetAmount = document.getElementById('newTargetInput').value;
-            const res = await fetch('/api/admin/set-target', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ targetAmount })
-            });
-            const data = await res.json();
-            if (data.success) {
-                alert(data.message || 'Target updated successfully.');
-                document.getElementById('targetForm').reset();
-                fetchGlobalStats();
-            } else {
-                alert(data.message || 'Failed to update target.');
-            }
-        });
-
-        async function closeAndResetCycle() {
-            if (!confirm("Are you sure you want to close this cycle? This will archive all current contributions and clear the board for a new cycle.")) return;
-            
-            const cycleName = prompt("Enter a name for this cycle archive (e.g., August Collection):", `Cycle ${new Date().toLocaleDateString()}`);
-            if (!cycleName) return;
-
-            const res = await fetch('/api/admin/close-cycle', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ cycleName })
-            });
-            const data = await res.json();
-            
-            if (data.success) {
-                alert(data.message || 'Cycle closed and archived successfully.');
-                location.reload();
-            } else {
-                alert(data.message || 'Failed to close cycle.');
-            }
-        }
-
-        async function loadMasterData() {
+                console.error("Error loading master data:", err);
     fetchGlobalStats();
     try {
         const res = await fetch('/api/admin/data');
@@ -646,7 +778,7 @@
                     const pId = p.id || p._id;
                     pHtml += `<tr><td>${p.name}</td><td>${maskPhoneNumber(p.phone)}</td><td>${p.jumuiya}</td><td>${p.group}</td><td><button class="btn btn-success btn-sm me-1" onclick="approveUser('${pId}')">Approve</button> <button class="btn btn-outline-danger btn-sm" onclick="rejectUser('${pId}')">Reject</button></td></tr>`;
                 });
-            }
+}
             pHtml += '</tbody></table>';
             document.getElementById('pendingList').innerHTML = pHtml;
 
@@ -676,12 +808,22 @@
             }
             mHtml += '</tbody></table>';
             document.getElementById('memberList').innerHTML = mHtml;
-        }
+}
     } catch (err) {
         console.error("Error loading master data:", err);
     }
 }
 
+        document.getElementById('eventForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                title: document.getElementById('eventTitle').value,
+                date: document.getElementById('eventDate').value,
+                description: document.getElementById('eventDesc').value
+            };
+            await fetch('/api/admin/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            document.getElementById('eventForm').reset();
+            loadMasterData();
 // Function to handle saving the target and refreshing the display instantly
 async function saveTarget() {
     const targetInput = document.getElementById('targetInput');
@@ -697,7 +839,7 @@ async function saveTarget() {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ targetAmount })
-        });
+});
         const result = await res.json();
         if (result.success) {
             loadMasterData(); // Immediately refresh all dashboard stats and progress bars
@@ -721,160 +863,160 @@ document.getElementById('eventForm').addEventListener('submit', async (e) => {
     document.getElementById('eventForm').reset();
     loadMasterData();
 });
-        async function deleteEvent(id) {
-            if (confirm('Delete this event?')) {
-                await fetch('/api/admin/events/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                loadMasterData();
-            }
-        }
+async function deleteEvent(id) {
+if (confirm('Delete this event?')) {
+await fetch('/api/admin/events/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+loadMasterData();
+}
+}
 
-        document.getElementById('readingForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const payload = {
-                title: document.getElementById('readingTitle').value,
-                firstReading: document.getElementById('firstReading').value,
-                psalm: document.getElementById('psalm').value,
-                secondReading: document.getElementById('secondReading').value,
-                gospel: document.getElementById('gospel').value
-            };
-            await fetch('/api/admin/readings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            document.getElementById('readingForm').reset();
-            loadMasterData();
-        });
+document.getElementById('readingForm').addEventListener('submit', async (e) => {
+e.preventDefault();
+const payload = {
+title: document.getElementById('readingTitle').value,
+firstReading: document.getElementById('firstReading').value,
+psalm: document.getElementById('psalm').value,
+secondReading: document.getElementById('secondReading').value,
+gospel: document.getElementById('gospel').value
+};
+await fetch('/api/admin/readings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+document.getElementById('readingForm').reset();
+loadMasterData();
+});
 
-        async function deleteReading(id) {
-            if (confirm('Delete this reading?')) {
-                await fetch('/api/admin/readings/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                loadMasterData();
-            }
-        }
+async function deleteReading(id) {
+if (confirm('Delete this reading?')) {
+await fetch('/api/admin/readings/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+loadMasterData();
+}
+}
 
-        document.getElementById('pollForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const question = document.getElementById('pollQuestion').value;
-            const rawOptions = document.getElementById('pollOptions').value;
-            const options = rawOptions.split(',').map(opt => opt.trim()).filter(opt => opt.length > 0);
+document.getElementById('pollForm').addEventListener('submit', async (e) => {
+e.preventDefault();
+const question = document.getElementById('pollQuestion').value;
+const rawOptions = document.getElementById('pollOptions').value;
+const options = rawOptions.split(',').map(opt => opt.trim()).filter(opt => opt.length > 0);
 
-            const res = await fetch('/api/admin/polls', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ question, options })
-            });
-            const data = await res.json();
-            if (data.success) {
-                document.getElementById('pollForm').reset();
-                loadMasterData();
-            } else {
-                alert('Error creating poll');
-            }
-        });
+const res = await fetch('/api/admin/polls', {
+method: 'POST',
+headers: { 'Content-Type': 'application/json' },
+body: JSON.stringify({ question, options })
+});
+const data = await res.json();
+if (data.success) {
+document.getElementById('pollForm').reset();
+loadMasterData();
+} else {
+alert('Error creating poll');
+}
+});
 
-        async function deletePoll(id) {
-            if (confirm('Delete this poll?')) {
-                await fetch('/api/admin/polls/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                loadMasterData();
-            }
-        }
+async function deletePoll(id) {
+if (confirm('Delete this poll?')) {
+await fetch('/api/admin/polls/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+loadMasterData();
+}
+}
 
-        async function togglePublish(id) {
-            await fetch('/api/admin/toggle-publish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            loadMasterData();
-        }
+async function togglePublish(id) {
+await fetch('/api/admin/toggle-publish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+loadMasterData();
+}
 
-        function openEditModal(id, name, amount, purpose) {
-            document.getElementById('editRecId').value = id;
-            document.getElementById('editName').value = name;
-            document.getElementById('editAmount').value = amount;
-            document.getElementById('editPurpose').value = purpose;
-            new bootstrap.Modal(document.getElementById('editModal')).show();
-        }
+function openEditModal(id, name, amount, purpose) {
+document.getElementById('editRecId').value = id;
+document.getElementById('editName').value = name;
+document.getElementById('editAmount').value = amount;
+document.getElementById('editPurpose').value = purpose;
+new bootstrap.Modal(document.getElementById('editModal')).show();
+}
 
-        async function saveEditedRecord() {
-            const payload = {
-                id: document.getElementById('editRecId').value,
-                name: document.getElementById('editName').value,
-                amount: document.getElementById('editAmount').value,
-                purpose: document.getElementById('editPurpose').value
-            };
-            await fetch('/api/admin/edit-jumuiya-record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
-            loadMasterData();
-        }
+async function saveEditedRecord() {
+const payload = {
+id: document.getElementById('editRecId').value,
+name: document.getElementById('editName').value,
+amount: document.getElementById('editAmount').value,
+purpose: document.getElementById('editPurpose').value
+};
+await fetch('/api/admin/edit-jumuiya-record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+loadMasterData();
+}
 
-        function openEditMemberModal(id, name, phone, jumuiya, group) {
-            document.getElementById('editUserId').value = id;
-            document.getElementById('editMemberName').value = name;
-            document.getElementById('editMemberPhone').value = phone;
-            document.getElementById('editMemberJumuiya').value = jumuiya;
-            document.getElementById('editMemberGroup').value = group;
-            new bootstrap.Modal(document.getElementById('editMemberModal')).show();
-        }
+function openEditMemberModal(id, name, phone, jumuiya, group) {
+document.getElementById('editUserId').value = id;
+document.getElementById('editMemberName').value = name;
+document.getElementById('editMemberPhone').value = phone;
+document.getElementById('editMemberJumuiya').value = jumuiya;
+document.getElementById('editMemberGroup').value = group;
+new bootstrap.Modal(document.getElementById('editMemberModal')).show();
+}
 
-        document.getElementById('editMemberForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const payload = {
-                id: document.getElementById('editUserId').value,
-                name: document.getElementById('editMemberName').value,
-                phone: document.getElementById('editMemberPhone').value,
-                jumuiya: document.getElementById('editMemberJumuiya').value,
-                group: document.getElementById('editMemberGroup').value
-            };
-            await fetch('/api/admin/edit-member', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            bootstrap.Modal.getInstance(document.getElementById('editMemberModal')).hide();
-            loadMasterData();
-        });
+document.getElementById('editMemberForm').addEventListener('submit', async (e) => {
+e.preventDefault();
+const payload = {
+id: document.getElementById('editUserId').value,
+name: document.getElementById('editMemberName').value,
+phone: document.getElementById('editMemberPhone').value,
+jumuiya: document.getElementById('editMemberJumuiya').value,
+group: document.getElementById('editMemberGroup').value
+};
+await fetch('/api/admin/edit-member', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+bootstrap.Modal.getInstance(document.getElementById('editMemberModal')).hide();
+loadMasterData();
+});
 
-        async function approvePasswordReset(id) {
-            if (confirm('Approve this new password request?')) {
-                await fetch('/api/admin/approve-password-reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                loadMasterData();
-            }
-        }
+async function approvePasswordReset(id) {
+if (confirm('Approve this new password request?')) {
+await fetch('/api/admin/approve-password-reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+loadMasterData();
+}
+}
 
-        async function deleteJumuiyaRecord(id) {
-            if (confirm('Are you sure you want to permanently delete this submission record?')) {
-                await fetch('/api/admin/delete-jumuiya-record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                loadMasterData();
-            }
-        }
+async function deleteJumuiyaRecord(id) {
+if (confirm('Are you sure you want to permanently delete this submission record?')) {
+await fetch('/api/admin/delete-jumuiya-record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+loadMasterData();
+}
+}
 
-        async function approveUser(id) {
-            await fetch('/api/admin/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            loadMasterData();
-        }
+async function approveUser(id) {
+await fetch('/api/admin/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+loadMasterData();
+}
 
-        async function rejectUser(id) {
-            if (confirm('Are you sure you want to reject this registration?')) {
-                await fetch('/api/admin/reject', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                loadMasterData();
-            }
-        }
+async function rejectUser(id) {
+if (confirm('Are you sure you want to reject this registration?')) {
+await fetch('/api/admin/reject', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+loadMasterData();
+}
+}
 
-        async function removeMember(id) {
-            if (confirm('Are you sure you want to remove this member?')) {
-                await fetch('/api/admin/remove-member', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                loadMasterData();
-            }
-        }
+async function removeMember(id) {
+if (confirm('Are you sure you want to remove this member?')) {
+await fetch('/api/admin/remove-member', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+loadMasterData();
+}
+}
 
-       async function downloadPortalData() {
-    try {
-        const choice = prompt("Select download type:\nEnter '1' for Financial Records (Jumuiya performance & published submissions)\nEnter '2' for Official Youth List (Registered youths, phone hidden)");
-        
-        let type = '';
-        if (choice === '1') type = 'financial';
-        else if (choice === '2') type = 'people';
-        else if (choice !== null) {
-            alert('Invalid selection. Please enter 1 or 2.');
-            return;
-        } else {
-            return; // Cancelled
-        }
+async function downloadPortalData() {
+try {
+const choice = prompt("Select download type:\nEnter '1' for Financial Records (Jumuiya performance & published submissions)\nEnter '2' for Official Youth List (Registered youths, phone hidden)");
 
-        window.open(`/api/admin/download-data?type=${type}`, '_blank');
-    } catch (error) {
-        alert('Error downloading portal data: ' + error.message);
-    }
+let type = '';
+if (choice === '1') type = 'financial';
+else if (choice === '2') type = 'people';
+else if (choice !== null) {
+alert('Invalid selection. Please enter 1 or 2.');
+return;
+} else {
+return; // Cancelled
+}
+
+window.open(`/api/admin/download-data?type=${type}`, '_blank');
+} catch (error) {
+alert('Error downloading portal data: ' + error.message);
+}
 }
 </script>
 </body>
