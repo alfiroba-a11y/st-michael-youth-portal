@@ -66,24 +66,24 @@
         </div>
 
         <!-- Target Configuration & Cycle Management -->
-        <div class="row g-3 mb-4">
-            <div class="col-md-6">
-                <div class="card shadow-sm p-3 h-100">
-                    <h5 class="text-primary mb-3">⚙️ Set Monthly Youth Target</h5>
-                    <form id="targetForm" class="d-flex gap-2">
-                        <input type="number" id="newTargetInput" class="form-control" placeholder="Enter target amount (e.g. 50000)" required>
-                        <button type="submit" class="btn btn-outline-primary text-nowrap">Save Target</button>
-                    </form>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="card shadow-sm p-3 h-100 border-danger">
-                    <h5 class="text-danger mb-2">🔄 Close & Archive Current Cycle</h5>
-                    <p class="text-muted small mb-3">Moves active contributions to history and clears the board for a fresh cycle.</p>
-                    <button onclick="closeAndResetCycle()" class="btn btn-danger btn-sm mt-auto">Close Cycle & Start Fresh</button>
-                </div>
-            </div>
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card shadow-sm p-3 h-100">
+            <h5 class="text-primary mb-3">⚙️ Set Contribution Target</h5>
+            <form id="targetForm" class="d-flex gap-2" onsubmit="event.preventDefault(); saveTarget();">
+                <input type="number" id="targetInput" class="form-control" placeholder="Enter target amount (e.g. 50000)" required>
+                <button type="submit" class="btn btn-outline-primary text-nowrap">Save Target</button>
+            </form>
         </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card shadow-sm p-3 h-100 border-danger">
+            <h5 class="text-danger mb-2">🔄 Close & Archive Current Cycle</h5>
+            <p class="text-muted small mb-3">Moves active contributions to history and clears the board for a fresh cycle.</p>
+            <button onclick="closeAndResetCycle()" class="btn btn-danger btn-sm mt-auto">Close Cycle & Start Fresh</button>
+        </div>
+    </div>
+</div>
 
         <!-- All Jumuiyas Performance Graph Section -->
         <div class="card shadow-sm p-4 mb-4">
@@ -466,170 +466,227 @@
         }
 
         async function loadMasterData() {
-            fetchGlobalStats();
-            try {
-                const res = await fetch('/api/admin/data');
-                const data = await res.json();
-                if (data.success) {
-                    let cHtml = '';
-                    for (const [jumuiya, count] of Object.entries(data.contributionsMap || {})) {
-                        cHtml += `<tr><td><strong>⛪ ${jumuiya}</strong></td><td><span class="badge bg-primary fs-6">KES ${Number(count).toLocaleString()}</span></td></tr>`;
-                    }
-                    document.getElementById('contributionsSummaryList').innerHTML = cHtml || '<tr><td colspan="2" class="text-muted text-center">No contributions recorded.</td></tr>';
+    fetchGlobalStats();
+    try {
+        const res = await fetch('/api/admin/data');
+        const data = await res.json();
+        if (data.success) {
+            let cHtml = '';
+            let totalCollected = 0; // Track total collected contributions
 
-                    updatePerformanceChart(data.contributionsMap);
-
-                    let eHtml = '<ul class="list-group">';
-                    if (data.events && data.events.length > 0) {
-                        data.events.forEach(ev => {
-                            const eventId = ev.id || ev._id;
-                            eHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div><strong>${ev.title || 'Untitled Event'}</strong> (${ev.date || ''})<br><small>${ev.description || ''}</small></div>
-                                <button class="btn btn-outline-danger btn-sm" onclick="deleteEvent('${eventId}')">Delete</button>
-                            </li>`;
-                        });
-                    } else {
-                        eHtml += '<li class="list-group-item text-muted">No active events posted.</li>';
-                    }
-                    eHtml += '</ul>';
-                    document.getElementById('eventsListAdmin').innerHTML = eHtml;
-
-                    let rHtml = '<ul class="list-group">';
-                    if (data.readings && data.readings.length > 0) {
-                        data.readings.forEach(rd => {
-                            const readingId = rd.id || rd._id;
-                            rHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <strong>${rd.title || 'Mass Readings'}</strong><br>
-                                    <small><strong>1st:</strong> ${rd.firstReading || '-'}</small><br>
-                                    <small><strong>Psalm:</strong> ${rd.psalm || '-'}</small><br>
-                                    <small><strong>2nd:</strong> ${rd.secondReading || '-'}</small><br>
-                                    <small><strong>Gospel:</strong> ${rd.gospel || '-'}</small>
-                                </div>
-                                <button class="btn btn-outline-danger btn-sm" onclick="deleteReading('${readingId}')">Delete</button>
-                            </li>`;
-                        });
-                    } else {
-                        rHtml += '<li class="list-group-item text-muted">No active readings posted.</li>';
-                    }
-                    rHtml += '</ul>';
-                    document.getElementById('readingsListAdmin').innerHTML = rHtml;
-
-                    let pListHtml = '<ul class="list-group">';
-                    if (data.polls && data.polls.length > 0) {
-                        data.polls.forEach(pl => {
-                            const pollId = pl.id || pl._id;
-                            pListHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div><strong>${pl.question}</strong><br><small>${pl.options ? pl.options.length : 0} options available</small></div>
-                                <button class="btn btn-outline-danger btn-sm" onclick="deletePoll('${pollId}')">Delete</button>
-                            </li>`;
-                        });
-                    } else {
-                        pListHtml += '<li class="list-group-item text-muted">No active polls.</li>';
-                    }
-                    pListHtml += '</ul>';
-                    document.getElementById('pollsListAdmin').innerHTML = pListHtml;
-
-                    let prHtml = '<table class="table table-bordered align-middle"><thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead><tbody>';
-                    if (!data.passwordResets || data.passwordResets.length === 0) {
-                        prHtml += '<tr><td colspan="4" class="text-muted text-center">No pending password reset requests.</td></tr>';
-                    } else {
-                        data.passwordResets.forEach(pr => {
-                            const memberId = pr.id || pr._id;
-                            prHtml += `<tr>
-                                <td>${pr.name}</td>
-                                <td>${maskPhoneNumber(pr.phone)}</td>
-                                <td><span class="badge bg-warning text-dark">Forgot Password / Awaiting Approval</span></td>
-                                <td><button class="btn btn-success btn-sm" onclick="approvePasswordReset('${memberId}')">Approve New Password</button></td>
-                            </tr>`;
-                        });
-                    }
-                    prHtml += '</tbody></table>';
-                    document.getElementById('passwordResetList').innerHTML = prHtml;
-
-                    let sHtml = '';
-                    if (!data.jumuiyaSubmissions || data.jumuiyaSubmissions.length === 0) {
-                        sHtml = '<tr><td colspan="7" class="text-muted text-center">No submissions received yet from Jumuiya admins.</td></tr>';
-                    } else {
-                        data.jumuiyaSubmissions.forEach((s, index) => {
-                            const subId = s.id || s._id;
-                            sHtml += `
-                                <tr>
-                                    <td><strong>${s.jumuiyaName || 'N/A'}</strong></td>
-                                    <td>${index + 1}</td>
-                                    <td>${subId ? subId.slice(-6) : 'N/A'}</td>
-                                    <td>${s.name} <br><small class="text-muted">KES ${Number(s.amount || 0).toLocaleString()}</small></td>
-                                    <td>${s.purpose || '-'}</td>
-                                    <td>${s.published ? '<span class="badge bg-success">Published</span>' : '<span class="badge bg-warning text-dark">Draft / Hidden</span>'}</td>
-                                    <td>
-                                        <button class="btn btn-sm ${s.published ? 'btn-outline-secondary' : 'btn-success'} mb-1" onclick="togglePublish('${subId}')">
-                                            ${s.published ? 'Unpublish' : 'Publish'}
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-primary mb-1" onclick="openEditModal('${subId}', '${(s.name || '').replace(/'/g, "\\'")}', '${s.amount || 0}', '${(s.purpose || '').replace(/'/g, "\\'")}')">Edit</button>
-                                        <button class="btn btn-sm btn-outline-danger mb-1" onclick="deleteJumuiyaRecord('${subId}')">Delete</button>
-                                    </td>
-                                </tr>
-                            `;
-                        });
-                    }
-                    document.getElementById('masterJumuiyaRecordsList').innerHTML = sHtml;
-
-                    let pHtml = '<table class="table table-bordered align-middle"><thead><tr><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th><th>Action</th></tr></thead><tbody>';
-                    if (!data.pending || data.pending.length === 0) {
-                        pHtml += '<tr><td colspan="5" class="text-muted text-center">No pending registrations.</td></tr>';
-                    } else {
-                        data.pending.forEach(p => {
-                            const pId = p.id || p._id;
-                            pHtml += `<tr><td>${p.name}</td><td>${maskPhoneNumber(p.phone)}</td><td>${p.jumuiya}</td><td>${p.group}</td><td><button class="btn btn-success btn-sm me-1" onclick="approveUser('${pId}')">Approve</button> <button class="btn btn-outline-danger btn-sm" onclick="rejectUser('${pId}')">Reject</button></td></tr>`;
-                        });
-                    }
-                    pHtml += '</tbody></table>';
-                    document.getElementById('pendingList').innerHTML = pHtml;
-
-                    let mHtml = '<table class="table table-bordered table-striped align-middle"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Phone</th><th>Group</th><th>Action</th></tr></thead><tbody>';
-                    if (!data.members || data.members.length === 0) {
-                        mHtml += '<tr><td colspan="6" class="text-muted text-center">No registered members yet.</td></tr>';
-                    } else {
-                        data.members.forEach((m) => {
-                            const memberId = m.id || m._id;
-                            const safeName = (m.name || '').replace(/'/g, "\\'");
-                            const safePhone = (m.phone || '').replace(/'/g, "\\'");
-                            const safeJumuiya = (m.jumuiya || '').replace(/'/g, "\\'");
-                            const safeGroup = (m.group || '').replace(/'/g, "\\'");
-
-                            mHtml += `<tr>
-                                <td><strong class="text-primary">${m.customId || 'N/A'}</strong></td>
-                                <td>${m.name}</td>
-                                <td><span class="badge bg-info text-dark">${m.jumuiya || 'St. Michael'}</span></td>
-                                <td>${maskPhoneNumber(m.phone)}</td>
-                                <td>${m.group}</td>
-                                <td>
-                                    <button class="btn btn-outline-primary btn-sm mb-1" onclick="openEditMemberModal('${memberId}', '${safeName}', '${safePhone}', '${safeJumuiya}', '${safeGroup}')">Edit</button>
-                                    <button class="btn btn-danger btn-sm mb-1" onclick="removeMember('${memberId}')">Remove</button>
-                                </td>
-                            </tr>`;
-                        });
-                    }
-                    mHtml += '</tbody></table>';
-                    document.getElementById('memberList').innerHTML = mHtml;
-                }
-            } catch (err) {
-                console.error("Error loading master data:", err);
+            for (const [jumuiya, count] of Object.entries(data.contributionsMap || {})) {
+                cHtml += `<tr><td><strong>⛪ ${jumuiya}</strong></td><td><span class="badge bg-primary fs-6">KES ${Number(count).toLocaleString()}</span></td></tr>`;
+                totalCollected += Number(count || 0);
             }
+            document.getElementById('contributionsSummaryList').innerHTML = cHtml || '<tr><td colspan="2" class="text-muted text-center">No contributions recorded.</td></tr>';
+
+            updatePerformanceChart(data.contributionsMap);
+
+            // --- DYNAMIC CONTRIBUTION TARGET UI UPDATE ---
+            const targetAmount = Number(data.targetAmount || 0);
+            const percentage = targetAmount > 0 ? Math.min(Math.round((totalCollected / targetAmount) * 100), 100) : 0;
+
+            // Update main card totals and labels
+            const totalCollectedEl = document.getElementById('adminTotalCollected');
+            if (totalCollectedEl) totalCollectedEl.innerText = `KES ${totalCollected.toLocaleString()}`;
+
+            const targetDisplayEl = document.getElementById('adminTargetDisplay');
+            if (targetDisplayEl) targetDisplayEl.innerText = `Target: KES ${targetAmount.toLocaleString()}`;
+
+            const percentageTextEl = document.getElementById('adminPercentageText');
+            if (percentageTextEl) percentageTextEl.innerText = `${percentage}% of Contribution Target Reached`;
+
+            const progressBar = document.getElementById('adminProgressBar');
+            if (progressBar) {
+                progressBar.style.width = `${percentage}%`;
+                progressBar.setAttribute('aria-valuenow', percentage);
+            }
+
+            // Pre-fill input if target exists
+            const targetInput = document.getElementById('targetInput');
+            if (targetInput && targetAmount > 0 && document.activeElement !== targetInput) {
+                targetInput.value = targetAmount;
+            }
+            // ----------------------------------------------
+
+            let eHtml = '<ul class="list-group">';
+            if (data.events && data.events.length > 0) {
+                data.events.forEach(ev => {
+                    const eventId = ev.id || ev._id;
+                    eHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div><strong>${ev.title || 'Untitled Event'}</strong> (${ev.date || ''})<br><small>${ev.description || ''}</small></div>
+                        <button class="btn btn-outline-danger btn-sm" onclick="deleteEvent('${eventId}')">Delete</button>
+                    </li>`;
+                });
+            } else {
+                eHtml += '<li class="list-group-item text-muted">No active events posted.</li>';
+            }
+            eHtml += '</ul>';
+            document.getElementById('eventsListAdmin').innerHTML = eHtml;
+
+            let rHtml = '<ul class="list-group">';
+            if (data.readings && data.readings.length > 0) {
+                data.readings.forEach(rd => {
+                    const readingId = rd.id || rd._id;
+                    rHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${rd.title || 'Mass Readings'}</strong><br>
+                            <small><strong>1st:</strong> ${rd.firstReading || '-'}</small><br>
+                            <small><strong>Psalm:</strong> ${rd.psalm || '-'}</small><br>
+                            <small><strong>2nd:</strong> ${rd.secondReading || '-'}</small><br>
+                            <small><strong>Gospel:</strong> ${rd.gospel || '-'}</small>
+                        </div>
+                        <button class="btn btn-outline-danger btn-sm" onclick="deleteReading('${readingId}')">Delete</button>
+                    </li>`;
+                });
+            } else {
+                rHtml += '<li class="list-group-item text-muted">No active readings posted.</li>';
+            }
+            rHtml += '</ul>';
+            document.getElementById('readingsListAdmin').innerHTML = rHtml;
+
+            let pListHtml = '<ul class="list-group">';
+            if (data.polls && data.polls.length > 0) {
+                data.polls.forEach(pl => {
+                    const pollId = pl.id || pl._id;
+                    pListHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
+                        <div><strong>${pl.question}</strong><br><small>${pl.options ? pl.options.length : 0} options available</small></div>
+                        <button class="btn btn-outline-danger btn-sm" onclick="deletePoll('${pollId}')">Delete</button>
+                    </li>`;
+                });
+            } else {
+                pListHtml += '<li class="list-group-item text-muted">No active polls.</li>';
+            }
+            pListHtml += '</ul>';
+            document.getElementById('pollsListAdmin').innerHTML = pListHtml;
+
+            let prHtml = '<table class="table table-bordered align-middle"><thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+            if (!data.passwordResets || data.passwordResets.length === 0) {
+                prHtml += '<tr><td colspan="4" class="text-muted text-center">No pending password reset requests.</td></tr>';
+            } else {
+                data.passwordResets.forEach(pr => {
+                    const memberId = pr.id || pr._id;
+                    prHtml += `<tr>
+                        <td>${pr.name}</td>
+                        <td>${maskPhoneNumber(pr.phone)}</td>
+                        <td><span class="badge bg-warning text-dark">Forgot Password / Awaiting Approval</span></td>
+                        <td><button class="btn btn-success btn-sm" onclick="approvePasswordReset('${memberId}')">Approve New Password</button></td>
+                    </tr>`;
+                });
+            }
+            prHtml += '</tbody></table>';
+            document.getElementById('passwordResetList').innerHTML = prHtml;
+
+            let sHtml = '';
+            if (!data.jumuiyaSubmissions || data.jumuiyaSubmissions.length === 0) {
+                sHtml = '<tr><td colspan="7" class="text-muted text-center">No submissions received yet from Jumuiya admins.</td></tr>';
+            } else {
+                data.jumuiyaSubmissions.forEach((s, index) => {
+                    const subId = s.id || s._id;
+                    sHtml += `
+                        <tr>
+                            <td><strong>${s.jumuiyaName || 'N/A'}</strong></td>
+                            <td>${index + 1}</td>
+                            <td>${subId ? subId.slice(-6) : 'N/A'}</td>
+                            <td>${s.name} <br><small class="text-muted">KES ${Number(s.amount || 0).toLocaleString()}</small></td>
+                            <td>${s.purpose || '-'}</td>
+                            <td>${s.published ? '<span class="badge bg-success">Published</span>' : '<span class="badge bg-warning text-dark">Draft / Hidden</span>'}</td>
+                            <td>
+                                <button class="btn btn-sm ${s.published ? 'btn-outline-secondary' : 'btn-success'} mb-1" onclick="togglePublish('${subId}')">
+                                    ${s.published ? 'Unpublish' : 'Publish'}
+                                </button>
+                                <button class="btn btn-sm btn-outline-primary mb-1" onclick="openEditModal('${subId}', '${(s.name || '').replace(/'/g, "\\'")}', '${s.amount || 0}', '${(s.purpose || '').replace(/'/g, "\\'")}')">Edit</button>
+                                <button class="btn btn-sm btn-outline-danger mb-1" onclick="deleteJumuiyaRecord('${subId}')">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            document.getElementById('masterJumuiyaRecordsList').innerHTML = sHtml;
+
+            let pHtml = '<table class="table table-bordered align-middle"><thead><tr><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th><th>Action</th></tr></thead><tbody>';
+            if (!data.pending || data.pending.length === 0) {
+                pHtml += '<tr><td colspan="5" class="text-muted text-center">No pending registrations.</td></tr>';
+            } else {
+                data.pending.forEach(p => {
+                    const pId = p.id || p._id;
+                    pHtml += `<tr><td>${p.name}</td><td>${maskPhoneNumber(p.phone)}</td><td>${p.jumuiya}</td><td>${p.group}</td><td><button class="btn btn-success btn-sm me-1" onclick="approveUser('${pId}')">Approve</button> <button class="btn btn-outline-danger btn-sm" onclick="rejectUser('${pId}')">Reject</button></td></tr>`;
+                });
+            }
+            pHtml += '</tbody></table>';
+            document.getElementById('pendingList').innerHTML = pHtml;
+
+            let mHtml = '<table class="table table-bordered table-striped align-middle"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Phone</th><th>Group</th><th>Action</th></tr></thead><tbody>';
+            if (!data.members || data.members.length === 0) {
+                mHtml += '<tr><td colspan="6" class="text-muted text-center">No registered members yet.</td></tr>';
+            } else {
+                data.members.forEach((m) => {
+                    const memberId = m.id || m._id;
+                    const safeName = (m.name || '').replace(/'/g, "\\'");
+                    const safePhone = (m.phone || '').replace(/'/g, "\\'");
+                    const safeJumuiya = (m.jumuiya || '').replace(/'/g, "\\'");
+                    const safeGroup = (m.group || '').replace(/'/g, "\\'");
+
+                    mHtml += `<tr>
+                        <td><strong class="text-primary">${m.customId || 'N/A'}</strong></td>
+                        <td>${m.name}</td>
+                        <td><span class="badge bg-info text-dark">${m.jumuiya || 'St. Michael'}</span></td>
+                        <td>${maskPhoneNumber(m.phone)}</td>
+                        <td>${m.group}</td>
+                        <td>
+                            <button class="btn btn-outline-primary btn-sm mb-1" onclick="openEditMemberModal('${memberId}', '${safeName}', '${safePhone}', '${safeJumuiya}', '${safeGroup}')">Edit</button>
+                            <button class="btn btn-danger btn-sm mb-1" onclick="removeMember('${memberId}')">Remove</button>
+                        </td>
+                    </tr>`;
+                });
+            }
+            mHtml += '</tbody></table>';
+            document.getElementById('memberList').innerHTML = mHtml;
         }
+    } catch (err) {
+        console.error("Error loading master data:", err);
+    }
+}
 
-        document.getElementById('eventForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const payload = {
-                title: document.getElementById('eventTitle').value,
-                date: document.getElementById('eventDate').value,
-                description: document.getElementById('eventDesc').value
-            };
-            await fetch('/api/admin/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            document.getElementById('eventForm').reset();
-            loadMasterData();
+// Function to handle saving the target and refreshing the display instantly
+async function saveTarget() {
+    const targetInput = document.getElementById('targetInput');
+    const targetAmount = targetInput ? targetInput.value : '';
+
+    if (!targetAmount || targetAmount <= 0) {
+        alert('Please enter a valid target amount.');
+        return;
+    }
+
+    try {
+        const res = await fetch('/api/admin/set-target', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ targetAmount })
         });
+        const result = await res.json();
+        if (result.success) {
+            loadMasterData(); // Immediately refresh all dashboard stats and progress bars
+        } else {
+            alert('Failed to update target.');
+        }
+    } catch (err) {
+        console.error('Error saving target:', err);
+        alert('Error connecting to server.');
+    }
+}
 
+document.getElementById('eventForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = {
+        title: document.getElementById('eventTitle').value,
+        date: document.getElementById('eventDate').value,
+        description: document.getElementById('eventDesc').value
+    };
+    await fetch('/api/admin/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    document.getElementById('eventForm').reset();
+    loadMasterData();
+});
         async function deleteEvent(id) {
             if (confirm('Delete this event?')) {
                 await fetch('/api/admin/events/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
