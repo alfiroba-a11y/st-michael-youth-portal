@@ -1,4 +1,4 @@
-// Complete and corrected server code ending cleanly
+// Complete and corrected server code ending cleanly with CORS support
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
@@ -9,6 +9,17 @@ const cron = require('node-cron');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Explicit CORS Middleware to ensure frontend scripts never get blocked
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200);
+    }
+    next();
+});
+
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname)));
@@ -16,7 +27,7 @@ app.use(express.static(path.join(__dirname)));
 const MONGO_URI = process.env.MONGO_URI;
 let db = null;
 
-// Automated Reflection Bank (Rotates daily based on the day of the year)
+// Automated Reflection Bank
 const automatedReflections = [
     {
         title: "Walking in Divine Strength",
@@ -55,7 +66,6 @@ const VALID_PURPOSES = [
     'Other'
 ];
 
-// Function to automatically update the daily reflection in DB
 async function rotateDailyReflection() {
     if (!db) return;
     try {
@@ -68,13 +78,11 @@ async function rotateDailyReflection() {
             { $set: { ...todayReflection, updatedAt: new Date() } },
             { upsert: true }
         );
-        console.log(`[Automation] Daily reflection updated to: "${todayReflection.title}"`);
     } catch (err) {
-        console.error('Error updating automated reflection:', err.message);
+        console.error('Error updating reflection:', err.message);
     }
 }
 
-// Function to initialize St. Aloysius Gonzaga as the permanent Patron Saint
 async function initializePatronSaint() {
     if (!db) return;
     try {
@@ -82,15 +90,13 @@ async function initializePatronSaint() {
             type: 'patronSaint',
             name: "St. Aloysius Gonzaga",
             feastDay: "June 21",
-            message: "Model of purity, youth, and selfless charity. Patron saint of Christian youth, who gave his life nursing the sick during the Roman plague."
+            message: "Model of purity, youth, and selfless charity. Patron saint of Christian youth."
         };
-
         await db.collection('settings').updateOne(
             { type: 'patronSaint' },
             { $set: saintData },
             { upsert: true }
         );
-        console.log('[Initialization] Patron Saint locked to St. Aloysius Gonzaga (June 21st).');
     } catch (err) {
         console.error('Error initializing patron saint:', err.message);
     }
@@ -103,7 +109,6 @@ async function initDB() {
             await client.connect();
             db = client.db('kasaini_youth_db');
             console.log('Connected successfully to MongoDB Atlas.');
-            
             await initializePatronSaint();
             await rotateDailyReflection();
         } catch (err) {
@@ -113,12 +118,11 @@ async function initDB() {
 }
 initDB();
 
-// Schedule cron job to run every day at 00:00 (Midnight)
 cron.schedule('0 0 * * *', () => {
     rotateDailyReflection();
 });
 
-// 11 Defined Jumuiyas with Unique Default Credentials
+// 11 Defined Jumuiyas
 const JUMUIYAS_LIST = [
     { id: 'st_catherine', name: 'St. Catherine', username: 'catherine_admin', pass: 'Cath2026!' },
     { id: 'st_ann', name: 'St. Ann', username: 'ann_admin', pass: 'Ann2026!' },
@@ -177,15 +181,15 @@ async function writeData(data) {
             await db.collection('portal_data').updateOne(
                 { _id: 'main_store' },
                 { $set: { 
-                    members: data.members, 
-                    pending: data.pending, 
-                    jumuiyaSubmissions: data.jumuiyaSubmissions, 
+                    members: data.members || [], 
+                    pending: data.pending || [], 
+                    jumuiyaSubmissions: data.jumuiyaSubmissions || [], 
                     polls: data.polls || [],
                     archives: data.archives || [],
                     targetAmount: data.targetAmount || 50000,
-                    events: data.events, 
-                    messages: data.messages, 
-                    readings: data.readings 
+                    events: data.events || [], 
+                    messages: data.messages || [], 
+                    readings: data.readings || [] 
                 } },
                 { upsert: true }
             );
@@ -203,18 +207,14 @@ function maskPhone(phone) {
 const normalize = (str) => (str || '').toLowerCase().replace(/[\.\s]/g, '');
 let activeUsers = {};
 
-// HTML Routes
+// HTML Route Handlers
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
 app.get('/dashboard', (req, res) => {
     const memberPath = path.join(__dirname, 'member.html');
     const dashboardPath = path.join(__dirname, 'dashboard.html');
-
-    if (fs.existsSync(memberPath)) {
-        return res.sendFile(memberPath);
-    } else if (fs.existsSync(dashboardPath)) {
-        return res.sendFile(dashboardPath);
-    }
+    if (fs.existsSync(memberPath)) return res.sendFile(memberPath);
+    if (fs.existsSync(dashboardPath)) return res.sendFile(dashboardPath);
     res.status(404).send('Dashboard file missing.');
 });
 app.get('/secret-admin-portal-kasaini-2026', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
@@ -223,38 +223,30 @@ app.get('/jumuiya-portal', (req, res) => res.sendFile(path.join(__dirname, 'jumu
 async function getSpiritualContent() {
     let reflection = null;
     let patronSaint = null;
-
     if (db) {
         try {
             reflection = await db.collection('settings').findOne({ type: 'reflection' });
             patronSaint = await db.collection('settings').findOne({ type: 'patronSaint' });
-        } catch (err) {
-            console.error('Error fetching settings collection:', err);
-        }
+        } catch (err) {}
     }
-
     if (!reflection) reflection = automatedReflections[0];
     if (!patronSaint) {
         patronSaint = {
             name: "St. Aloysius Gonzaga",
             feastDay: "June 21",
-            message: "Model of purity, youth, and selfless charity. Patron saint of Christian youth."
+            message: "Model of purity, youth, and selfless charity."
         };
     }
     return { reflection, patronSaint };
 }
 
-// Spiritual Content APIs
+// APIs
 app.get('/api/spiritual/content', async (req, res) => {
-    try {
-        const { reflection, patronSaint } = await getSpiritualContent();
-        res.json({ success: true, reflection, patronSaint });
-    } catch (err) {
-        res.status(500).json({ success: false, message: 'Server error retrieving spiritual content.' });
-    }
+    const { reflection, patronSaint } = await getSpiritualContent();
+    res.json({ success: true, reflection, patronSaint });
 });
 
-// Unified Analytics API for 11 Jumuiyas
+// Analytics Graph API for Jumuiyas
 app.get('/api/analytics/jumuiya-graph', async (req, res) => {
     try {
         const data = await readData();
@@ -270,24 +262,20 @@ app.get('/api/analytics/jumuiya-graph', async (req, res) => {
 
         (data.jumuiyaSubmissions || []).forEach(record => {
             if (record.published && record.jumuiyaName) {
-                // Match normalized name strings securely
                 const matchedLabel = labels.find(l => normalize(l) === normalize(record.jumuiyaName));
                 if (matchedLabel) {
                     const amt = Number(record.amount || 0);
                     totalsMap[matchedLabel] += amt;
-                    
                     const pur = VALID_PURPOSES.includes(record.purpose) ? record.purpose : 'Other';
                     purposeBreakdown[matchedLabel][pur] = (purposeBreakdown[matchedLabel][pur] || 0) + amt;
                 }
             }
         });
 
-        const datasetsData = labels.map(name => totalsMap[name]);
-
         res.json({
             success: true,
             labels,
-            datasetsData,
+            datasetsData: labels.map(name => totalsMap[name]),
             purposeBreakdown
         });
     } catch (err) {
@@ -295,7 +283,6 @@ app.get('/api/analytics/jumuiya-graph', async (req, res) => {
     }
 });
 
-// Presence API
 app.post('/api/ping', (req, res) => {
     const { username } = req.body;
     if (username) activeUsers[username] = Date.now();
@@ -308,7 +295,6 @@ app.get('/api/online-users', (req, res) => {
     res.json(online);
 });
 
-// Jumuiya Portal APIs
 app.get('/api/jumuiyas/list', (req, res) => {
     const publicList = JUMUIYAS_LIST.map(j => ({ id: j.id, name: j.name, username: j.username }));
     res.json({ success: true, jumuiyas: publicList });
@@ -336,83 +322,43 @@ app.post('/api/jumuiya/submit-record', async (req, res) => {
     if (!name || !jumuiyaName) return res.json({ success: false, message: 'Name and Jumuiya name are required.' });
 
     const finalPurpose = VALID_PURPOSES.includes(purpose) ? purpose : 'Other';
-
     const data = await readData();
     if (!data.jumuiyaSubmissions) data.jumuiyaSubmissions = [];
 
-    const newRecord = {
+    data.jumuiyaSubmissions.push({
         id: Date.now().toString(),
         jumuiyaName,
         name: name.trim(),
         amount: parseFloat(amount) || 0,
         purpose: finalPurpose,
         published: false
-    };
-
-    data.jumuiyaSubmissions.push(newRecord);
+    });
     await writeData(data);
     res.json({ success: true, message: 'Contribution recorded successfully and sent for Master Admin review!' });
 });
 
-// Jumuiya Printable / Download PDF Report API
+// Jumuiya Report PDF Download API
 app.get('/api/jumuiya/download-data', async (req, res) => {
     try {
         const { jumuiyaName } = req.query;
         const data = await readData();
         const targetJumuiya = jumuiyaName ? normalize(jumuiyaName) : '';
-
-        const submissions = (data.jumuiyaSubmissions || []).filter(s => {
-            if (!targetJumuiya) return true;
-            return normalize(s.jumuiyaName) === targetJumuiya;
-        });
+        const submissions = (data.jumuiyaSubmissions || []).filter(s => !targetJumuiya || normalize(s.jumuiyaName) === targetJumuiya);
 
         let jumuiyaCollected = 0;
+        submissions.forEach(s => { if (s.published) jumuiyaCollected += Number(s.amount || 0); });
+
+        let html = `<!DOCTYPE html><html><head><title>${jumuiyaName || 'Jumuiya'} - Report</title>
+        <style>body { font-family: Arial; margin: 25px; } table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; } th, td { border: 1px solid #ddd; padding: 8px; text-align: left; } th { background: #f1f3f5; }</style>
+        </head><body><h1>${jumuiyaName || 'Jumuiya'} Report</h1><p>Generated: ${new Date().toLocaleString()}</p>
+        <h3>Total Verified: KES ${jumuiyaCollected.toLocaleString()}</h3>
+        <table><thead><tr><th>Name</th><th>Amount</th><th>Purpose</th><th>Status</th></tr></thead><tbody>`;
+        
+        if (submissions.length === 0) html += `<tr><td colspan="4" style="text-align:center;">No records found.</td></tr>`;
         submissions.forEach(s => {
-            if (s.published) jumuiyaCollected += Number(s.amount || 0);
+            html += `<tr><td>${s.name}</td><td>KES ${s.amount}</td><td>${s.purpose}</td><td>${s.published ? 'Published' : 'Pending'}</td></tr>`;
         });
-
-        let html = `<!DOCTYPE html>
-        <html>
-        <head>
-            <title>${jumuiyaName || 'Jumuiya'} - Activity Report</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 25px; color: #333; }
-                h1 { font-size: 22px; color: #0d6efd; margin-bottom: 2px; }
-                h2 { font-size: 16px; border-bottom: 2px solid #0d6efd; padding-bottom: 5px; margin-top: 30px; color: #198754; }
-                p { font-size: 12px; color: #666; }
-                .card-box { background: #f8f9fa; border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 6px; }
-                table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
-                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                th { background-color: #f1f3f5; }
-                @media print { .no-print { display: none; } }
-            </style>
-        </head>
-        <body>
-            <h1>${jumuiyaName ? jumuiyaName + ' Jumuiya' : 'Jumuiya Portal'} Report</h1>
-            <p>Generated on ${new Date().toLocaleString()}</p>
-            <button class="no-print" onclick="window.print()" style="padding: 10px 20px; background: #0d6efd; color: white; border: none; cursor: pointer; margin-bottom: 20px; font-weight: bold; border-radius: 4px;">🖨️ Print / Save as PDF</button>
-            
-            <div class="card-box">
-                <h3 style="margin: 0 0 10px 0;">📊 Total Verified Contributions: KES ${jumuiyaCollected.toLocaleString()}</h3>
-            </div>
-
-            <h2>Submissions History</h2>
-            <table>
-                <thead><tr><th>Contributor Name</th><th>Amount (KES)</th><th>Purpose</th><th>Status</th></tr></thead>
-                <tbody>`;
-        
-        if (submissions.length === 0) {
-            html += `<tr><td colspan="4" style="text-align: center; color: #777;">No records found.</td></tr>`;
-        } else {
-            submissions.forEach(s => {
-                html += `<tr><td>${s.name}</td><td>KES ${Number(s.amount || 0).toLocaleString()}</td><td>${s.purpose || 'Other'}</td><td>${s.published ? 'Published' : 'Pending Review'}</td></tr>`;
-            });
-        }
-        
-        html += `</tbody></table>
-            <script>window.onload = function() { setTimeout(() => { window.print(); }, 500); };</script>
-        </body></html>`;
-
+        html += `</tbody></table><script>window.onload = () => window.print();</script></body></html>`;
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.send(html);
     } catch (e) {
@@ -420,43 +366,30 @@ app.get('/api/jumuiya/download-data', async (req, res) => {
     }
 });
 
-// Youth Directory & Master Contributions
+// Youth Directory API
 app.get('/api/youth/directory', async (req, res) => {
     const data = await readData();
     const { reflection, patronSaint } = await getSpiritualContent();
     
-    const publishedRecords = (data.jumuiyaSubmissions || [])
-        .filter(s => s.published)
-        .map(s => ({
-            id: s.id,
-            name: s.name,
-            amount: s.amount,
-            purpose: s.purpose,
-            jumuiyaName: s.jumuiyaName
-        }));
-
     let contributionsMap = {};
     JUMUIYAS_LIST.forEach(j => { contributionsMap[j.name] = 0; });
     
     (data.jumuiyaSubmissions || []).forEach(r => {
         if (r.published) {
             const matched = JUMUIYAS_LIST.find(j => normalize(j.name) === normalize(r.jumuiyaName));
-            if (matched) {
-                contributionsMap[matched.name] = (contributionsMap[matched.name] || 0) + Number(r.amount || 0);
-            }
+            if (matched) contributionsMap[matched.name] += Number(r.amount || 0);
         }
     });
 
     res.json({ 
         success: true, 
         members: (data.members || []).map(m => ({ ...m, phone: maskPhone(m.phone) })), 
-        masterContributions: publishedRecords, 
+        masterContributions: (data.jumuiyaSubmissions || []).filter(s => s.published), 
         contributionsMap,
-        events: data.events, 
-        readings: data.readings, 
-        messages: data.messages,
+        events: data.events || [], 
+        readings: data.readings || [], 
+        messages: data.messages || [],
         reflection,
-        textReflection: reflection,
         patronSaint,
         validPurposes: VALID_PURPOSES
     });
@@ -464,25 +397,17 @@ app.get('/api/youth/directory', async (req, res) => {
 
 app.post('/api/youth/register', async (req, res) => {
     const { name, phone, jumuiya, group, pass } = req.body;
-    if (!name || !pass) return res.json({ success: false, message: 'Name and password are required.' });
+    if (!name || !pass) return res.json({ success: false, message: 'Name and password required.' });
     
     const data = await readData();
     const cleanName = name.trim().toLowerCase();
     
     if ((data.members || []).some(m => m.name.toLowerCase() === cleanName) || (data.pending || []).some(p => p.name.toLowerCase() === cleanName)) {
-        return res.json({ success: false, message: 'An account with this name already exists or is awaiting approval.' });
+        return res.json({ success: false, message: 'Account with this name already exists or is pending.' });
     }
 
     if (!data.pending) data.pending = [];
-    data.pending.push({ 
-        id: Date.now().toString(), 
-        name: name.trim(), 
-        phone: phone || '', 
-        jumuiya: jumuiya || 'St. Michael', 
-        group: group || 'Youth General', 
-        pass, 
-        date: new Date().toLocaleDateString() 
-    });
+    data.pending.push({ id: Date.now().toString(), name: name.trim(), phone: phone || '', jumuiya: jumuiya || 'St. Michael', group: group || 'Youth General', pass, date: new Date().toLocaleDateString() });
     await writeData(data);
     res.json({ success: true, message: 'Registration successful! Awaiting admin approval.' });
 });
@@ -498,7 +423,7 @@ app.post('/api/youth/login', async (req, res) => {
         return res.json({ success: false, message: 'Incorrect password.' });
     }
     if ((data.pending || []).find(p => p.name.toLowerCase() === cleanName)) {
-        return res.json({ success: false, message: 'Your account is still pending approval.' });
+        return res.json({ success: false, message: 'Your account is pending approval.' });
     }
     res.json({ success: false, message: 'Member not found.' });
 });
@@ -523,16 +448,12 @@ app.get('/api/admin/data', async (req, res) => {
     const data = await readData();
     const { reflection, patronSaint } = await getSpiritualContent();
     
-    const passwordResets = (data.members || []).filter(m => m.passwordResetRequested);
-
     let contributionsMap = {};
     JUMUIYAS_LIST.forEach(j => { contributionsMap[j.name] = 0; });
     (data.jumuiyaSubmissions || []).forEach(r => {
         if (r.published) {
             const matched = JUMUIYAS_LIST.find(j => normalize(j.name) === normalize(r.jumuiyaName));
-            if (matched) {
-                contributionsMap[matched.name] = (contributionsMap[matched.name] || 0) + Number(r.amount || 0);
-            }
+            if (matched) contributionsMap[matched.name] += Number(r.amount || 0);
         }
     });
 
@@ -540,27 +461,26 @@ app.get('/api/admin/data', async (req, res) => {
         success: true, 
         pending: data.pending || [], 
         members: data.members || [], 
-        passwordResets: passwordResets, 
         jumuiyaSubmissions: data.jumuiyaSubmissions || [],
         polls: data.polls || [],
         archives: data.archives || [],
         targetAmount: data.targetAmount || 50000,
         contributionsMap,
-        readings: data.readings, 
+        readings: data.readings || [], 
         events: data.events || [], 
         messages: data.messages || [],
         reflection,
-        textReflection: reflection,
         patronSaint,
         validPurposes: VALID_PURPOSES
     });
 });
 
+// Master Admin Target Update Route
 app.post('/api/admin/set-target', async (req, res) => {
     try {
         const { targetAmount } = req.body;
         const data = await readData();
-        data.targetAmount = parseFloat(targetAmount) || 0;
+        data.targetAmount = parseFloat(targetAmount) || 50000;
         await writeData(data);
         res.json({ success: true, targetAmount: data.targetAmount });
     } catch (err) {
@@ -568,11 +488,11 @@ app.post('/api/admin/set-target', async (req, res) => {
     }
 });
 
+// Master Admin Close Cycle Route
 app.post('/api/admin/close-cycle', async (req, res) => {
     try {
         const { cycleName } = req.body;
         const data = await readData();
-        
         if (!data.archives) data.archives = [];
         
         const currentPublished = (data.jumuiyaSubmissions || []).filter(r => r.published);
@@ -584,19 +504,17 @@ app.post('/api/admin/close-cycle', async (req, res) => {
 
         data.jumuiyaSubmissions = (data.jumuiyaSubmissions || []).filter(r => !r.published);
         await writeData(data);
-
-        res.json({ success: true, message: 'Cycle closed, archived, and reset successfully!' });
+        res.json({ success: true, message: 'Cycle closed and archived successfully!' });
     } catch (err) {
         res.status(500).json({ success: false, message: 'Error closing active cycle.' });
     }
 });
 
-// Master Admin Printable / Download PDF Report API
+// Master Admin Printable Report Download API
 app.get('/api/admin/download-data', async (req, res) => {
     try {
         const { type } = req.query;
         const data = await readData();
-        
         let totalCollected = 0;
         let contributionsMap = {};
         JUMUIYAS_LIST.forEach(j => { contributionsMap[j.name] = 0; });
@@ -606,80 +524,32 @@ app.get('/api/admin/download-data', async (req, res) => {
                 const amt = Number(r.amount || 0);
                 totalCollected += amt;
                 const matched = JUMUIYAS_LIST.find(j => normalize(j.name) === normalize(r.jumuiyaName));
-                if (matched) {
-                    contributionsMap[matched.name] = (contributionsMap[matched.name] || 0) + amt;
-                }
+                if (matched) contributionsMap[matched.name] += amt;
             }
         });
 
-        const targetAmount = data.targetAmount || 50000;
-        const percentage = Math.min(Math.round((totalCollected / targetAmount) * 100), 100);
-
-        let html = `<!DOCTYPE html>
-        <html>
-        <head>
-            <title>St. Michael Kasaini Youth Portal Master Report</title>
-            <style>
-                body { font-family: Arial, sans-serif; margin: 25px; color: #333; }
-                h1 { font-size: 22px; color: #0d6efd; margin-bottom: 2px; }
-                h2 { font-size: 16px; border-bottom: 2px solid #0d6efd; padding-bottom: 5px; margin-top: 30px; color: #198754; }
-                p { font-size: 12px; color: #666; }
-                .card-box { background: #f8f9fa; border: 1px solid #ddd; padding: 15px; margin-bottom: 20px; border-radius: 6px; }
-                .metrics { display: flex; justify-content: space-between; margin-top: 10px; font-weight: bold; font-size: 14px; }
-                table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
-                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                th { background-color: #f1f3f5; }
-                @media print { .no-print { display: none; } }
-            </style>
-        </head>
-        <body>
-            <h1>St. Michael Kasaini Youth Portal</h1>
-            <p>Master Admin Comprehensive Report — Generated on ${new Date().toLocaleString()}</p>
-            <button class="no-print" onclick="window.print()" style="padding: 10px 20px; background: #0d6efd; color: white; border: none; cursor: pointer; margin-bottom: 20px; font-weight: bold; border-radius: 4px;">🖨️ Print / Save as PDF</button>`;
+        let html = `<!DOCTYPE html><html><head><title>St. Michael Kasaini Master Report</title>
+        <style>body { font-family: Arial; margin: 25px; } table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 12px; } th, td { border: 1px solid #ddd; padding: 8px; text-align: left; } th { background: #f1f3f5; }</style>
+        </head><body><h1>St. Michael Kasaini Youth Portal</h1><p>Report Generated: ${new Date().toLocaleString()}</p>`;
 
         if (type === 'financial') {
-            html += `<div class="card-box">
-                <h3 style="margin: 0 0 10px 0; color: #333;">📊 Financial & Target Summary</h3>
-                <div class="metrics">
-                    <div>Total Collected: KES ${totalCollected.toLocaleString()}</div>
-                    <div>Monthly Target: KES ${targetAmount.toLocaleString()}</div>
-                    <div>Achievement: ${percentage}%</div>
-                </div>
-            </div>
-
-            <h2>Jumuiya Performance Analytics Breakdown</h2>
-            <table>
-                <thead><tr><th>Jumuiya Name</th><th>Total Submissions / Contributions (KES)</th></tr></thead>
-                <tbody>`;
-            
-            for (const [jumuiyaName, amount] of Object.entries(contributionsMap)) {
-                html += `<tr><td><strong>${jumuiyaName}</strong></td><td>KES ${Number(amount).toLocaleString()}</td></tr>`;
-            }
-            html += `</tbody></table>`;
-
-        } else if (type === 'people') {
-            html += `<h2>Registered Youth Directory</h2>
-            <table>
-                <thead><tr><th>#</th><th>ID</th><th>Name</th><th>Phone Number</th><th>Jumuiya</th><th>Group</th></tr></thead>
-                <tbody>`;
-            
-            const members = data.members || [];
-            if (members.length === 0) {
-                html += `<tr><td colspan="6" style="text-align: center; color: #777;">No registered members found.</td></tr>`;
-            } else {
-                members.forEach((m, idx) => {
-                    const hiddenPhone = m.phone ? maskPhone(m.phone) : '****';
-                    html += `<tr><td>${idx + 1}</td><td>${m.customId || 'N/A'}</td><td>${m.name}</td><td>${hiddenPhone}</td><td>${m.jumuiya || 'N/A'}</td><td>${m.group || 'N/A'}</td></tr>`;
-                });
+            html += `<h3>Total Collected: KES ${totalCollected.toLocaleString()} / Target: KES ${(data.targetAmount || 50000).toLocaleString()}</h3>
+            <h3>Jumuiya Performance Breakdown</h3><table><thead><tr><th>Jumuiya</th><th>Amount (KES)</th></tr></thead><tbody>`;
+            for (const [name, amt] of Object.entries(contributionsMap)) {
+                html += `<tr><td>${name}</td><td>KES ${amt.toLocaleString()}</td></tr>`;
             }
             html += `</tbody></table>`;
         } else {
-            html += `<p style="color: red; font-weight: bold;">Invalid or missing download type specified.</p>`;
+            html += `<h3>Registered Youth Directory</h3><table><thead><tr><th>#</th><th>ID</th><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th></tr></thead><tbody>`;
+            const members = data.members || [];
+            if (members.length === 0) html += `<tr><td colspan="6" style="text-align:center;">No members found.</td></tr>`;
+            members.forEach((m, idx) => {
+                html += `<tr><td>${idx + 1}</td><td>${m.customId || 'N/A'}</td><td>${m.name}</td><td>${m.phone || ''}</td><td>${m.jumuiya}</td><td>${m.group}</td></tr>`;
+            });
+            html += `</tbody></table>`;
         }
 
-        html += `<script>window.onload = function() { setTimeout(() => { window.print(); }, 500); };</script>
-        </body></html>`;
-
+        html += `<script>window.onload = () => window.print();</script></body></html>`;
         res.setHeader('Content-Type', 'text/html; charset=utf-8');
         res.send(html);
     } catch (e) {
@@ -721,11 +591,8 @@ app.post('/api/admin/edit-member', async (req, res) => {
     try {
         const { id, name, phone, jumuiya, group } = req.body;
         const data = await readData();
-
         const member = (data.members || []).find(m => m.id === id || m._id === id);
-        if (!member) {
-            return res.json({ success: false, message: 'Member not found.' });
-        }
+        if (!member) return res.json({ success: false, message: 'Member not found.' });
 
         if (name) member.name = name.trim();
         if (phone !== undefined) member.phone = phone.trim();
@@ -733,9 +600,9 @@ app.post('/api/admin/edit-member', async (req, res) => {
         if (group) member.group = group.trim();
 
         await writeData(data);
-        res.json({ success: true, message: 'Member details updated successfully!', member });
+        res.json({ success: true, message: 'Member updated successfully!', member });
     } catch (err) {
-        res.status(500).json({ success: false, message: 'Server error updating member details.' });
+        res.status(500).json({ success: false, message: 'Server error updating member.' });
     }
 });
 
