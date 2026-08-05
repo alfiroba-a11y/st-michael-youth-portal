@@ -42,6 +42,47 @@
             </div>
         </div>
 
+        <!-- Global Grand Total & Live Target Management Widgets -->
+        <div class="card shadow-sm p-4 mb-4 bg-primary text-white">
+            <div class="row align-items-center">
+                <div class="col-md-6">
+                    <h6 class="text-uppercase tracking-wider text-white-50 fw-bold">Total Youth Contributions</h6>
+                    <div class="display-4 fw-bold my-2">
+                        KES <span id="grandTotalCounter">0</span>
+                    </div>
+                    <div class="mb-0 text-white-50" id="progressText">0% of Monthly Target Reached</div>
+                </div>
+                <div class="col-md-6 mt-3 mt-md-0">
+                    <div class="progress bg-white bg-opacity-25" style="height: 12px;">
+                        <div id="progressBar" class="progress-bar bg-success" role="progressbar" style="width: 0%"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-2 small text-white-50">
+                        <span id="targetDisplay">Target: KES 0</span>
+                        <span>Live Status: Active Cycle</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-3 mb-4">
+            <div class="col-md-6">
+                <div class="card shadow-sm p-3 h-100">
+                    <h5 class="text-primary mb-3">⚙️ Set Monthly Youth Target</h5>
+                    <form id="targetForm" class="d-flex gap-2">
+                        <input type="number" id="newTargetInput" class="form-control" placeholder="Enter target amount (e.g. 50000)" required>
+                        <button type="submit" class="btn btn-outline-primary text-nowrap">Save Target</button>
+                    </form>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card shadow-sm p-3 h-100 border-danger">
+                    <h5 class="text-danger mb-2">🔄 Close & Archive Current Cycle</h5>
+                    <p class="text-muted small mb-3">Moves active contributions to history and clears the board for a fresh cycle.</p>
+                    <button onclick="closeAndResetCycle()" class="btn btn-danger btn-sm mt-auto">Close Cycle & Start Fresh</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Jumuiya Contributions Summary Table -->
         <div class="card shadow-sm p-4 mb-4">
             <h4 class="text-primary mb-3">📊 Jumuiya Contributions Summary</h4>
@@ -282,6 +323,7 @@
                 document.getElementById('loginWrapper').classList.add('d-none');
                 document.getElementById('dashboardSection').classList.remove('d-none');
                 loadMasterData();
+                fetchGlobalStats();
             } else {
                 alertBox.textContent = 'Invalid credentials';
                 alertBox.className = 'alert alert-danger small';
@@ -289,18 +331,96 @@
             }
         });
 
+        function animateCounter(elementId, finalValue, duration = 1200) {
+            const element = document.getElementById(elementId);
+            if (!element) return;
+            let startTimestamp = null;
+            const startValue = 0;
+
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const easeOutQuad = progress * (2 - progress);
+                const currentVal = Math.floor(easeOutQuad * (finalValue - startValue) + startValue);
+                
+                element.innerText = currentVal.toLocaleString();
+                
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        async function fetchGlobalStats() {
+            try {
+                const res = await fetch('/api/admin/global-stats');
+                const data = await res.json();
+                if (data.success) {
+                    animateCounter('grandTotalCounter', data.totalCollected);
+                    
+                    const target = data.targetAmount || 1;
+                    const percentage = Math.min(Math.round((data.totalCollected / target) * 100), 100);
+                    
+                    document.getElementById('progressBar').style.width = percentage + '%';
+                    document.getElementById('progressText').innerText = `${percentage}% of Monthly Target Reached`;
+                    document.getElementById('targetDisplay').innerText = `Target: KES ${target.toLocaleString()}`;
+                }
+            } catch (err) {
+                console.error("Error fetching global stats:", err);
+            }
+        }
+
+        document.getElementById('targetForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const targetAmount = document.getElementById('newTargetInput').value;
+            const res = await fetch('/api/admin/set-target', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ targetAmount })
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert(data.message);
+                document.getElementById('targetForm').reset();
+                fetchGlobalStats();
+            } else {
+                alert(data.message || 'Failed to update target.');
+            }
+        });
+
+        async function closeAndResetCycle() {
+            if (!confirm("Are you sure you want to close this cycle? This will archive all current contributions and clear the board for a new cycle.")) return;
+            
+            const cycleName = prompt("Enter a name for this cycle archive (e.g., August Collection):", `Cycle ${new Date().toLocaleDateString()}`);
+            if (!cycleName) return;
+
+            const res = await fetch('/api/admin/close-cycle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cycleName })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert(data.message || 'Failed to close cycle.');
+            }
+        }
+
         async function loadMasterData() {
+            fetchGlobalStats();
             const res = await fetch('/api/admin/data');
             const data = await res.json();
             if (data.success) {
-                // Contributions Summary
                 let cHtml = '';
                 for (const [jumuiya, count] of Object.entries(data.contributionsMap || {})) {
                     cHtml += `<tr><td><strong>⛪ ${jumuiya}</strong></td><td><span class="badge bg-primary fs-6">KES ${count}</span></td></tr>`;
                 }
                 document.getElementById('contributionsSummaryList').innerHTML = cHtml || '<tr><td colspan="2" class="text-muted">No contributions recorded.</td></tr>';
 
-                // Events Admin List
                 let eHtml = '<ul class="list-group">';
                 if (data.events && data.events.length > 0) {
                     data.events.forEach(ev => {
@@ -316,7 +436,6 @@
                 eHtml += '</ul>';
                 document.getElementById('eventsListAdmin').innerHTML = eHtml;
 
-                // Readings Admin List
                 let rHtml = '<ul class="list-group">';
                 if (data.readings && data.readings.length > 0) {
                     data.readings.forEach(rd => {
@@ -338,7 +457,6 @@
                 rHtml += '</ul>';
                 document.getElementById('readingsListAdmin').innerHTML = rHtml;
 
-                // Polls Admin List
                 let pListHtml = '<ul class="list-group">';
                 if (data.polls && data.polls.length > 0) {
                     data.polls.forEach(pl => {
@@ -354,7 +472,6 @@
                 pListHtml += '</ul>';
                 document.getElementById('pollsListAdmin').innerHTML = pListHtml;
 
-                // Password Reset Requests Table
                 let prHtml = '<table class="table table-bordered align-middle"><thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead><tbody>';
                 if (!data.passwordResets || data.passwordResets.length === 0) {
                     prHtml += '<tr><td colspan="4" class="text-muted">No pending password reset requests.</td></tr>';
@@ -372,7 +489,6 @@
                 prHtml += '</tbody></table>';
                 document.getElementById('passwordResetList').innerHTML = prHtml;
 
-                // Jumuiya Submissions Table
                 let sHtml = '';
                 if (!data.jumuiyaSubmissions || data.jumuiyaSubmissions.length === 0) {
                     sHtml = '<tr><td colspan="7" class="text-muted text-center">No submissions received yet from Jumuiya admins.</td></tr>';
@@ -399,7 +515,6 @@
                 }
                 document.getElementById('masterJumuiyaRecordsList').innerHTML = sHtml;
 
-                // Pending Registrations Table
                 let pHtml = '<table class="table table-bordered"><thead><tr><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th><th>Action</th></tr></thead><tbody>';
                 if (!data.pending || data.pending.length === 0) {
                     pHtml += '<tr><td colspan="5" class="text-muted">No pending registrations.</td></tr>';
@@ -411,7 +526,6 @@
                 pHtml += '</tbody></table>';
                 document.getElementById('pendingList').innerHTML = pHtml;
 
-                // Members Table
                 let mHtml = '<table class="table table-bordered table-striped"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Phone</th><th>Group</th><th>Action</th></tr></thead><tbody>';
                 if (!data.members || data.members.length === 0) {
                     mHtml += '<tr><td colspan="6" class="text-muted">No registered members yet.</td></tr>';
@@ -441,7 +555,6 @@
             }
         }
 
-        // Event Form Submission
         document.getElementById('eventForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const payload = {
@@ -461,7 +574,6 @@
             }
         }
 
-        // Reading Form Submission
         document.getElementById('readingForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const payload = {
@@ -483,7 +595,6 @@
             }
         }
 
-        // Poll Form Submission
         document.getElementById('pollForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const question = document.getElementById('pollQuestion').value;
