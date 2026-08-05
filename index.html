@@ -1,6 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
+<!DOCTYPE html><html lang="en"><head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>St. Michael Kasaini Youth Portal & Catholic Prayers</title>
@@ -8,16 +6,25 @@
     <style>
         .collapsible-content { display: none; }
         .collapsible-content.show { display: block; }
+        /* Hero background container styling */
+        .hero-section {
+            position: relative;
+            overflow: hidden;
+        }
+        .hero-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2;
+        }
+        /* Hidden admin trigger styling: subtle text or dot that only you know where it is */
         .secret-admin-trigger { color: #f8f9fa; text-decoration: none; font-size: 11px; }
         .secret-admin-trigger:hover { color: #ffc107; }
-        .reading-verse-box {
-            max-height: 280px;
-            overflow-y: auto;
-            background-color: #fcfcfc;
-        }
     </style>
-</head>
-<body class="bg-light">
+</head><body class="bg-light">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
         <a class="navbar-brand" href="/">✝ St. Michael Kasaini Youth</a>
         <div class="ms-auto">
@@ -27,8 +34,16 @@
         </div>
     </nav>
 
-    <div class="bg-primary text-white text-center py-5">
-        <div class="container">
+    <!-- Hero Section with Permanently Hosted GitHub Image -->
+    <div class="hero-section text-white text-center py-5 position-relative">
+        <!-- Background Image loaded directly from your repository -->
+        <img src="church image.jfif" alt="St. Michael Kasaini Church" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover" style="z-index: 1;">
+        
+        <!-- Dark Overlay for Readability -->
+        <div class="hero-overlay"></div>
+        
+        <!-- Hero Content -->
+        <div class="container position-relative py-5" style="z-index: 3;">
             <h1 class="display-5 fw-bold">St. Michael Kasaini Youth Portal</h1>
             <p class="lead">Connecting youth in faith, fellowship, scripture, rosary devotion, and service.</p>
             <div class="mt-4">
@@ -40,52 +55,33 @@
 
     <div class="container my-5">
         
-        <!-- Compact Date Picker Popup Widget -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-body bg-white d-flex align-items-center justify-content-between flex-wrap gap-3">
-                <div>
-                    <h5 class="mb-1 text-dark fs-5">📖 USCCB Catholic Liturgical Readings Selector</h5>
-                    <p class="text-muted small mb-0">Select any date to instantly load the official daily Scripture readings.</p>
-                </div>
-                <div class="d-flex align-items-center gap-2">
-                    <label for="liturgicalDateInput" class="fw-bold text-secondary small">Choose Date:</label>
-                    <input type="date" id="liturgicalDateInput" class="form-control form-control-sm w-auto fw-bold text-primary shadow-sm" onchange="onDatePicked(this.value)">
-                </div>
-            </div>
-        </div>
-
-        <!-- Holy Mass Full Readings Simultaneous Display Panel -->
-        <div class="card shadow-sm p-4 mb-4 border-primary">
-            <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
-                <h3 id="readingTitle" class="text-primary mb-0 fs-4">Holy Mass Full Readings</h3>
-                <span id="activeDateBadge" class="badge bg-secondary fs-6">Loading date...</span>
-            </div>
-            
-            <div id="announcementBanner" class="alert alert-warning mb-3">Pick any date above to instantly load USCCB-compliant scripture texts.</div>
-            
+        <!-- Sunday Holy Mass Readings -->
+        <div class="card shadow-sm p-4 mb-4">
+            <h3 id="readingTitle" class="text-primary mb-3">Sunday Holy Mass Readings & Updates</h3>
+            <div id="announcementBanner" class="alert alert-warning mb-3">Loading updates...</div>
             <div class="row g-3">
                 <div class="col-md-6 col-lg-3">
-                    <div class="p-3 border rounded bg-white h-100 shadow-sm d-flex flex-column">
+                    <div class="p-3 border rounded bg-white h-100 shadow-sm">
                         <h6 class="text-secondary fw-bold border-bottom pb-2">First Reading</h6>
-                        <div id="firstReading" class="small text-dark reading-verse-box p-2 border rounded mt-2 flex-grow-1">Loading...</div>
+                        <p id="firstReading" class="small text-muted mb-0">Loading...</p>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-3">
-                    <div class="p-3 border rounded bg-white h-100 shadow-sm d-flex flex-column">
+                    <div class="p-3 border rounded bg-white h-100 shadow-sm">
                         <h6 class="text-secondary fw-bold border-bottom pb-2">Responsorial Psalm</h6>
-                        <div id="psalmReading" class="small text-dark reading-verse-box p-2 border rounded mt-2 flex-grow-1">Loading...</div>
+                        <p id="psalmReading" class="small text-muted mb-0">Loading...</p>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-3">
-                    <div class="p-3 border rounded bg-white h-100 shadow-sm d-flex flex-column">
+                    <div class="p-3 border rounded bg-white h-100 shadow-sm">
                         <h6 class="text-secondary fw-bold border-bottom pb-2">Second Reading</h6>
-                        <div id="secondReading" class="small text-dark reading-verse-box p-2 border rounded mt-2 flex-grow-1">Loading...</div>
+                        <p id="secondReading" class="small text-muted mb-0">Loading...</p>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-3">
-                    <div class="p-3 border rounded bg-white h-100 shadow-sm d-flex flex-column">
+                    <div class="p-3 border rounded bg-white h-100 shadow-sm">
                         <h6 class="text-secondary fw-bold border-bottom pb-2">Gospel</h6>
-                        <div id="gospelReading" class="small text-dark reading-verse-box p-2 border rounded mt-2 flex-grow-1">Loading...</div>
+                        <p id="gospelReading" class="small text-muted mb-0">Loading...</p>
                     </div>
                 </div>
             </div>
@@ -102,7 +98,7 @@
                 </div>
                 <div id="p1" class="collapsible-content p-3 bg-light border-start border-primary border-4 my-2">
                     <p><strong>Sign of the Cross:</strong> In the name of the Father, and of the Son, and of the Holy Spirit. Amen.</p>
-                    <p><strong>The Confiteor (Penitential Rite):</strong> I confess to almighty God and to you, my brothers and sisters, that I have greatly sinned, in my thoughts and in my words, in what I have done and in what I have failed to do, through my fault, through my fault, through my most grievous fault; therefore I ask blessed Mary ever-Virgin, all the Angels and Saints, and you, my brothers and sisters, to pray for me to the Lord our God.</p>
+                    <p><strong>The Confiteor (Penitential Rite):</strong> I confess to almighty God and to you, my brothers and sisters, that I have greatly sinned, in my thoughts and in my words, in what I have done and in what I have failed to do, (strike breast) through my fault, through my fault, through my most grievous fault; therefore I ask blessed Mary ever-Virgin, all the Angels and Saints, and you, my brothers and sisters, to pray for me to the Lord our God.</p>
                     <p><strong>Gloria:</strong> Glory to God in the highest, and on earth peace to people of good will. We praise you, we bless you, we adore you, we glorify you, we give you thanks for your great glory, Lord God, heavenly King, O God, almighty Father...</p>
                     <p><strong>Nicene Creed:</strong> I believe in one God, the Father almighty, maker of heaven and earth, of all things visible and invisible. I believe in one Lord Jesus Christ, the Only Begotten Son of God, born of the Father before all ages...</p>
                 </div>
@@ -118,7 +114,7 @@
             </div>
         </div>
 
-        <!-- The Holy Rosary -->
+        <!-- The Holy Rosary (Mysteries hidden until pressed) -->
         <div class="card shadow-sm p-4 mb-4">
             <h3 class="text-primary mb-3">The Holy Rosary: Complete Guide & Mysteries</h3>
             <p class="text-muted small">Press a mystery button to display its detailed content step-by-step.</p>
@@ -175,25 +171,81 @@
             </div>
         </div>
 
-        <!-- Way of the Cross Stations 1 to 14 -->
+        <!-- Way of the Cross Stations 1 to 14 (Full Content) -->
         <div class="card shadow-sm p-4 mb-4">
             <h3 class="text-primary mb-3">The Way of the Cross (Stations 1 to 14)</h3>
             <p class="text-muted small">Click any station to read its full meditation.</p>
             <div class="accordion" id="stationsAccordion">
-                <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st1">Station 1: Jesus is condemned to death</button></h2><div id="st1" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> Pontius Pilate hands Jesus over to be crucified. Let us pray for courage to stand for truth.</div></div></div>
-                <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st2">Station 2: Jesus takes up His cross</button></h2><div id="st2" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> Christ willingly accepts the heavy wooden cross for our sins. May we carry our daily crosses with patience.</div></div></div>
-                <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st3">Station 3: Jesus falls the first time</button></h2><div id="st3" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> Under brutal weight, Jesus falls and rises to show us how to recover from sin.</div></div></div>
-                <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st4">Station 4: Jesus meets His afflicted Mother</button></h2><div id="st4" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> Mary and Jesus share a profound look of silent grief and trust in the Father's will.</div></div></div>
-                <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st5">Station 5: Simon of Cyrene helps Jesus carry the cross</button></h2><div id="st5" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> Simon assists the Lord. Let us always be ready to lighten the burdens of others.</div></div></div>
-                <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st6">Station 6: Veronica wipes the face of Jesus</button></h2><div id="st6" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> Veronica shows bravery, wiping Jesus' face and leaving His holy image on her veil.</div></div></div>
-                <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st7">Station 7: Jesus falls the second time</button></h2><div id="st7" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> Exhaustion overtakes Jesus once more, yet He pushes forward out of love.</div></div></div>
-                <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st8">Station 8: Jesus meets the women of Jerusalem</button></h2><div id="st8" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> Jesus tells the weeping women to weep for themselves and their children.</div></div></div>
-                <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st9">Station 9: Jesus falls the third time</button></h2><div id="st9" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> Reaching the limits of physical endurance, Jesus falls a final time before Calvary.</div></div></div>
-                <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st10">Station 10: Jesus is stripped of His garments</button></h2><div id="st10" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> Soldiers strip Jesus publicly, enduring ultimate humiliation for our restoration.</div></div></div>
-                <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st11">Station 11: Jesus is nailed to the cross</button></h2><div id="st11" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> Spikes pierce His hands and feet. "Father, forgive them, for they know not what they do."</div></div></div>
-                <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st12">Station 12: Jesus dies on the cross</button></h2><div id="st12" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> After crying out in a loud voice, Jesus yields His spirit to the Heavenly Father.</div></div></div>
-                <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st13">Station 13: Jesus is taken down from the cross</button></h2><div id="st13" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> The lifeless body of our Savior is placed into the sorrowful arms of His Mother.</div></div></div>
-                <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st14">Station 14: Jesus is laid in the tomb</button></h2><div id="st14" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> Jesus is sealed in a clean tomb, awaiting the glorious victory of Easter Sunday.</div></div></div>
+                <!-- Station 1 -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st1">Station 1: Jesus is condemned to death</button></h2>
+                    <div id="st1" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> Pontius Pilate hands Jesus over to be crucified despite finding no fault in Him. Let us pray for courage to stand for truth.</div></div>
+                </div>
+                <!-- Station 2 -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st2">Station 2: Jesus takes up His cross</button></h2>
+                    <div id="st2" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> Christ willingly accepts the heavy wooden cross for our sins. May we carry our daily crosses with patience.</div></div>
+                </div>
+                <!-- Station 3 -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st3">Station 3: Jesus falls the first time</button></h2>
+                    <div id="st3" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> Under the brutal weight, Jesus falls to the earth. He rises to show us how to get back up after sin.</div></div>
+                </div>
+                <!-- Station 4 -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st4">Station 4: Jesus meets His afflicted Mother</button></h2>
+                    <div id="st4" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> Mother Mary and Jesus share a profound look of silent grief and absolute trust in the Father's will.</div></div>
+                </div>
+                <!-- Station 5 -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st5">Station 5: Simon of Cyrene helps Jesus carry the cross</button></h2>
+                    <div id="st5" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> Simon is forced to help. Let us be ever ready to lighten the burdens of our fellow brothers and sisters.</div></div>
+                </div>
+                <!-- Station 6 -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st6">Station 6: Veronica wipes the face of Jesus</button></h2>
+                    <div id="st6" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> Veronica shows immense bravery, wiping Jesus' face and leaving His holy image imprinted on her veil.</div></div>
+                </div>
+                <!-- Station 7 -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st7">Station 7: Jesus falls the second time</button></h2>
+                    <div id="st7" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> Exhaustion overtakes Jesus once more, yet He pushes forward out of pure love for us.</div></div>
+                </div>
+                <!-- Station 8 -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st8">Station 8: Jesus meets the women of Jerusalem</button></h2>
+                    <div id="st8" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> Jesus tells the weeping women to weep rather for themselves and for their children.</div></div>
+                </div>
+                <!-- Station 9 -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st9">Station 9: Jesus falls the third time</button></h2>
+                    <div id="st9" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> Reaching the limits of physical endurance, Jesus falls a final time before Calvary.</div></div>
+                </div>
+                <!-- Station 10 -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st10">Station 10: Jesus is stripped of His garments</button></h2>
+                    <div id="st10" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> Soldiers strip Jesus publicly, enduring ultimate humiliation for our spiritual restoration.</div></div>
+                </div>
+                <!-- Station 11 -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st11">Station 11: Jesus is nailed to the cross</button></h2>
+                    <div id="st11" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> Painful spikes pierce His hands and feet. Father, forgive them, for they know not what they do.</div></div>
+                </div>
+                <!-- Station 12 -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st12">Station 12: Jesus dies on the cross</button></h2>
+                    <div id="st12" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> After crying out in a loud voice, Jesus yields His spirit into the hands of the Heavenly Father.</div></div>
+                </div>
+                <!-- Station 13 -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st13">Station 13: Jesus is taken down from the cross</button></h2>
+                    <div id="st13" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> The lifeless body of our Savior is placed into the sorrowful arms of His blessed Mother.</div></div>
+                </div>
+                <!-- Station 14 -->
+                <div class="accordion-item">
+                    <h2 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#st14">Station 14: Jesus is laid in the tomb</button></h2>
+                    <div id="st14" class="accordion-collapse collapse" data-bs-parent="#stationsAccordion"><div class="accordion-body"><strong>V.</strong> We adore you, O Christ, and we bless you.<br><strong>R.</strong> Because by your holy cross you have redeemed the world.<br><em>Meditation:</em> Jesus is sealed in a clean tomb, awaiting the glorious victory of Easter Sunday morning.</div></div>
+                </div>
             </div>
         </div>
 
@@ -217,100 +269,47 @@
     <script>
         function togglePrayer(id) {
             const el = document.getElementById(id);
-            if(el) el.classList.toggle('show');
+            el.classList.toggle('show');
         }
         function toggleMystery(type) {
             const panes = ['joyfulContent', 'sorrowfulContent', 'gloriousContent', 'luminousContent'];
             panes.forEach(p => {
-                const el = document.getElementById(p);
-                if(el) el.classList.remove('show');
+                document.getElementById(p).classList.remove('show');
             });
-            const target = document.getElementById(type + 'Content');
-            if(target) target.classList.add('show');
+            document.getElementById(type + 'Content').classList.add('show');
         }
 
-        function onDatePicked(dateStr) {
-            if (!dateStr) return;
-            const parsedDateObj = new Date(dateStr + 'T00:00:00');
-            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
-            const formattedDateStr = parsedDateObj.toLocaleDateString('en-US', options);
-            const dayOfWeek = parsedDateObj.getDay(); // 0 = Sunday
-
-            document.getElementById('activeDateBadge').innerText = formattedDateStr;
-            const banner = document.getElementById('announcementBanner');
-            banner.textContent = `Official USCCB Readings Loaded for: ${formattedDateStr}`;
-            banner.style.display = 'block';
-
-            // Exact USCCB dynamic matchup for Aug 5, 2026 and generic fallback cycles
-            if (dateStr === '2026-08-05') {
-                document.getElementById('readingTitle').textContent = `Wednesday of the 18th Week in Ordinary Time (${formattedDateStr})`;
-                document.getElementById('firstReading').innerHTML = `
-                    <strong>Jeremiah 31:1-7</strong><br><br>
-                    "At that time, says the Lord, I will be the God of all the families of Israel, and they shall be my people. Thus says the Lord: The people who survived the sword found grace in the wilderness; when Israel sought for rest, the Lord appeared to him from afar. I have loved you with an everlasting love; therefore I have continued my faithfulness to you. Again I will build you, and you shall be built, O virgin Israel! ... Sing aloud with gladness for Jacob, and raise shouts for the chief of the nations; proclaim, give praise, and say: The Lord has saved his people, the remnant of Israel."
-                `;
-                document.getElementById('psalmReading').innerHTML = `
-                    <strong>Jeremiah 31:10, 11-12ab, 13</strong><br><br>
-                    <strong>R. The Lord will guard us as a shepherd guards his flock.</strong><br>
-                    Hear the word of the LORD, O nations, and declare it on the coastlands far away: He who scattered Israel will gather him, and will keep him as a shepherd guards his flock. For the LORD has ransomed Jacob, and has redeemed him from hands too strong for him...<br>
-                    <strong>R. The Lord will guard us as a shepherd guards his flock.</strong>
-                `;
-                document.getElementById('secondReading').innerHTML = `
-                    <em>(Optional Memorial / Weekday: No Second Reading assigned).</em>
-                `;
-                document.getElementById('gospelReading').innerHTML = `
-                    <strong>Matthew 15:21-28</strong><br><br>
-                    "At that time, Jesus went away from there and withdrew to the district of Tyre and Sidon. And behold, a Canaanite woman from that region came out and cried, 'Have mercy on me, O Lord, Son of David; my daughter is severely possessed by a demon.' But he did not answer her a word... Then Jesus answered her, 'O woman, great is your faith! Be it done for you as you desire.' And her daughter was healed instantly."
-                `;
-            } else if (dayOfWeek === 0) {
-                document.getElementById('readingTitle').textContent = `Sunday Mass Full Readings (${formattedDateStr})`;
-                document.getElementById('firstReading').innerHTML = `
-                    <strong>Isaiah 40:1-5, 9-11</strong><br><br>
-                    "Comfort, give comfort to my people, says your God. Speak tenderly to Jerusalem, and proclaim to her that her service is at an end, her guilt is expiated... A voice cries out: In the desert prepare the way of the highway for our God! Every valley shall be filled in, every mountain and hill shall be made low..."
-                `;
-                document.getElementById('psalmReading').innerHTML = `
-                    <strong>Psalm 85:9-10, 11-12, 13-14</strong><br><br>
-                    <strong>R. Lord, let us see your kindness, and grant us your salvation.</strong><br>
-                    I will hear what God proclaims; the LORD—for he proclaims peace to his people. Near indeed is his salvation to those who fear him, glory dwelling in our land.<br>
-                    <strong>R. Lord, let us see your kindness, and grant us your salvation.</strong>
-                `;
-                document.getElementById('secondReading').innerHTML = `
-                    <strong>2 Peter 3:8-14</strong><br><br>
-                    "Do not ignore this one fact, beloved, that with the Lord one day is like a thousand years and a thousand years like one day. The Lord does not delay his promise, as some regard "delay," but he is patient with you, not wishing that any should perish but that all should come to repentance..."
-                `;
-                document.getElementById('gospelReading').innerHTML = `
-                    <strong>Mark 1:1-8</strong><br><br>
-                    "The beginning of the gospel of Jesus Christ, the Son of God. As it is written in Isaiah the prophet: Behold, I am sending my messenger ahead of you; he will prepare your way. A voice of one crying out in the desert: 'Prepare the way of the Lord, make straight his paths.' John the Baptist appeared in the desert proclaiming a baptism of repentance for the forgiveness of sins..."
-                `;
-            } else {
-                document.getElementById('readingTitle').textContent = `Weekday Mass Full Readings (${formattedDateStr})`;
-                document.getElementById('firstReading').innerHTML = `
-                    <strong>Reading I (Daily Cycle)</strong><br><br>
-                    "The word of the Lord came to me: Son of man, speak to the elders of the house of Israel and say to them: Thus says the Lord God: Are you coming to consult me? As I live, says the Lord God, I will not let you consult me... Walk in all my statutes that I commanded you, so that it may be well with you."
-                `;
-                document.getElementById('psalmReading').innerHTML = `
-                    <strong>Responsorial Psalm</strong><br><br>
-                    <strong>R. If today you hear his voice, harden not your hearts.</strong><br>
-                    Come, let us sing joyfully to the LORD; let us acclaim the Rock of our salvation. Let us come into his presence with thanksgiving; let us joyfully sing psalms to him.<br>
-                    <strong>R. If today you hear his voice, harden not your hearts.</strong>
-                `;
-                document.getElementById('secondReading').innerHTML = `
-                    <em>(Not assigned for standard weekdays; second readings are reserved for Sundays and solemnities).</em>
-                `;
-                document.getElementById('gospelReading').innerHTML = `
-                    <strong>Gospel</strong><br><br>
-                    "Jesus came to Nazareth where he had grown up, and according to his custom he went into the synagogue on the sabbath day. He stood up to read and was handed the scroll of the prophet Isaiah. He unrolled the scroll and found the passage where it was written: The Spirit of the Lord is upon me..."
-                `;
+        async function loadReadings() {
+            try {
+                const res = await fetch('/api/youth/directory');
+                const data = await res.json();
+                
+                if (data.success && data.readings) {
+                    const r = Array.isArray(data.readings) ? data.readings[0] : data.readings;
+                    
+                    if (r) {
+                        if (r.title) document.getElementById('readingTitle').textContent = r.title;
+                        
+                        document.getElementById('firstReading').textContent = r.firstReading || 'No first reading provided.';
+                        document.getElementById('psalmReading').textContent = r.psalm || 'No psalm provided.';
+                        document.getElementById('secondReading').textContent = r.secondReading || 'No second reading provided.';
+                        document.getElementById('gospelReading').textContent = r.gospel || 'No gospel provided.';
+                        
+                        const banner = document.getElementById('announcementBanner');
+                        if (r.announcement) {
+                            banner.textContent = r.announcement;
+                            banner.style.display = 'block';
+                        } else {
+                            banner.style.display = 'none';
+                        }
+                    }
+                }
+            } catch(e) {
+                console.error('Failed to load readings:', e);
+                document.getElementById('announcementBanner').textContent = 'Unable to load updates at this time.';
             }
         }
-
-        document.addEventListener('DOMContentLoaded', () => {
-            const todayStr = new Date().toISOString().split('T')[0];
-            const dateInput = document.getElementById('liturgicalDateInput');
-            if(dateInput) {
-                dateInput.value = todayStr;
-                onDatePicked(todayStr);
-            }
-        });
+        
+        loadReadings();
     </script>
-</body>
-</html>
+</body></html>
