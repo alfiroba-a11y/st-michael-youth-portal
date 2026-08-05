@@ -636,7 +636,7 @@ app.post('/api/admin/add-event', async (req, res) => {
 app.post('/api/admin/reply-query', async (req, res) => {
     const { text } = req.body;
     const data = await readData();
-    data.messages.push({ id: Date.now().toString(), sender: '🛡️ Robert Wambua (Admin)', text, time: new Date().toLocaleString() });
+    data.messages.push({ id: Date.now().toString(), sender: '🛡️ Admin', text, time: new Date().toLocaleString() });
     await writeData(data);
     res.json({ success: true });
 });
