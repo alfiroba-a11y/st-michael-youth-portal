@@ -326,10 +326,18 @@
         }
 
         function downloadPDF() {
+            if (!currentJumuiyaName) {
+                alert('Please select and log in to a Jumuiya first.');
+                return;
+            }
             window.open(`/api/jumuiya/pdf?jumuiyaName=${encodeURIComponent(currentJumuiyaName)}`, '_blank');
         }
 
         function downloadJumuiyaData(format = 'csv') {
+            if (!currentJumuiyaName) {
+                alert('Please select and log in to a Jumuiya first.');
+                return;
+            }
             window.open(`/api/jumuiya/export?jumuiyaName=${encodeURIComponent(currentJumuiyaName)}&format=${format}`, '_blank');
         }
 
