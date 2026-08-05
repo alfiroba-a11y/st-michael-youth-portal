@@ -56,10 +56,10 @@
                 <button class="btn btn-outline-danger btn-sm" onclick="location.reload()">Logout</button>
             </div>
 
-            <!-- Analytics Graph Section -->
+            <!-- Analytics Graph Section (Displays all 11 Jumuiyas overview) -->
             <div class="card shadow-sm p-4 mb-4">
-                <h4 class="text-primary mb-3">📊 Contribution Analytics Overview</h4>
-                <div style="position: relative; height: 250px; width: 100%;">
+                <h4 class="text-primary mb-3">📊 All Jumuiyas Contribution Overview</h4>
+                <div style="position: relative; height: 280px; width: 100%;">
                     <canvas id="contributionChart"></canvas>
                 </div>
             </div>
@@ -227,26 +227,27 @@
                         <td>${s.published ? '<span class="badge bg-success">Published on Portal</span>' : '<span class="badge bg-warning text-dark">Pending Master Approval</span>'}</td>
                     </tr>
                 `).join('');
-                renderChart(data.submissions);
             } else {
                 tbody.innerHTML = `<tr><td colspan="6" class="text-muted text-center">No contributions recorded yet for ${currentJumuiyaName}.</td></tr>`;
-                renderChart([]);
+            }
+            loadAllJumuiyasGraph();
+        }
+
+        async function loadAllJumuiyasGraph() {
+            try {
+                const res = await fetch('/api/analytics/jumuiya-graph');
+                const graphData = await res.json();
+                if (graphData.success) {
+                    renderGlobalChart(graphData.labels, graphData.datasetsData);
+                }
+            } catch (err) {
+                console.error('Error loading global chart:', err);
             }
         }
 
-        function renderChart(submissions) {
+        function renderGlobalChart(labels, values) {
             const ctx = document.getElementById('contributionChart').getContext('2d');
             
-            // Group amounts by purpose
-            const totalsByPurpose = {};
-            submissions.forEach(s => {
-                const purpose = s.purpose || 'Other';
-                totalsByPurpose[purpose] = (totalsByPurpose[purpose] || 0) + Number(s.amount || 0);
-            });
-
-            const labels = Object.keys(totalsByPurpose);
-            const values = Object.values(totalsByPurpose);
-
             if (contributionChartInstance) {
                 contributionChartInstance.destroy();
             }
@@ -254,10 +255,10 @@
             contributionChartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: labels.length > 0 ? labels : ['No Data'],
+                    labels: labels,
                     datasets: [{
-                        label: 'Total Amount (KES)',
-                        data: values.length > 0 ? values : [0],
+                        label: 'Total Contributions (KES)',
+                        data: values,
                         backgroundColor: 'rgba(13, 110, 253, 0.7)',
                         borderColor: 'rgba(13, 110, 253, 1)',
                         borderWidth: 1
