@@ -767,12 +767,24 @@
         }
 
         async function downloadPortalData() {
-            try {
-                window.open('/api/admin/download-data', '_blank');
-            } catch (error) {
-                alert('Error downloading portal data: ' + error.message);
-            }
+    try {
+        const choice = prompt("Select download type:\nEnter '1' for Financial Data & Summary\nEnter '2' for List of People (Phone Hidden)");
+        
+        let type = '';
+        if (choice === '1') type = 'financial';
+        else if (choice === '2') type = 'people';
+        else if (choice !== null) {
+            alert('Invalid selection. Please enter 1 or 2.');
+            return;
+        } else {
+            return; // Cancelled
         }
-    </script>
+
+        window.open(`/api/admin/download-data?type=${type}`, '_blank');
+    } catch (error) {
+        alert('Error downloading portal data: ' + error.message);
+    }
+}
+</script>
 </body>
 </html>
