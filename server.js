@@ -6,13 +6,15 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Serve static frontend files (HTML, CSS, JS) from your project folder
+app.use(express.static(path.join(__dirname)));
+
 // Database Helper Functions
 async function readData() {
     try {
         const fileData = await fs.readFile(path.join(__dirname, 'db.json'), 'utf8');
         return JSON.parse(fileData);
     } catch (err) {
-        // Fallback default structure if db.json doesn't exist yet
         return {
             members: [],
             jumuiyaSubmissions: [],
@@ -29,10 +31,61 @@ async function writeData(data) {
 }
 
 // ==========================================
+// CORE FRONTEND PAGE ROUTES (Fixes "Not Found")
+// ==========================================
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
+});
+
+app.get('/login', (req, res) => {
+    res.sendFile(path.join(__dirname, 'login.html'));
+});
+
+app.get('/admin', (req, res) => {
+    res.sendFile(path.join(__dirname, 'admin.html'));
+});
+
+// ==========================================
+// YOUTH & DIRECTORY API ROUTES
+// ==========================================
+app.get('/api/youth/directory', async (req, res) => {
+    try {
+        const data = await readData();
+        const publishedSubmissions = (data.jumuiyaSubmissions || []).filter(r => r.published);
+        res.json({
+            success: true,
+            members: data.members || [],
+            masterContributions: publishedSubmissions,
+            messages: data.messages || [],
+            events: data.events || [],
+            readings: data.readings || {}
+        });
+    } catch (err) {
+        console.error('Error fetching directory:', err);
+        res.status(500).json({ success: false, message: 'Error loading directory.' });
+    }
+});
+
+app.post('/api/youth/message', async (req, res) => {
+    try {
+        const { sender, text } = req.body;
+        const data = await readData();
+        if (!data.messages) data.messages = [];
+        data.messages.push({
+            sender: sender || 'Anonymous',
+            text,
+            time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+        await writeData(data);
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ success: false });
+    }
+});
+
+// ==========================================
 // TARGET MANAGEMENT & ADMIN API ROUTES
 // ==========================================
-
-// API to get Global Stats & Target Amount
 app.get('/api/admin/global-stats', async (req, res) => {
     try {
         const data = await readData();
@@ -55,7 +108,6 @@ app.get('/api/admin/global-stats', async (req, res) => {
     }
 });
 
-// API to Set Monthly Target Amount
 app.post('/api/admin/set-target', async (req, res) => {
     try {
         const { targetAmount } = req.body;
@@ -76,7 +128,6 @@ app.post('/api/admin/set-target', async (req, res) => {
     }
 });
 
-// API to Close and Archive Current Cycle
 app.post('/api/admin/close-cycle', async (req, res) => {
     try {
         const { cycleName } = req.body;
@@ -84,7 +135,6 @@ app.post('/api/admin/close-cycle', async (req, res) => {
         
         if (!data.archives) data.archives = [];
         
-        // Push current published submissions into archives
         const currentPublished = (data.jumuiyaSubmissions || []).filter(r => r.published);
         data.archives.push({
             cycleName: cycleName || `Cycle ${new Date().toLocaleDateString()}`,
@@ -92,7 +142,6 @@ app.post('/api/admin/close-cycle', async (req, res) => {
             records: currentPublished
         });
 
-        // Clear out published records or reset for the new cycle
         data.jumuiyaSubmissions = (data.jumuiyaSubmissions || []).filter(r => !r.published);
         await writeData(data);
 
@@ -103,7 +152,7 @@ app.post('/api/admin/close-cycle', async (req, res) => {
     }
 });
 
-// Upgraded PDF / HTML Export Route including Target Status & Contributions Breakdown
+// Upgraded PDF / HTML Export Route
 app.get('/api/admin/download-data', async (req, res) => {
     try {
         const data = await readData();
@@ -111,7 +160,6 @@ app.get('/api/admin/download-data', async (req, res) => {
         let totalCollected = 0;
         let contributionsMap = {};
         
-        // Official list defined locally to completely prevent ReferenceErrors on deployment
         const officialJumuiyas = [
             "St. Catherine", "St. Ann", "St. Michael", "St. Raphael", 
             "St. Francisco", "St. Monica", "St. Stephen", "St. Jacinta", 
@@ -204,9 +252,9 @@ app.get('/api/admin/download-data', async (req, res) => {
 });
 
 // ==========================================
-// SERVER INITIALIZATION & LISTENER
+// SERVER LISTENER
 // ==========================================
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`St. Michael Kasaini Portal Server running successfully on port ${PORT}`);
+    console.log(`Server is running on port ${PORT}`);
 });
