@@ -28,7 +28,7 @@
             <div class="card shadow-sm p-4" style="border: 1px solid #cfe2ff; border-radius: 8px;">
                 <h4 class="text-primary mb-3" style="display: flex; align-items: center; gap: 8px;">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm6.9 3.5c-.42-.3-1.12-.3-1.54 0l-.65.46a7.96 7.96 0 0 1-1.12-.65l-.01-.81a1.11 1.11 0 0 0-1.11-1.11h-.94a1.11 1.11 0 0 0-1.11 1.11l-.01.81c-.41.26-.78.47-1.12.65l-.65-.46c-.42-.3-1.12-.3-1.54 0l-.92.65c-.42-.3-.53.88-.26 1.3l.53.79c-.19.39-.34.8-.46 1.22h-.94c-.5 0-.91.41-.91.91v1.11c0 .5.41.91.91.91h.94c.12.42.27.83.46 1.22l-.53.79c-.27.42-.16 1 .26 1.3l.92.65c.42.3 1.12.3 1.54 0l.65-.46c.34.18.71.39 1.12.65l.01.81c0 .5.41.91.11 1.11h.94c.5 0 .91-.41.91-.91l.01-.81c.41-.26.78-.47 1.12-.65l.65.46c.42.3 1.12.3 1.54 0l.92-.65c.42-.3.53-.88.26-1.3l-.53-.79c.19-.39.34-.8.46-1.22h-.94c-.5 0 .91-.41.91-.91v-1.11c0-.5-.41-.91-.91-.91h-.94c-.12-.42-.27-.83-.46-1.22l.53-.79c.27-.42.16-1-.26-1.3l-.92-.65zM12 21.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm6.9 3.5c-.42-.3-1.12-.3-1.54 0l-.65.46a7.96 7.96 0 0 1-1.12-.65l-.01-.81a1.11 1.11 0 0 0-1.11-1.11h-.94a1.11 1.11 0 0 0-1.11 1.11l-.01.81c-.41.26-.78.47-1.12.65l-.65-.46c-.42-.3-1.12-.3-1.54 0l-.92.65c-.42-.3-.53.88-.26 1.3l.53.79c-.19.39-.34.8-.46 1.22h-.94c-.5 0-.91.41-.91.91v1.11c0 .5.41.91.91.91h.94c.12.42.27.83.46 1.22l-.53.79c-.27.42-.16 1 .26 1.3l.92.65c.42.3 1.12.3 1.54 0l.65-.46c.34.18.71.39 1.12.65l.01.81c0 .5.41.91.11 1.11h.94c.5 0 .91-.41.91-.91l.01-.81c.41-.26.78-.47 1.12-.65l.65.46c.42.3 1.12.3 1.54 0l.92-.65c.42-.3.53-.88.26-1.3l-.53-.79c.19-.39.34-.8.46-1.22h.94c.5 0 .91-.41.91-.91v-1.11c0-.5-.41-.91-.91-.91h-.94c-.12-.42-.27-.83-.46-1.22l.53-.79c.27-.42.16-1-.26-1.3l-.92-.65zM12 21.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                     </svg>
                     My Profile Settings
                 </h4>
@@ -53,22 +53,22 @@
             </div>
         </div>
 
-        <!-- Updates Banner (Moved to Top) -->
+        <!-- Updates Banner -->
         <div class="alert alert-info shadow-sm mb-4">
             <h4 class="alert-heading">📢 Community Updates & Announcements</h4>
             <p class="mb-0 fw-bold" id="userAnnouncement">Loading community announcements...</p>
         </div>
 
         <div class="row">
-            <!-- Left Column: Events (Reservations removed) -->
+            <!-- Left Column: Events -->
             <div class="col-lg-8">
-                <!-- Upcoming Youth Events (RSVP Removed) -->
+                <!-- Upcoming Youth Events -->
                 <div class="card shadow-sm p-4 mb-4">
                     <h4 class="text-success mb-3">📅 Upcoming Youth Events</h4>
                     <div id="eventsList" class="row g-3">Loading upcoming events...</div>
                 </div>
 
-                <!-- Election & Decision Making (Secure Voting) -->
+                <!-- Election & Decision Making -->
                 <div class="card shadow-sm p-4 mb-4 border-primary">
                     <h4 class="text-primary mb-2">🗳️ Active Youth Election / Ballot</h4>
                     <p class="text-muted small" id="electionDescription">Loading active vote...</p>
@@ -78,13 +78,13 @@
 
             <!-- Right Column: Daily Reflections & Patron Saint Reminder -->
             <div class="col-lg-4">
-                <!-- Patron Saint Reminder Card -->
+                <!-- Patron Saint Reminder Card (Locked to St. Aloysius Gonzaga) -->
                 <div class="card shadow-sm p-4 mb-4 border-warning">
                     <h5 class="text-warning text-dark mb-2">✨ Patron Saint Reminder</h5>
                     <div id="patronSaintWidget">Loading patron saint...</div>
                 </div>
 
-                <!-- Different Text Reflections Card -->
+                <!-- Daily Spiritual Reflection Card (Automated Daily Verse) -->
                 <div class="card shadow-sm p-4 mb-4 border-info">
                     <h5 class="text-info mb-2">📖 Daily Spiritual Reflection</h5>
                     <div id="textReflectionsWidget">Loading reflection...</div>
@@ -146,18 +146,14 @@
                         document.getElementById('userAnnouncement').textContent = 'Welcome to St. Michael Kasaini Youth Portal.';
                     }
 
-                    // 1.1 Patron Saint Reminder Widget
-                    if (data.patronSaint) {
-                        document.getElementById('patronSaintWidget').innerHTML = `
-                            <h6 class="fw-bold text-dark">${data.patronSaint.name || 'St. Michael the Archangel'}</h6>
-                            <p class="small text-muted mb-1"><strong>Feast Day:</strong> ${data.patronSaint.feastDay || 'September 29'}</p>
-                            <p class="small mb-0 fst-italic">"${data.patronSaint.message || 'Defend us in battle...'}"</p>
-                        `;
-                    } else {
-                        document.getElementById('patronSaintWidget').innerHTML = '<p class="small text-muted mb-0">St. Michael the Archangel, pray for us.</p>';
-                    }
+                    // 1.1 Patron Saint Reminder Widget (Permanently St. Aloysius Gonzaga)
+                    document.getElementById('patronSaintWidget').innerHTML = `
+                        <h6 class="fw-bold text-dark">St. Aloysius Gonzaga</h6>
+                        <p class="small text-muted mb-1"><strong>Feast Day:</strong> June 21</p>
+                        <p class="small mb-0 fst-italic">"I am a piece of iron, and I am drawn by a magnet; my desire is to go to God."</p>
+                    `;
 
-                    // 1.2 Text Reflections Widget
+                    // 1.2 Text Reflections Widget (Automated Backend Rotation)
                     if (data.textReflection) {
                         document.getElementById('textReflectionsWidget').innerHTML = `
                             <h6 class="fw-bold text-dark">${data.textReflection.title || 'Daily Word'}</h6>
@@ -177,7 +173,7 @@
                         }
                     }
 
-                    // 2. Render Upcoming Events (Reservations / RSVP buttons removed)
+                    // 2. Render Upcoming Events
                     let eHtml = '';
                     if (!data.events || data.events.length === 0) {
                         eHtml = '<div class="col-12 text-muted small">No upcoming events scheduled at the moment.</div>';
@@ -197,7 +193,7 @@
                     }
                     document.getElementById('eventsList').innerHTML = eHtml;
 
-                    // 3. Render Election & Voting Module (Single-vote enforcement)
+                    // 3. Render Election & Voting Module
                     const election = data.activeElection;
                     if (!election || !election.active) {
                         document.getElementById('electionDescription').textContent = 'No active elections or polls running at the moment.';
