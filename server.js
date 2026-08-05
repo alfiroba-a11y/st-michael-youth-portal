@@ -616,6 +616,7 @@ app.post('/api/admin/close-cycle', async (req, res) => {
 // ==========================================
 app.get('/api/admin/download-data', async (req, res) => {
     try {
+        const { type } = req.query;
         const data = await readData();
         
         let totalCollected = 0;
@@ -657,9 +658,11 @@ app.get('/api/admin/download-data', async (req, res) => {
         <body>
             <h1>St. Michael Kasaini Youth Portal</h1>
             <p>Master Admin Comprehensive & Analytics Report — Generated on ${new Date().toLocaleString()}</p>
-            <button class="no-print" onclick="window.print()" style="padding: 10px 20px; background: #0d6efd; color: white; border: none; cursor: pointer; margin-bottom: 20px; font-weight: bold; border-radius: 4px;">🖨️ Print / Save as PDF</button>
-            
-            <div class="card-box">
+            <button class="no-print" onclick="window.print()" style="padding: 10px 20px; background: #0d6efd; color: white; border: none; cursor: pointer; margin-bottom: 20px; font-weight: bold; border-radius: 4px;">🖨️ Print / Save as PDF</button>`;
+
+        if (type === 'financial') {
+            // Option 1: Financial Records (Performance & Submissions)
+            html += `<div class="card-box">
                 <h3 style="margin: 0 0 10px 0; color: #333;">📊 Financial & Target Summary</h3>
                 <div class="metrics">
                     <div>Total Collected: KES ${totalCollected.toLocaleString()}</div>
@@ -672,29 +675,49 @@ app.get('/api/admin/download-data', async (req, res) => {
             <table>
                 <thead><tr><th>Jumuiya Name</th><th>Total Submissions / Contributions (KES)</th></tr></thead>
                 <tbody>`;
-        
-        for (const [jumuiyaName, amount] of Object.entries(contributionsMap)) {
-            html += `<tr><td><strong>${jumuiyaName}</strong></td><td>KES ${Number(amount).toLocaleString()}</td></tr>`;
-        }
+            
+            for (const [jumuiyaName, amount] of Object.entries(contributionsMap)) {
+                html += `<tr><td><strong>${jumuiyaName}</strong></td><td>KES ${Number(amount).toLocaleString()}</td></tr>`;
+            }
+            html += `</tbody></table>`;
 
-        html += `</tbody></table>
-
-            <h2>Registered Members Directory</h2>
+            html += `<h2>Jumuiya Submissions Review List</h2>
             <table>
-                <thead><tr><th>#</th><th>ID</th><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th></tr></thead>
+                <thead><tr><th>Jumuiya Name</th><th>ID</th><th>Contributor Name</th><th>Amount (KES)</th><th>Purpose</th><th>Status</th></tr></thead>
                 <tbody>`;
-        
-        const members = data.members || [];
-        if (members.length === 0) {
-            html += `<tr><td colspan="6" style="text-align: center; color: #777;">No registered members found.</td></tr>`;
+            
+            const submissions = data.jumuiyaSubmissions || [];
+            if (submissions.length === 0) {
+                html += `<tr><td colspan="6" style="text-align: center; color: #777;">No submissions found.</td></tr>`;
+            } else {
+                submissions.forEach((s, idx) => {
+                    html += `<tr><td>${s.jumuiyaName || 'N/A'}</td><td>${s.id || idx + 1}</td><td>${s.name}</td><td>KES ${Number(s.amount || 0).toLocaleString()}</td><td>${s.purpose || 'Other'}</td><td>${s.published ? 'Published' : 'Pending'}</td></tr>`;
+                });
+            }
+            html += `</tbody></table>`;
+
+        } else if (type === 'people') {
+            // Option 2: Registered Youth Directory (Phone hidden with ****)
+            html += `<h2>Registered Youth Directory (Edit Names, Phone & Group)</h2>
+            <table>
+                <thead><tr><th>#</th><th>ID</th><th>Name</th><th>Phone Number</th><th>Jumuiya</th><th>Group</th></tr></thead>
+                <tbody>`;
+            
+            const members = data.members || [];
+            if (members.length === 0) {
+                html += `<tr><td colspan="6" style="text-align: center; color: #777;">No registered members found.</td></tr>`;
+            } else {
+                members.forEach((m, idx) => {
+                    const hiddenPhone = m.phone ? m.phone.replace(/(\d{3})\d{4}(\d{3})/, '$1****$2') : '****';
+                    html += `<tr><td>${idx + 1}</td><td>${m.customId || 'N/A'}</td><td>${m.name}</td><td>${hiddenPhone}</td><td>${m.jumuiya || 'N/A'}</td><td>${m.group || 'N/A'}</td></tr>`;
+                });
+            }
+            html += `</tbody></table>`;
         } else {
-            members.forEach((m, idx) => {
-                html += `<tr><td>${idx + 1}</td><td>${m.customId || 'N/A'}</td><td>${m.name}</td><td>${m.phone || 'N/A'}</td><td>${m.jumuiya || 'N/A'}</td><td>${m.group || 'N/A'}</td></tr>`;
-            });
+            html += `<p style="color: red; font-weight: bold;">Invalid or missing download type specified.</p>`;
         }
-        
-        html += `</tbody></table>
-            <script>window.onload = function() { setTimeout(() => { window.print(); }, 500); };</script>
+
+        html += `<script>window.onload = function() { setTimeout(() => { window.print(); }, 500); };</script>
         </body></html>`;
 
         res.setHeader('Content-Type', 'text/html');
