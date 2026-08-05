@@ -340,7 +340,7 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         let cachedMasterData = {};
-        let window.myJumuiyaChart = null;
+        let myJumuiyaChart = null;
 
         function maskPhoneNumber(phone) {
             if (!phone || phone === '-') return '-';
@@ -357,20 +357,26 @@
             const password = document.getElementById('adminPass').value;
             const alertBox = document.getElementById('adminAlert');
 
-            const res = await fetch('/api/admin/login', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ username, password })
-            });
-            const data = await res.json();
+            try {
+                const res = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
 
-            if (data.success) {
-                document.getElementById('loginWrapper').classList.remove('my-auto');
-                document.getElementById('loginWrapper').classList.add('d-none');
-                document.getElementById('dashboardSection').classList.remove('d-none');
-                loadMasterData();
-            } else {
-                alertBox.textContent = 'Invalid credentials';
+                if (data.success) {
+                    document.getElementById('loginWrapper').classList.remove('my-auto');
+                    document.getElementById('loginWrapper').classList.add('d-none');
+                    document.getElementById('dashboardSection').classList.remove('d-none');
+                    loadMasterData();
+                } else {
+                    alertBox.textContent = data.message || 'Invalid credentials';
+                    alertBox.className = 'alert alert-danger small';
+                    alertBox.classList.remove('d-none');
+                }
+            } catch (err) {
+                alertBox.textContent = 'Server connection error during login.';
                 alertBox.className = 'alert alert-danger small';
                 alertBox.classList.remove('d-none');
             }
@@ -434,10 +440,10 @@
 
                 // Render Chart.js Graph
                 const ctx = document.getElementById('jumuiyaChart').getContext('2d');
-                if (window.myJumuiyaChart instanceof Chart) {
-                    window.myJumuiyaChart.destroy();
+                if (myJumuiyaChart instanceof Chart) {
+                    myJumuiyaChart.destroy();
                 }
-                window.myJumuiyaChart = new Chart(ctx, {
+                myJumuiyaChart = new Chart(ctx, {
                     type: 'bar',
                     data: {
                         labels: jumuiyaLabels,
