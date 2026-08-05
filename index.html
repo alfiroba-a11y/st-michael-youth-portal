@@ -6,11 +6,10 @@
     <style>
         .collapsible-content { display: none; }
         .collapsible-content.show { display: block; }
-        /* Hero background styling with church image and dark overlay */
+        /* Hero background container styling */
         .hero-section {
             position: relative;
-            background: url('path_to_church_image.jpg') no-repeat center center;
-            background-size: cover;
+            overflow: hidden;
         }
         .hero-overlay {
             position: absolute;
@@ -19,6 +18,7 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.6);
+            z-index: 2;
         }
         /* Hidden admin trigger styling: subtle text or dot that only you know where it is */
         .secret-admin-trigger { color: #f8f9fa; text-decoration: none; font-size: 11px; }
@@ -34,9 +34,16 @@
         </div>
     </nav>
 
-    <div class="hero-section text-white text-center py-5">
+    <!-- Hero Section with Permanently Hosted GitHub Image -->
+    <div class="hero-section text-white text-center py-5 position-relative">
+        <!-- Background Image loaded directly from your repository -->
+        <img src="church image.jfif" alt="St. Michael Kasaini Church" class="position-absolute top-0 start-0 w-100 h-100 object-fit-cover" style="z-index: 1;">
+        
+        <!-- Dark Overlay for Readability -->
         <div class="hero-overlay"></div>
-        <div class="container position-relative py-5">
+        
+        <!-- Hero Content -->
+        <div class="container position-relative py-5" style="z-index: 3;">
             <h1 class="display-5 fw-bold">St. Michael Kasaini Youth Portal</h1>
             <p class="lead">Connecting youth in faith, fellowship, scripture, rosary devotion, and service.</p>
             <div class="mt-4">
