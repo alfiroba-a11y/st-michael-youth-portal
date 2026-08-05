@@ -15,7 +15,7 @@ app.use(express.static(path.join(__dirname)));
 const MONGO_URI = process.env.MONGO_URI;
 let db = null;
 
-// Automated Reflection Bank (Rotates daily based on the day of the year)
+// Expanded Automated Reflection Bank (Rotates daily based on the day of the year)
 const automatedReflections = [
     {
         title: "Walking in Divine Strength",
@@ -41,6 +41,51 @@ const automatedReflections = [
         title: "Renewed Hope",
         reference: "Isaiah 40:31",
         content: "Those who hope in the Lord will renew their strength. They will soar on wings like eagles; they will run and not grow weary, they will walk and not be faint."
+    },
+    {
+        title: "The Light of the World",
+        reference: "Matthew 5:16",
+        content: "In the same way, let your light shine before others, that they may see your good deeds and glorify your Father in heaven."
+    },
+    {
+        title: "Strength in Quiet Trust",
+        reference: "Isaiah 30:15",
+        content: "In repentance and rest is your salvation, in quietness and trust is your strength, but you would have none of it."
+    },
+    {
+        title: "Fanchoring Your Soul",
+        reference: "Hebrews 6:19",
+        content: "We have this hope as an anchor for the soul, firm and secure. It enters the inner sanctuary behind the curtain."
+    },
+    {
+        title: "Walking by Faith",
+        reference: "2 Corinthians 5:7",
+        content: "For we live by faith, not by sight. Let your spiritual eyes guide your steps through every trial and triumph today."
+    },
+    {
+        title: "Grace Sufficient for You",
+        reference: "2 Corinthians 12:9",
+        content: "But he said to me, 'My grace is sufficient for you, for my power is made perfect in weakness.' Therefore I will boast all the more gladly about my weaknesses."
+    },
+    {
+        title: "Joy in the Morning",
+        reference: "Psalm 30:5",
+        content: "For his anger lasts only a moment, but his favor lasts a lifetime; weeping may stay for the night, but rejoicing comes in the morning."
+    },
+    {
+        title: "Steadfast Love",
+        reference: "Lamentations 3:22-23",
+        content: "Because of the Lord's great love we are not consumed, for his compassions never fail. They are new every morning; great is your faithfulness."
+    },
+    {
+        title: "Clothed in Compassion",
+        reference: "Colossians 3:12",
+        content: "Therefore, as God's chosen people, holy and dearly loved, clothe yourselves with compassion, kindness, humility, gentleness and patience."
+    },
+    {
+        title: "Guiding Light",
+        reference: "Psalm 119:105",
+        content: "Your word is a lamp for my feet, a light on my path. Let Scripture guide your choices and illuminate your heart today."
     }
 ];
 
@@ -54,7 +99,7 @@ const VALID_PURPOSES = [
     'Other'
 ];
 
-// Function to automatically update the daily reflection in DB
+// Function to automatically update the daily reflection in DB (Ensures forced immediate sync on startup)
 async function rotateDailyReflection() {
     if (!db) return;
     try {
@@ -62,12 +107,13 @@ async function rotateDailyReflection() {
         const reflectionIndex = dayOfYear % automatedReflections.length;
         const todayReflection = automatedReflections[reflectionIndex];
 
+        // Force update or insert current day reflection so it instantly reflects on frontend views
         await db.collection('settings').updateOne(
             { type: 'reflection' },
             { $set: { ...todayReflection, updatedAt: new Date() } },
             { upsert: true }
         );
-        console.log(`[Automation] Daily reflection updated to: "${todayReflection.title}"`);
+        console.log(`[Automation] Daily reflection synchronized to: "${todayReflection.title}" (Day of Year: ${dayOfYear})`);
     } catch (err) {
         console.error('Error updating automated reflection:', err.message);
     }
@@ -104,7 +150,7 @@ async function initDB() {
             console.log('Connected successfully to MongoDB Atlas.');
             
             await initializePatronSaint();
-            await rotateDailyReflection();
+            await rotateDailyReflection(); // Runs immediately upon server boot to guarantee database reflection is live
         } catch (err) {
             console.error('MongoDB connection error:', err.message);
         }
@@ -112,7 +158,7 @@ async function initDB() {
 }
 initDB();
 
-// Schedule cron job to run every day at 00:00 (Midnight)
+// Schedule cron job to run every day at 00:00 (Midnight) to smoothly rotate daily reflection
 cron.schedule('0 0 * * *', () => {
     rotateDailyReflection();
 });
