@@ -570,20 +570,13 @@ app.get('/api/admin/data', async (req, res) => {
 app.post('/api/admin/set-target', async (req, res) => {
     try {
         const { targetAmount } = req.body;
-        const parsedTarget = parseFloat(targetAmount);
-        
-        if (isNaN(parsedTarget) || parsedTarget <= 0) {
-            return res.json({ success: false, message: 'Invalid target amount.' });
-        }
-
         const data = await readData();
-        data.targetAmount = parsedTarget;
+        data.targetAmount = parseFloat(targetAmount) || 0;
         await writeData(data);
-
-        res.json({ success: true, message: 'Monthly youth target updated successfully!' });
+        res.json({ success: true, targetAmount: data.targetAmount });
     } catch (err) {
         console.error('Error setting target:', err);
-        res.status(500).json({ success: false, message: 'Error updating target.' });
+        res.status(500).json({ success: false, message: 'Server error setting target.' });
     }
 });
 
