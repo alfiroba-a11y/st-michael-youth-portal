@@ -7,12 +7,12 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light d-flex flex-column min-vh-100">
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
-        <a class="navbar-brand" href="/">✝ St. Michael Kasaini Youth Portal</a>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4 shadow-sm">
+        <a class="navbar-brand fw-bold" href="/">✝ St. Michael Kasaini Youth Portal</a>
         <div class="ms-auto d-flex align-items-center">
             <span id="welcomeUser" class="text-light me-3 small"></span>
             <!-- Profile Tab Toggle Button -->
-            <button class="btn btn-outline-light btn-sm me-2" type="button" data-bs-toggle="collapse" data-bs-target="#profileTabSection" aria-expanded="false" aria-controls="profileTabSection" style="display: flex; align-items: center; gap: 6px;">
+            <button class="btn btn-outline-light btn-sm me-2 d-flex align-items-center gap-1" type="button" data-bs-toggle="collapse" data-bs-target="#profileTabSection" aria-expanded="false" aria-controls="profileTabSection">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm6.9 3.5c-.42-.3-1.12-.3-1.54 0l-.65.46a7.96 7.96 0 0 1-1.12-.65l-.01-.81a1.11 1.11 0 0 0-1.11-1.11h-.94a1.11 1.11 0 0 0-1.11 1.11l-.01.81c-.41.26-.78.47-1.12.65l-.65-.46c-.42-.3-1.12-.3-1.54 0l-.92.65c-.42-.3-.53.88-.26 1.3l.53.79c-.19.39-.34.8-.46 1.22h-.94c-.5 0-.91.41-.91.91v1.11c0 .5.41.91.91.91h.94c.12.42.27.83.46 1.22l-.53.79c-.27.42-.16 1 .26 1.3l.92.65c.42.3 1.12.3 1.54 0l.65-.46c.34.18.71.39 1.12.65l.01.81c0 .5.41.91.11 1.11h.94c.5 0 .91-.41.91-.91l.01-.81c.41-.26.78-.47 1.12-.65l.65.46c.42.3 1.12.3 1.54 0l.92-.65c.42-.3.53-.88.26-1.3l-.53-.79c.19-.39.34-.8.46-1.22h.94c.5 0 .91-.41.91-.91v-1.11c0-.5-.41-.91-.91-.91h-.94c-.12-.42-.27-.83-.46-1.22l.53-.79c.27-.42.16-1-.26-1.3l-.92-.65zM12 21.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                 </svg>
@@ -25,8 +25,8 @@
     <div class="container my-4 flex-grow-1">
         <!-- Collapsible Profile Settings Tab Section -->
         <div class="collapse mb-4" id="profileTabSection">
-            <div class="card shadow-sm p-4" style="border: 1px solid #cfe2ff; border-radius: 8px;">
-                <h4 class="text-primary mb-3" style="display: flex; align-items: center; gap: 8px;">
+            <div class="card shadow-sm p-4 border-primary-subtle rounded-3">
+                <h4 class="text-primary mb-3 d-flex align-items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm6.9 3.5c-.42-.3-1.12-.3-1.54 0l-.65.46a7.96 7.96 0 0 1-1.12-.65l-.01-.81a1.11 1.11 0 0 0-1.11-1.11h-.94a1.11 1.11 0 0 0-1.11 1.11l-.01.81c-.41.26-.78.47-1.12.65l-.65-.46c-.42-.3-1.12-.3-1.54 0l-.92.65c-.42-.3-.53.88-.26 1.3l.53.79c-.19.39-.34.8-.46 1.22h-.94c-.5 0-.91.41-.91.91v1.11c0 .5.41.91.91.91h.94c.12.42.27.83.46 1.22l-.53.79c-.27.42-.16 1 .26 1.3l.92.65c.42.3 1.12.3 1.54 0l.65-.46c.34.18.71.39 1.12.65l.01.81c0 .5.41.91.11 1.11h.94c.5 0 .91-.41.91-.91l.01-.81c.41-.26.78-.47 1.12-.65l.65.46c.42.3 1.12.3 1.54 0l.92-.65c.42-.3.53-.88.26-1.3l-.53-.79c.19-.39.34-.8.46-1.22h.94c.5 0 .91-.41.91-.91v-1.11c0-.5-.41-.91-.91-.91h-.94c-.12-.42-.27-.83-.46-1.22l.53-.79c.27-.42.16-1-.26-1.3l-.92-.65zM12 21.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                     </svg>
@@ -36,41 +36,41 @@
                 <form id="profileForm">
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label for="profileName" class="form-label" style="font-size: 14px; color: #333;">Full Name</label>
+                            <label for="profileName" class="form-label small fw-semibold text-secondary">Full Name</label>
                             <input type="text" id="profileName" class="form-control" required>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label for="profileGroup" class="form-label" style="font-size: 14px; color: #333;">Group</label>
+                            <label for="profileGroup" class="form-label small fw-semibold text-secondary">Group</label>
                             <input type="text" id="profileGroup" class="form-control" required>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label for="profilePassword" class="form-label" style="font-size: 14px; color: #333;">New Password (leave blank to keep current)</label>
+                            <label for="profilePassword" class="form-label small fw-semibold text-secondary">New Password (leave blank to keep current)</label>
                             <input type="password" id="profilePassword" class="form-control" placeholder="••••">
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary" style="background-color: #0d6efd; border: none; padding: 8px 16px; font-weight: 500;">Save Profile Changes</button>
+                    <button type="submit" class="btn btn-primary px-4 fw-medium">Save Profile Changes</button>
                 </form>
             </div>
         </div>
 
         <!-- Updates Banner -->
-        <div class="alert alert-info shadow-sm mb-4">
-            <h4 class="alert-heading">📢 Community Updates & Announcements</h4>
-            <p class="mb-0 fw-bold" id="userAnnouncement">Loading community announcements...</p>
+        <div class="alert alert-info shadow-sm mb-4 border-0 bg-info-subtle text-info-emphasis">
+            <h4 class="alert-heading h5 fw-bold">📢 Community Updates & Announcements</h4>
+            <p class="mb-0 fw-medium" id="userAnnouncement">Loading community announcements...</p>
         </div>
 
         <div class="row">
             <!-- Left Column: Events -->
             <div class="col-lg-8">
                 <!-- Upcoming Youth Events -->
-                <div class="card shadow-sm p-4 mb-4">
-                    <h4 class="text-success mb-3">📅 Upcoming Youth Events</h4>
+                <div class="card shadow-sm p-4 mb-4 border-0">
+                    <h4 class="text-success h5 fw-bold mb-3">📅 Upcoming Youth Events</h4>
                     <div id="eventsList" class="row g-3">Loading upcoming events...</div>
                 </div>
 
                 <!-- Election & Decision Making -->
-                <div class="card shadow-sm p-4 mb-4 border-primary">
-                    <h4 class="text-primary mb-2">🗳️ Active Youth Election / Ballot</h4>
+                <div class="card shadow-sm p-4 mb-4 border-primary-subtle">
+                    <h4 class="text-primary h5 fw-bold mb-2">🗳️ Active Youth Election / Ballot</h4>
                     <p class="text-muted small" id="electionDescription">Loading active vote...</p>
                     <div id="votingSection">Loading ballot...</div>
                 </div>
@@ -79,40 +79,40 @@
             <!-- Right Column: Daily Reflections & Patron Saint Reminder -->
             <div class="col-lg-4">
                 <!-- Patron Saint Reminder Card (Locked to St. Aloysius Gonzaga) -->
-                <div class="card shadow-sm p-4 mb-4 border-warning">
-                    <h5 class="text-warning text-dark mb-2">✨ Patron Saint Reminder</h5>
+                <div class="card shadow-sm p-4 mb-4 border-warning-subtle">
+                    <h5 class="text-warning-emphasis fw-bold mb-2">✨ Patron Saint Reminder</h5>
                     <div id="patronSaintWidget">Loading patron saint...</div>
                 </div>
 
                 <!-- Daily Spiritual Reflection Card (Automated Daily Verse) -->
-                <div class="card shadow-sm p-4 mb-4 border-info">
-                    <h5 class="text-info mb-2">📖 Daily Spiritual Reflection</h5>
+                <div class="card shadow-sm p-4 mb-4 border-info-subtle">
+                    <h5 class="text-info-emphasis fw-bold mb-2">📖 Daily Spiritual Reflection</h5>
                     <div id="textReflectionsWidget">Loading reflection...</div>
                 </div>
             </div>
         </div>
 
         <!-- Master Approved Contributions List -->
-        <div class="card shadow-sm p-4 mb-4">
-            <h4 class="text-success mb-2">💰 Official Approved Contributions List</h4>
+        <div class="card shadow-sm p-4 mb-4 border-0">
+            <h4 class="text-success h5 fw-bold mb-2">💰 Official Approved Contributions List</h4>
             <p class="text-muted small">Combined contributions from all Jumuiyas approved by the administration.</p>
             <div id="masterContributionsList" class="table-responsive">Loading contributions...</div>
         </div>
 
         <!-- Youth Directory Table -->
-        <div class="card shadow-sm p-4 mb-4">
-            <h4 class="text-primary mb-3">Official Youth Directory & Members</h4>
+        <div class="card shadow-sm p-4 mb-4 border-0">
+            <h4 class="text-primary h5 fw-bold mb-3">Official Youth Directory & Members</h4>
             <div id="directoryList" class="table-responsive">Loading directory...</div>
         </div>
 
         <!-- Community Chat / Message Board -->
-        <div class="card shadow-sm p-4 mb-4">
-            <h4 class="text-primary mb-3">Youth Community Board & Queries</h4>
-            <div id="messageBoard" class="border p-3 mb-3 bg-white rounded" style="height: 200px; overflow-y: auto;">Loading messages...</div>
+        <div class="card shadow-sm p-4 mb-4 border-0">
+            <h4 class="text-primary h5 fw-bold mb-3">Youth Community Board & Queries</h4>
+            <div id="messageBoard" class="border p-3 mb-3 bg-white rounded-2 shadow-inner" style="height: 200px; overflow-y: auto;">Loading messages...</div>
             <form id="messageForm">
                 <div class="input-group">
                     <input type="text" id="messageInput" class="form-control" placeholder="Type a message or query for leaders..." required>
-                    <button class="btn btn-primary" type="submit">Post Message</button>
+                    <button class="btn btn-primary px-4" type="submit">Post Message</button>
                 </div>
             </form>
         </div>
@@ -181,9 +181,9 @@
                         data.events.forEach((ev) => {
                             eHtml += `
                                 <div class="col-md-6">
-                                    <div class="p-3 border rounded bg-white shadow-sm h-100 d-flex flex-column justify-content-between">
+                                    <div class="p-3 border rounded-2 bg-white shadow-sm h-100 d-flex flex-column justify-content-between">
                                         <div>
-                                            <h5 class="text-success">${ev.title}</h5>
+                                            <h5 class="text-success h6 fw-bold">${ev.title}</h5>
                                             <p class="small text-muted mb-1"><strong>Time:</strong> ${ev.date || 'TBA'}</p>
                                             <p class="small mb-0">${ev.description || ''}</p>
                                         </div>
@@ -213,7 +213,7 @@
                         }
 
                         if (userHasVoted) {
-                            let resultsHtml = `<div class="alert alert-success small mb-2">✓ You have successfully cast your vote for: <strong>${votedForCandidate}</strong></div>`;
+                            let resultsHtml = `<div class="alert alert-success small mb-2 py-2">✓ You have successfully cast your vote for: <strong>${votedForCandidate}</strong></div>`;
                             resultsHtml += '<h6 class="small fw-bold text-dark mt-3">Current Ballot Results:</h6><ul class="list-group list-group-flush small mb-0">';
                             let totalVotesAll = 0;
                             for (let cand of election.candidates) {
@@ -230,12 +230,12 @@
                             let ballotHtml = '<form id="ballotForm"><div class="vstack gap-2 mb-3">';
                             election.candidates.forEach((cand, idx) => {
                                 ballotHtml += `
-                                    <div class="form-check p-2 border rounded bg-white">
+                                    <div class="form-check p-2 border rounded-2 bg-white">
                                         <input class="form-check-input ms-1" type="radio" name="voteCandidate" id="cand_${idx}" value="${cand}" required>
                                         <label class="form-check-label fw-bold ms-2 text-dark" for="cand_${idx}">${cand}</label>
                                     </div>`;
                             });
-                            ballotHtml += '</div><button type="submit" class="btn btn-primary btn-sm">Submit Secure Vote</button></form>';
+                            ballotHtml += '</div><button type="submit" class="btn btn-primary btn-sm px-3">Submit Secure Vote</button></form>';
                             document.getElementById('votingSection').innerHTML = ballotHtml;
 
                             document.getElementById('ballotForm').addEventListener('submit', async (evSub) => {
@@ -261,7 +261,7 @@
 
                     // 4. Render Master Approved Contributions List
                     const contributionsList = data.masterContributions || [];
-                    let cHtml = '<table class="table table-bordered table-striped align-middle"><thead><tr><th>Contributor Name</th><th>Amount (KES)</th><th>Purpose</th><th>Jumuiya</th></tr></thead><tbody>';
+                    let cHtml = '<table class="table table-bordered table-striped align-middle small"><thead><tr><th>Contributor Name</th><th>Amount (KES)</th><th>Purpose</th><th>Jumuiya</th></tr></thead><tbody>';
                     if (contributionsList.length === 0) {
                         cHtml += '<tr><td colspan="4" class="text-muted text-center">No approved contributions published yet.</td></tr>';
                     } else {
@@ -273,7 +273,7 @@
                     document.getElementById('masterContributionsList').innerHTML = cHtml;
 
                     // 5. Render Registered Members Directory
-                    let html = '<table class="table table-bordered table-striped"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Group</th><th>Phone</th></tr></thead><tbody>';
+                    let html = '<table class="table table-bordered table-striped align-middle small"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Group</th><th>Phone</th></tr></thead><tbody>';
                     if (!data.members || data.members.length === 0) {
                         html += '<tr><td colspan="5" class="text-muted text-center">No approved members listed yet.</td></tr>';
                     } else {
