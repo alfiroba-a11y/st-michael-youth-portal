@@ -182,34 +182,41 @@ app.post('/api/jumuiya/submit-record', async (req, res) => {
     res.json({ success: true, message: 'Contribution recorded successfully and sent for Master Admin review!' });
 });
 
-// Automated USCCB Scraper Helper for Daily Readings (Updated with robust fallback selectors)
-async function getAutomatedDailyReadings() {
+// Automated USCCB Scraper Helper for Daily Readings (With Date Support)
+async function getAutomatedDailyReadings(targetDateStr = null) {
     try {
-        const today = new Date();
-        const mm = String(today.getMonth() + 1).padStart(2, '0');
-        const dd = String(today.getDate()).padStart(2, '0');
-        const yy = String(today.getFullYear()).slice(-2);
-        const dateStr = `${mm}${dd}${yy}`; // MMDDYY format for USCCB URL
-        const mongoDateStr = `${today.getFullYear()}-${mm}-${dd}`;
+        let targetDate = new Date();
+        if (targetDateStr) {
+            targetDate = new Date(targetDateStr);
+        }
+        
+        const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(targetDate.getDate()).padStart(2, '0');
+        const yy = String(targetDate.getFullYear()).slice(-2);
+        const usccbDateStr = `${mm}${dd}${yy}`; // MMDDYY format for USCCB URL
+        const mongoDateStr = `${targetDate.getFullYear()}-${mm}-${dd}`;
 
         if (!db) return null;
         const readingsCol = db.collection('automated_readings');
 
-        // Check if cached for today in MongoDB
+        // Check if cached for this date in MongoDB
         let cached = await readingsCol.findOne({ readingDate: mongoDateStr });
         if (cached) {
-            return [{
-                id: cached._id.toString(),
-                title: cached.title,
-                firstReading: cached.firstReading,
-                psalm: cached.psalm,
-                secondReading: cached.secondReading,
-                gospel: cached.gospel
-            }];
+            return {
+                success: true,
+                reading: {
+                    id: cached._id.toString(),
+                    title: cached.title,
+                    firstReading: cached.firstReading,
+                    psalm: cached.psalm,
+                    secondReading: cached.secondReading,
+                    gospel: cached.gospel
+                }
+            };
         }
 
         // Scrape live from USCCB website
-        const targetUrl = `https://bible.usccb.org/bible/readings/${dateStr}.cfm`;
+        const targetUrl = `https://bible.usccb.org/bible/readings/${usccbDateStr}.cfm`;
         const { data: html } = await axios.get(targetUrl, { 
             timeout: 10000,
             headers: {
@@ -221,7 +228,6 @@ async function getAutomatedDailyReadings() {
         let title = $('.date_calendar div').text().trim() || $('.content-title').text().trim() || $('h1').first().text().trim() || "Daily Mass Readings";
         let readingsList = [];
 
-        // Flexible multi-selector approach to capture readings even if class names shift
         const selectors = [
             '.field--name-field-readings-body',
             '.b-readings__content',
@@ -236,10 +242,9 @@ async function getAutomatedDailyReadings() {
                     readingsList.push(text);
                 }
             });
-            if (readingsList.length >= 2) break; // Exit loop if we successfully captured content
+            if (readingsList.length >= 2) break;
         }
 
-        // Ultimate fallback if structured classes fail entirely
         if (readingsList.length === 0) {
             $('.content-body p, article p').each((index, element) => {
                 const text = $(element).text().trim();
@@ -265,27 +270,53 @@ async function getAutomatedDailyReadings() {
             { upsert: true }
         );
 
-        return [{
-            id: 'auto',
-            title: scrapedData.title,
-            firstReading: scrapedData.firstReading,
-            psalm: scrapedData.psalm,
-            secondReading: scrapedData.secondReading,
-            gospel: scrapedData.gospel
-        }];
+        return {
+            success: true,
+            reading: {
+                id: 'auto',
+                title: scrapedData.title,
+                firstReading: scrapedData.firstReading,
+                psalm: scrapedData.psalm,
+                secondReading: scrapedData.secondReading,
+                gospel: scrapedData.gospel
+            }
+        };
     } catch (err) {
         console.error('USCCB Automated Scraper Error:', err.message);
-        return null;
+        return { success: false, message: 'Could not fetch live readings for this date.' };
     }
 }
+
+// Dedicated API endpoint for Calendar Date-Specific Readings Lookup
+app.get('/api/readings/date', async (req, res) => {
+    const { date } = req.query; // Expects YYYY-MM-DD format
+    if (!date) return res.json({ success: false, message: 'Date parameter is required.' });
+
+    const automatedResult = await getAutomatedDailyReadings(date);
+    if (automatedResult && automatedResult.success) {
+        return res.json(automatedResult);
+    }
+
+    // Fallback to static stored readings if scraper/database fails
+    const data = await readData();
+    const fallbackReading = (data.readings && data.readings.length > 0) ? data.readings[0] : null;
+    if (fallbackReading) {
+        return res.json({ success: true, reading: fallbackReading });
+    }
+
+    res.json({ success: false, message: 'No readings found for this date.' });
+});
 
 // Youth Directory & Master Contributions List for Members Portal
 app.get('/api/youth/directory', async (req, res) => {
     const data = await readData();
     
-    // Automatically attempt fetching live USCCB readings
-    let activeReadings = await getAutomatedDailyReadings();
-    if (!activeReadings || activeReadings.length === 0) {
+    // Automatically attempt fetching live USCCB readings for today
+    let activeReadings = [];
+    const autoToday = await getAutomatedDailyReadings();
+    if (autoToday && autoToday.success) {
+        activeReadings = [autoToday.reading];
+    } else {
         activeReadings = data.readings; // fallback to admin-set readings if scraper fails
     }
     
