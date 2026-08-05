@@ -2,6 +2,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
 const { MongoClient } = require('mongodb');
+const axios = require('axios');
+const cheerio = require('cheerio');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -19,6 +21,7 @@ async function initDB() {
             const client = new MongoClient(MONGO_URI);
             await client.connect();
             db = client.db('kasaini_youth_db');
+            app.locals.db = db; // Exposes db instance globally for routes
             console.log('Connected successfully to MongoDB Atlas.');
         } catch (err) {
             console.error('MongoDB connection error:', err.message);
@@ -179,9 +182,83 @@ app.post('/api/jumuiya/submit-record', async (req, res) => {
     res.json({ success: true, message: 'Contribution recorded successfully and sent for Master Admin review!' });
 });
 
+// Automated USCCB Scraper Helper for Daily Readings
+async function getAutomatedDailyReadings() {
+    try {
+        const today = new Date();
+        const mm = String(today.getMonth() + 1).padStart(2, '0');
+        const dd = String(today.getDate()).padStart(2, '0');
+        const yy = String(today.getFullYear()).slice(-2);
+        const dateStr = `${mm}${dd}${yy}`; // MMDDYY format for USCCB URL
+        const mongoDateStr = `${today.getFullYear()}-${mm}-${dd}`;
+
+        if (!db) return null;
+        const readingsCol = db.collection('automated_readings');
+
+        // Check if cached for today in MongoDB
+        let cached = await readingsCol.findOne({ readingDate: mongoDateStr });
+        if (cached) {
+            return [{
+                id: cached._id.toString(),
+                title: cached.title,
+                firstReading: cached.firstReading,
+                psalm: cached.psalm,
+                secondReading: cached.secondReading,
+                gospel: cached.gospel
+            }];
+        }
+
+        // Scrape live from USCCB website
+        const targetUrl = `https://bible.usccb.org/bible/readings/${dateStr}.cfm`;
+        const { data: html } = await axios.get(targetUrl, { timeout: 10000 });
+        const $ = cheerio.load(html);
+
+        let title = $('.date_calendar div').text().trim() || $('.content-title').text().trim() || "Daily Mass Readings";
+        let readingsList = [];
+
+        $('.field--name-field-readings-body').each((index, element) => {
+            readingsList.push($(element).text().trim());
+        });
+
+        const scrapedData = {
+            readingDate: mongoDateStr,
+            title: title,
+            firstReading: readingsList[0] || 'First reading unavailable.',
+            psalm: readingsList[1] || 'Responsorial psalm unavailable.',
+            secondReading: readingsList[2] || 'None (Weekday)',
+            gospel: readingsList[3] || readingsList[2] || 'Gospel unavailable.',
+            createdAt: new Date()
+        };
+
+        await readingsCol.updateOne(
+            { readingDate: mongoDateStr },
+            { $set: scrapedData },
+            { upsert: true }
+        );
+
+        return [{
+            id: 'auto',
+            title: scrapedData.title,
+            firstReading: scrapedData.firstReading,
+            psalm: scrapedData.psalm,
+            secondReading: scrapedData.secondReading,
+            gospel: scrapedData.gospel
+        }];
+    } catch (err) {
+        console.error('USCCB Automated Scraper Error:', err.message);
+        return null;
+    }
+}
+
 // Youth Directory & Master Contributions List for Members Portal
 app.get('/api/youth/directory', async (req, res) => {
     const data = await readData();
+    
+    // Automatically attempt fetching live USCCB readings
+    let activeReadings = await getAutomatedDailyReadings();
+    if (!activeReadings || activeReadings.length === 0) {
+        activeReadings = data.readings; // fallback to admin-set readings if scraper fails
+    }
     
     const publishedRecords = (data.jumuiyaSubmissions || [])
         .filter(s => s.published)
@@ -209,7 +286,7 @@ app.get('/api/youth/directory', async (req, res) => {
         masterContributions: publishedRecords, 
         contributionsMap,
         events: data.events, 
-        readings: data.readings, 
+        readings: activeReadings, 
         messages: data.messages 
     });
 });
@@ -338,7 +415,6 @@ app.post('/api/admin/login', (req, res) => {
 app.get('/api/admin/data', async (req, res) => {
     const data = await readData();
     
-    // Filter members who requested a password reset
     const passwordResets = (data.members || []).filter(m => m.passwordResetRequested);
 
     let contributionsMap = {};
@@ -392,7 +468,6 @@ app.post('/api/admin/remove-member', async (req, res) => {
     res.json({ success: true });
 });
 
-// Master Admin Endpoint to Edit Member Details (Name, Phone, Jumuiya, Group)
 app.post('/api/admin/edit-member', async (req, res) => {
     try {
         const { id, name, phone, jumuiya, group } = req.body;
@@ -416,7 +491,6 @@ app.post('/api/admin/edit-member', async (req, res) => {
     }
 });
 
-// Master Admin Endpoint to Approve Password Reset
 app.post('/api/admin/approve-password-reset', async (req, res) => {
     try {
         const { id } = req.body;
@@ -437,7 +511,6 @@ app.post('/api/admin/approve-password-reset', async (req, res) => {
     }
 });
 
-// Master Admin: Publish or Unpublish Jumuiya Record
 app.post('/api/admin/toggle-publish', async (req, res) => {
     const { id } = req.body;
     const data = await readData();
@@ -449,7 +522,6 @@ app.post('/api/admin/toggle-publish', async (req, res) => {
     res.json({ success: true });
 });
 
-// Master Admin: Edit Jumuiya Record (Name, Amount, Purpose)
 app.post('/api/admin/edit-jumuiya-record', async (req, res) => {
     const { id, name, amount, purpose } = req.body;
     const data = await readData();
@@ -463,7 +535,6 @@ app.post('/api/admin/edit-jumuiya-record', async (req, res) => {
     res.json({ success: true });
 });
 
-// Master Admin: Delete Jumuiya Submission Record
 app.post('/api/admin/delete-jumuiya-record', async (req, res) => {
     const { id } = req.body;
     const data = await readData();
@@ -474,7 +545,6 @@ app.post('/api/admin/delete-jumuiya-record', async (req, res) => {
     res.json({ success: true });
 });
 
-// Master Admin: Render printable report for browser Print-to-PDF
 app.get('/api/admin/download-data', async (req, res) => {
     try {
         const data = await readData();
@@ -567,7 +637,6 @@ app.get('/api/admin/download-data', async (req, res) => {
     }
 });
 
-// Events Management Endpoints
 app.post('/api/admin/events', async (req, res) => {
     const { title, date, description } = req.body;
     const data = await readData();
@@ -587,7 +656,6 @@ app.post('/api/admin/events/delete', async (req, res) => {
     res.json({ success: true });
 });
 
-// Mass Readings Management Endpoints
 app.post('/api/admin/readings', async (req, res) => {
     const { title, firstReading, psalm, secondReading, gospel } = req.body;
     const data = await readData();
@@ -617,7 +685,6 @@ app.post('/api/admin/readings/delete', async (req, res) => {
     res.json({ success: true });
 });
 
-// Legacy handler support
 app.post('/api/admin/update-readings', async (req, res) => {
     const data = await readData();
     data.readings = [req.body];
