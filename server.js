@@ -80,7 +80,15 @@ app.get('/api/admin/download-data', async (req, res) => {
         
         let totalCollected = 0;
         let contributionsMap = {};
-        JUMUIYAS_LIST.forEach(j => { contributionsMap[j.name] = 0; });
+        
+        // Official list defined locally to completely prevent ReferenceErrors on deployment
+        const officialJumuiyas = [
+            "St. Catherine", "St. Ann", "St. Michael", "St. Raphael", 
+            "St. Francisco", "St. Monica", "St. Stephen", "St. Jacinta", 
+            "St. Paul", "St. Francis of Assisi", "St. Charles Lwanga"
+        ];
+        
+        officialJumuiyas.forEach(name => { contributionsMap[name] = 0; });
 
         (data.jumuiyaSubmissions || []).forEach(r => {
             if (r.published) {
@@ -88,6 +96,9 @@ app.get('/api/admin/download-data', async (req, res) => {
                 totalCollected += amt;
                 if (contributionsMap[r.jumuiyaName] !== undefined) {
                     contributionsMap[r.jumuiyaName] += amt;
+                } else {
+                    // Gracefully handle any dynamic or custom entry outside standard list
+                    contributionsMap[r.jumuiyaName] = amt;
                 }
             }
         });
