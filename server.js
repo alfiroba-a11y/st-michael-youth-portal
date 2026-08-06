@@ -1,4 +1,4 @@
-// Complete and corrected server.js supporting individual Jumuiya targets and downloads
+// Complete server.js with all data schemas, target updates, and downloads intact
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
@@ -21,11 +21,6 @@ app.use(express.static(path.join(__dirname)));
 
 const MONGO_URI = process.env.MONGO_URI;
 let db = null;
-
-const automatedReflections = [
-    { title: "Walking in Divine Strength", reference: "Philippians 4:13", content: "I can do all things through Christ who strengthens me. No matter the challenges you face today, rely not on your own power, but on His infinite grace." },
-    { title: "Trusting the Journey", reference: "Proverbs 3:5-6", content: "Trust in the Lord with all your heart and lean not on your own understanding; in all your ways submit to him, and he will make your paths straight." }
-];
 
 const VALID_PURPOSES = ['Christmas collection', 'Easter collection', 'Diocesan collection', 'Youth harambee', 'PMC contribution', 'Other'];
 
@@ -119,11 +114,12 @@ initDB();
 const normalize = (str) => (str || '').toLowerCase().replace(/[\.\s]/g, '');
 const maskPhone = (phone) => (!phone || phone.length < 6) ? '****' : phone.slice(0, 3) + '****' + phone.slice(-3);
 
-// Page Routes
+// Core Page Routes
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
 app.get('/secret-admin-portal-kasaini-2026', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+app.get('/jumuiya-portal', (req, res) => res.sendFile(path.join(__dirname, 'jumuiya-portal.html')));
 
-// Admin Data API
+// Full Admin Data API
 app.get('/api/admin/data', async (req, res) => {
     const data = await readData();
     res.json({ 
@@ -131,12 +127,17 @@ app.get('/api/admin/data', async (req, res) => {
         pending: data.pending || [], 
         members: data.members || [], 
         jumuiyaSubmissions: data.jumuiyaSubmissions || [],
+        polls: data.polls || [],
+        archives: data.archives || [],
+        events: data.events || [],
+        messages: data.messages || [],
+        readings: data.readings || [],
         targetAmount: data.targetAmount !== undefined ? data.targetAmount : 500000,
         jumuiyaTargets: data.jumuiyaTargets || {}
     });
 });
 
-// Target Update Endpoint (Handles both Global and Individual Jumuiya targets)
+// Target Update Endpoint
 app.post('/api/admin/set-target', async (req, res) => {
     try {
         const { targetAmount, jumuiyaTargets } = req.body;
@@ -158,7 +159,7 @@ app.post('/api/admin/set-target', async (req, res) => {
     }
 });
 
-// Admin Report Download API (With Privacy Masking & Separate Financial Summary)
+// Admin Report Download API
 app.get('/api/admin/download-data', async (req, res) => {
     try {
         const { type } = req.query;
@@ -233,6 +234,26 @@ app.get('/api/admin/download-data', async (req, res) => {
     } catch (e) {
         res.status(500).send('Error generating report.');
     }
+});
+
+// Member Management Endpoints
+app.post('/api/admin/approve', async (req, res) => {
+    const { id } = req.body;
+    const data = await readData();
+    const index = (data.pending || []).findIndex(p => p.id === id);
+    if (index !== -1) {
+        const approved = data.pending.splice(index, 1)[0];
+        const members = [...(data.members || []), { ...approved, customId: `K${(data.members || []).length + 1}` }];
+        await writeData({ pending: data.pending, members });
+    }
+    res.json({ success: true });
+});
+
+app.post('/api/admin/reject', async (req, res) => {
+    const { id } = req.body;
+    const data = await readData();
+    await writeData({ pending: (data.pending || []).filter(p => p.id !== id) });
+    res.json({ success: true });
 });
 
 app.listen(PORT, () => {
