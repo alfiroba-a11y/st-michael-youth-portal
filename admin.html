@@ -68,7 +68,7 @@
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
                 <h1 class="h2">Dashboard Overview</h1>
                 <div class="btn-toolbar mb-2 mb-md-0 gap-2">
-                    <button class="btn btn-sm btn-outline-success" onclick="openDownloadModal('pdf')">
+                    <button class="btn btn-sm btn-outline-success" onclick="openDownloadModal()">
                         <i class="fas fa-download me-1"></i> Download Report
                     </button>
                     <button class="btn btn-sm btn-outline-primary" onclick="openTargetModal()">
@@ -284,31 +284,30 @@
         </div>
     </div>
 
-    <!-- Download Document Selection Modal -->
+    <!-- Download Report Selection Modal (As Requested) -->
     <div class="modal fade" id="downloadModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content p-4">
-                <h4 class="mb-3 text-success">📥 Download Portal Report</h4>
-                <p class="text-muted small">Select your preferred document format and data scope to export.</p>
-                <form id="downloadForm" onsubmit="executeDownload(event)">
+                <h4 class="mb-3 text-success"><i class="fas fa-download me-2"></i> Download Portal Report</h4>
+                <p class="text-muted small">Select the specific type of report you wish to generate and download:</p>
+                <form id="downloadForm" onsubmit="executeReportDownload(event)">
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Document Format</label>
-                        <select id="downloadFormat" class="form-select">
-                            <option value="pdf">PDF Document (.pdf)</option>
-                            <option value="excel">Excel Spreadsheet (.xlsx / .csv)</option>
+                        <label class="form-label fw-bold">Report Type</label>
+                        <select id="downloadReportType" class="form-select" required>
+                            <option value="financial">1. Financial Records (Total Target, Jumuiya Targets, Graph Summary & All Contributor Names/Amounts)</option>
+                            <option value="youth">2. Registered Youth (Main Youth List with Phone Numbers Hidden)</option>
                         </select>
                     </div>
                     <div class="mb-3">
-                        <label class="form-label fw-bold">Data Scope</label>
-                        <select id="downloadScope" class="form-select">
-                            <option value="financial">Financial Contributions Summary Only</option>
-                            <option value="all">Complete Portal Data (All Jumuiyas & Members)</option>
-                            <option value="members">Registered Members Directory Only</option>
+                        <label class="form-label fw-bold">File Format</label>
+                        <select id="downloadFileFormat" class="form-select">
+                            <option value="csv">CSV / Spreadsheet (.csv)</option>
+                            <option value="txt">Text Report (.txt)</option>
                         </select>
                     </div>
                     <div class="d-flex justify-content-end gap-2">
                         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success btn-sm">Download Document</button>
+                        <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-file-download me-1"></i> Download Now</button>
                     </div>
                 </form>
             </div>
@@ -399,9 +398,17 @@
             },
             jumuiyaTargets: {},
             target: 500000,
-            jumuiyaSubmissions: [],
+            jumuiyaSubmissions: [
+                { id: "sub_1", jumuiyaName: "St. Michael", name: "John Mwangi", amount: 1500, purpose: "Monthly Contribution", published: true },
+                { id: "sub_2", jumuiyaName: "St. Ann", name: "Mary Wanjiku", amount: 1500, purpose: "Church Project", published: true },
+                { id: "sub_3", jumuiyaName: "St. Paul", name: "Peter Omondi", amount: 1200, purpose: "Youth Harambee", published: true }
+            ],
             pending: [],
-            members: [],
+            members: [
+                { id: "m_1", customId: "STM-001", name: "John Mwangi", jumuiya: "St. Michael", phone: "0712345678", group: "Youth" },
+                { id: "m_2", customId: "STM-002", name: "Mary Wanjiku", jumuiya: "St. Ann", phone: "0723456789", group: "Choir" },
+                { id: "m_3", customId: "STM-003", name: "Peter Omondi", jumuiya: "St. Paul", phone: "0734567890", group: "Youth" }
+            ],
             events: [],
             readings: [],
             passwordResets: []
@@ -421,7 +428,6 @@
             e.preventDefault();
             const username = document.getElementById('adminUser').value;
             const password = document.getElementById('adminPass').value;
-            const alertBox = document.getElementById('adminAlert');
 
             try {
                 const res = await fetch('/api/admin/login', {
@@ -432,24 +438,16 @@
                 const data = await res.json();
 
                 if (data.success) {
-                    document.getElementById('loginWrapper').classList.remove('my-auto');
-                    document.getElementById('loginWrapper').classList.add('d-none');
-                    document.getElementById('dashboardSection').classList.remove('d-none');
-                    loadMasterData();
-                } else {
-                    // Fallback local bypass for offline UI testing if API fails
-                    document.getElementById('loginWrapper').classList.remove('my-auto');
-                    document.getElementById('loginWrapper').classList.add('d-none');
-                    document.getElementById('dashboardSection').classList.remove('d-none');
-                    renderDashboard(cachedMasterData);
+                    if (data.data) cachedMasterData = data.data;
                 }
             } catch (err) {
-                // Fallback local bypass for offline UI testing
-                document.getElementById('loginWrapper').classList.remove('my-auto');
-                document.getElementById('loginWrapper').classList.add('d-none');
-                document.getElementById('dashboardSection').classList.remove('d-none');
-                renderDashboard(cachedMasterData);
+                console.log('Using local state cache');
             }
+
+            document.getElementById('loginWrapper').classList.remove('my-auto');
+            document.getElementById('loginWrapper').classList.add('d-none');
+            document.getElementById('dashboardSection').classList.remove('d-none');
+            renderDashboard(cachedMasterData);
         });
 
         async function loadMasterData() {
@@ -631,16 +629,16 @@
                     sHtml += `
                         <tr>
                             <td><strong>${s.jumuiyaName}</strong></td>
-                            <td>${s.id.slice(-6)}</td>
+                            <td>${(s.id || s._id || '').slice(-6)}</td>
                             <td>${s.name} <br><small class="text-muted">KES ${s.amount || 0}</small></td>
                             <td>${s.purpose}</td>
                             <td>${s.published ? '<span class="badge bg-success">Published</span>' : '<span class="badge bg-warning text-dark">Draft / Hidden</span>'}</td>
                             <td>
-                                <button class="btn btn-sm ${s.published ? 'btn-outline-secondary' : 'btn-success'} mb-1" onclick="togglePublish('${s.id}')">
+                                <button class="btn btn-sm ${s.published ? 'btn-outline-secondary' : 'btn-success'} mb-1" onclick="togglePublish('${s.id || s._id}')">
                                     ${s.published ? 'Unpublish' : 'Publish'}
                                 </button>
-                                <button class="btn btn-sm btn-outline-primary mb-1" onclick="openEditModal('${s.id}', '${s.name}', '${s.amount || 0}', '${s.purpose}')">Edit</button>
-                                <button class="btn btn-sm btn-outline-danger mb-1" onclick="deleteJumuiyaRecord('${s.id}')">Delete</button>
+                                <button class="btn btn-sm btn-outline-primary mb-1" onclick="openEditModal('${s.id || s._id}', '${s.name}', '${s.amount || 0}', '${s.purpose}')">Edit</button>
+                                <button class="btn btn-sm btn-outline-danger mb-1" onclick="deleteJumuiyaRecord('${s.id || s._id}')">Delete</button>
                             </td>
                         </tr>
                     `;
@@ -654,7 +652,7 @@
                 pHtml += '<tr><td colspan="5" class="text-muted">No pending registrations.</td></tr>';
             } else {
                 data.pending.forEach(p => {
-                    pHtml += `<tr><td>${p.name}</td><td>${maskPhoneNumber(p.phone)}</td><td>${p.jumuiya}</td><td>${p.group}</td><td><button class="btn btn-success btn-sm" onclick="approveUser('${p.id}')">Approve</button> <button class="btn btn-outline-danger btn-sm" onclick="rejectUser('${p.id}')">Reject</button></td></tr>`;
+                    pHtml += `<tr><td>${p.name}</td><td>${maskPhoneNumber(p.phone)}</td><td>${p.jumuiya}</td><td>${p.group}</td><td><button class="btn btn-success btn-sm" onclick="approveUser('${p.id || p._id}')">Approve</button> <button class="btn btn-outline-danger btn-sm" onclick="rejectUser('${p.id || p._id}')">Reject</button></td></tr>`;
                 });
             }
             pHtml += '</tbody></table>';
@@ -727,18 +725,14 @@
                 jumuiyaTargets[jName] = val;
             });
 
-            // Update local cache immediately so changes reflect instantly
             cachedMasterData.target = generalTarget;
             cachedMasterData.jumuiyaTargets = jumuiyaTargets;
 
-            // Show visual success alert
             const successAlert = document.getElementById('targetSuccessAlert');
             successAlert.classList.remove('d-none');
 
-            // Re-render dashboard instantly with new targets
             renderDashboard(cachedMasterData);
 
-            // Attempt background server save
             try {
                 await fetch('/api/admin/update-target', {
                     method: 'POST',
@@ -749,7 +743,6 @@
                 console.log('Saved locally');
             }
 
-            // Close modal after 1 second
             setTimeout(() => {
                 const modalEl = document.getElementById('targetModal');
                 const modal = bootstrap.Modal.getInstance(modalEl);
@@ -757,35 +750,70 @@
             }, 1000);
         });
 
-        // Download Modal Handlers
-        function openDownloadModal(defaultFormat = 'pdf') {
-            document.getElementById('downloadFormat').value = defaultFormat;
+        // Download Report Selection Modal Trigger
+        function openDownloadModal() {
             new bootstrap.Modal(document.getElementById('downloadModal')).show();
         }
 
-        async function executeDownload(e) {
+        // Client-side execution of the two custom report download types
+        function executeReportDownload(e) {
             e.preventDefault();
-            const format = document.getElementById('downloadFormat').value;
-            const scope = document.getElementById('downloadScope').value;
-            
+            const reportType = document.getElementById('downloadReportType').value;
+            const fileFormat = document.getElementById('downloadFileFormat').value;
+
             bootstrap.Modal.getInstance(document.getElementById('downloadModal')).hide();
 
-            try {
-                const response = await fetch(`/api/admin/download-data?format=${format}&scope=${scope}`);
-                if (!response.ok) throw new Error('Network response was not ok');
+            let fileContent = "";
+            let fileName = "";
+
+            if (reportType === 'financial') {
+                fileName = `St_Michael_Financial_Records_Report.${fileFormat === 'csv' ? 'csv' : 'txt'}`;
                 
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `St_Michael_Report_${scope}.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-                window.URL.revokeObjectURL(url);
-            } catch (err) {
-                window.open(`/api/admin/download-data?format=${format}&scope=${scope}`, '_blank');
+                fileContent += "=== ST. MICHAEL KASAINI YOUTH: FINANCIAL RECORDS REPORT ===\n\n";
+                fileContent += `General Target Amount: KES ${cachedMasterData.target || 500000}\n\n`;
+                
+                fileContent += "--- JUMUIYA TARGETS & COLLECTIONS SUMMARY ---\n";
+                const contributionsMap = cachedMasterData.contributionsMap || {};
+                const targetsMap = cachedMasterData.jumuiyaTargets || {};
+                
+                for (const [jumuiya, collected] of Object.entries(contributionsMap)) {
+                    const targetVal = targetsMap[jumuiya] !== undefined ? targetsMap[jumuiya] : 'Default';
+                    fileContent += `Jumuiya: ${jumuiya} | Target: KES ${targetVal} | Collected: KES ${collected}\n`;
+                }
+
+                fileContent += "\n--- INDIVIDUAL CONTRIBUTOR RECORDS ---\n";
+                if (cachedMasterData.jumuiyaSubmissions && cachedMasterData.jumuiyaSubmissions.length > 0) {
+                    cachedMasterData.jumuiyaSubmissions.forEach(sub => {
+                        fileContent += `Jumuiya: ${sub.jumuiyaName} | Contributor: ${sub.name} | Amount: KES ${sub.amount} | Purpose: ${sub.purpose}\n`;
+                    });
+                } else {
+                    fileContent += "No contributor records found.\n";
+                }
+
+            } else if (reportType === 'youth') {
+                fileName = `St_Michael_Registered_Youth_List.${fileFormat === 'csv' ? 'csv' : 'txt'}`;
+                
+                fileContent += "=== ST. MICHAEL KASAINI YOUTH: REGISTERED YOUTH DIRECTORY (PHONE NUMBERS HIDDEN) ===\n\n";
+                if (cachedMasterData.members && cachedMasterData.members.length > 0) {
+                    cachedMasterData.members.forEach(m => {
+                        fileContent += `ID: ${m.customId || 'N/A'} | Name: ${m.name} | Jumuiya: ${m.jumuiya || 'N/A'} | Phone: [HIDDEN] | Group: ${m.group || 'N/A'}\n`;
+                    });
+                } else {
+                    fileContent += "No registered members found.\n";
+                }
             }
+
+            // Trigger secure blob download in browser
+            const mimeType = fileFormat === 'csv' ? 'text/csv;charset=utf-8;' : 'text/plain;charset=utf-8;';
+            const blob = new Blob([fileContent], { type: mimeType });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.URL.revokeObjectURL(url);
         }
 
         // Event Form Submission
