@@ -185,12 +185,27 @@ app.post('/api/jumuiya/login', (req, res) => {
     res.json({ success: false, message: 'Invalid credentials.' });
 });
 
+// Fully updated Jumuiya portal endpoint providing submissions, registered members directory filtered for that group, and targets/graph values
 app.get('/api/jumuiya/data', async (req, res) => {
     const { jumuiyaName } = req.query;
     const data = await readData();
     const targetNorm = normalize(jumuiyaName);
     const submissions = (data.jumuiyaSubmissions || []).filter(s => normalize(s.jumuiyaName) === targetNorm);
-    res.json({ success: true, submissions, validPurposes: VALID_PURPOSES });
+    const members = (data.members || []).filter(m => normalize(m.jumuiya) === targetNorm);
+    
+    let jumuiyaTotal = 0;
+    submissions.forEach(s => {
+        if (s.published) jumuiyaTotal += Number(s.amount || 0);
+    });
+
+    res.json({ 
+        success: true, 
+        submissions, 
+        members,
+        jumuiyaTotal,
+        jumuiyaTarget: (data.jumuiyaTargets && jumuiyaName) ? (data.jumuiyaTargets[jumuiyaName] || 0) : 0,
+        validPurposes: VALID_PURPOSES 
+    });
 });
 
 app.post('/api/jumuiya/submit-record', async (req, res) => {
@@ -318,19 +333,16 @@ app.post('/api/admin/set-target', async (req, res) => {
     }
 });
 
-// Admin Event Management Endpoint
 app.post('/api/admin/save-event', async (req, res) => {
     try {
         const { id, title, date, description } = req.body;
         const data = await readData();
         let events = data.events || [];
-        
         if (id) {
             events = events.map(ev => ev.id === id ? { ...ev, title, date, description } : ev);
         } else {
             events.push({ id: Date.now().toString(), title, date, description, type: 'upcoming' });
         }
-        
         await writeData({ events });
         res.json({ success: true, events });
     } catch (e) {
@@ -338,19 +350,16 @@ app.post('/api/admin/save-event', async (req, res) => {
     }
 });
 
-// Admin Readings Management Endpoint
 app.post('/api/admin/save-reading', async (req, res) => {
     try {
         const { id, title, firstReading, psalm, secondReading, gospel } = req.body;
         const data = await readData();
         let readings = data.readings || [];
-        
         if (id) {
             readings = readings.map(r => r.id === id ? { ...r, title, firstReading, psalm, secondReading, gospel } : r);
         } else {
             readings.push({ id: Date.now().toString(), title, firstReading, psalm, secondReading, gospel });
         }
-        
         await writeData({ readings });
         res.json({ success: true, readings });
     } catch (e) {
@@ -358,20 +367,17 @@ app.post('/api/admin/save-reading', async (req, res) => {
     }
 });
 
-// Admin Toggle Publish for Submissions Endpoint
 app.post('/api/admin/toggle-publish', async (req, res) => {
     try {
         const { id } = req.body;
         const data = await readData();
         let submissions = data.jumuiyaSubmissions || [];
-        
         submissions = submissions.map(sub => {
             if (sub.id === id) {
                 return { ...sub, published: !sub.published };
             }
             return sub;
         });
-        
         await writeData({ jumuiyaSubmissions: submissions });
         res.json({ success: true, jumuiyaSubmissions: submissions });
     } catch (e) {
@@ -379,14 +385,12 @@ app.post('/api/admin/toggle-publish', async (req, res) => {
     }
 });
 
-// Admin Password Reset Approval Endpoint
 app.post('/api/admin/approve-password', async (req, res) => {
     try {
         const { id } = req.body;
         const data = await readData();
         let requests = data.passwordRequests || [];
         let members = data.members || [];
-        
         const reqIndex = requests.findIndex(r => r.id === id);
         if (reqIndex !== -1) {
             const approved = requests.splice(reqIndex, 1)[0];
@@ -436,7 +440,7 @@ app.get('/api/admin/download-data', async (req, res) => {
         <h1>St. Michael Kasaini Master Admin Report</h1>
         <div class="meta">Generated On: ${new Date().toLocaleString()} | Category: ${type === 'financial' ? 'Financial Summary Only' : type === 'members' ? 'Registered Members Directory Only' : 'Complete Portal Data'}</div>`;
 
-        if (type === 'financial') {
+        if (type === 'financial' || type === 'all' || !type) {
             html += `<div class="summary-box">
                 Total Collected: KES ${totalCollected.toLocaleString()} / Target: KES ${(data.targetAmount || 500000).toLocaleString()}
             </div>
@@ -461,7 +465,7 @@ app.get('/api/admin/download-data', async (req, res) => {
                 html += `<tr><td colspan="6" style="text-align:center;">No members found.</td></tr>`;
             } else {
                 members.forEach((m, idx) => {
-                    html += `<tr><td>${idx + 1}</td><td>${m.customId || 'N/A'}</td><td>${m.name}</td><td>${maskPhone(m.phone)}</td><td>${m.jumuiya}</td><td>${m.group}</td></tr>`;
+                    html += `<tr><td>${idx + 1}</td><td>${m.customId || 'N/A'}</td><td>${m.name}</td><td>${m.phone}</td><td>${m.jumuiya}</td><td>${m.group}</td></tr>`;
                 });
             }
             html += `</tbody></table>`;
