@@ -140,7 +140,6 @@
                         <thead class="table-light">
                             <tr>
                                 <th>Jumuiya</th>
-                                <th>No.</th>
                                 <th>Reference ID</th>
                                 <th>Youth / Amount</th>
                                 <th>Purpose</th>
@@ -149,7 +148,7 @@
                             </tr>
                         </thead>
                         <tbody id="masterJumuiyaRecordsList">
-                            <tr><td colspan="7" class="text-muted text-center">No submissions recorded yet.</td></tr>
+                            <tr><td colspan="6" class="text-muted text-center">No submissions recorded yet.</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -256,12 +255,22 @@
     <div class="modal fade" id="targetModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content p-4">
-                <h4 class="mb-3 text-primary">🎯 Set Jumuiya Targets</h4>
-                <p class="text-muted small">Configure individual targets for each Jumuiya. The total target updates automatically.</p>
+                <h4 class="mb-3 text-primary">🎯 Set Targets</h4>
+                <p class="text-muted small">Configure both the General Target Amount and individual Jumuiya Target Amounts.</p>
                 <form id="targetForm">
+                    <div class="mb-3 p-3 bg-light rounded border">
+                        <label class="form-label fw-bold text-dark">GENERAL TARGET AMOUNT:</label>
+                        <input type="number" id="generalTargetInput" class="form-control" required placeholder="e.g. 500000">
+                        <small class="text-muted">Total overall financial goal for the parish youth.</small>
+                    </div>
+
+                    <hr class="my-3">
+
+                    <label class="form-label fw-bold text-dark mb-2">JUMUIYA TARGET AMOUNTS:</label>
                     <div id="jumuiyaTargetsContainer" class="row g-3 mb-3">
                         <!-- Dynamically generated Jumuiya inputs -->
                     </div>
+
                     <div class="d-flex justify-content-end gap-2">
                         <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
                         <button type="submit" class="btn btn-primary btn-sm">Save All Targets</button>
@@ -421,9 +430,11 @@
                 cachedMasterData = data;
                 const contributionsMap = data.contributionsMap || {};
                 const jumuiyaTargetsObj = data.jumuiyaTargets || {};
+                const generalTargetVal = data.target !== undefined ? Number(data.target) : 500000;
                 
+                document.getElementById('generalTargetInput').value = generalTargetVal;
+
                 let totalCollectedAll = 0;
-                let calculatedTotalTarget = 0;
                 let cHtml = '';
                 let targetInputsHtml = '';
 
@@ -435,8 +446,7 @@
                     const collected = Number(amount) || 0;
                     totalCollectedAll += collected;
                     
-                    const jumuiyaTarget = jumuiyaTargetsObj[jumuiya] !== undefined ? Number(jumuiyaTargetsObj[jumuiya]) : Math.round(500000 / 11);
-                    calculatedTotalTarget += jumuiyaTarget;
+                    const jumuiyaTarget = jumuiyaTargetsObj[jumuiya] !== undefined ? Number(jumuiyaTargetsObj[jumuiya]) : Math.round(generalTargetVal / (jumuiyaLabels.length || 11));
 
                     const percentage = jumuiyaTarget > 0 ? Math.min(Math.round((collected / jumuiyaTarget) * 100), 100) : 0;
                     
@@ -507,10 +517,10 @@
                 });
 
                 // Update Overall Target Cards & Progress
-                const overallPercentage = calculatedTotalTarget > 0 ? Math.min(Math.round((totalCollectedAll / calculatedTotalTarget) * 100), 100) : 0;
+                const overallPercentage = generalTargetVal > 0 ? Math.min(Math.round((totalCollectedAll / generalTargetVal) * 100), 100) : 0;
                 document.getElementById('totalCollectedDisplay').textContent = `KES ${totalCollectedAll.toLocaleString()}`;
-                document.getElementById('totalTargetDisplay').textContent = `KES ${calculatedTotalTarget.toLocaleString()}`;
-                document.getElementById('goalInputDisplay').textContent = calculatedTotalTarget.toLocaleString();
+                document.getElementById('totalTargetDisplay').textContent = `KES ${generalTargetVal.toLocaleString()}`;
+                document.getElementById('goalInputDisplay').textContent = generalTargetVal.toLocaleString();
                 document.getElementById('progressPercentageText').textContent = `${overallPercentage}% Achieved`;
                 
                 const progressBar = document.getElementById('overallProgressBar');
@@ -574,16 +584,15 @@
                 prHtml += '</tbody></table>';
                 document.getElementById('passwordResetList').innerHTML = prHtml;
 
-                // Jumuiya Submissions Table
+                // Jumuiya Submissions Table (Removed row number column index as requested)
                 let sHtml = '';
                 if (!data.jumuiyaSubmissions || data.jumuiyaSubmissions.length === 0) {
-                    sHtml = '<tr><td colspan="7" class="text-muted text-center">No submissions received yet from Jumuiya admins.</td></tr>';
+                    sHtml = '<tr><td colspan="6" class="text-muted text-center">No submissions received yet from Jumuiya admins.</td></tr>';
                 } else {
-                    data.jumuiyaSubmissions.forEach((s, index) => {
+                    data.jumuiyaSubmissions.forEach((s) => {
                         sHtml += `
                             <tr>
                                 <td><strong>${s.jumuiyaName}</strong></td>
-                                <td>${index + 1}</td>
                                 <td>${s.id.slice(-6)}</td>
                                 <td>${s.name} <br><small class="text-muted">KES ${s.amount || 0}</small></td>
                                 <td>${s.purpose}</td>
@@ -662,22 +671,27 @@
         document.getElementById('targetForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
             
+            const generalTarget = Number(document.getElementById('generalTargetInput').value) || 0;
             const jumuiyaTargets = {};
-            let sumTargets = 0;
+            
             document.querySelectorAll('.jumuiya-target-field').forEach(input => {
                 const jName = input.getAttribute('data-jumuiya');
                 const val = Number(input.value) || 0;
                 jumuiyaTargets[jName] = val;
-                sumTargets += val;
             });
 
-            await fetch('/api/admin/update-target', {
+            const res = await fetch('/api/admin/update-target', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ target: sumTargets, jumuiyaTargets })
+                body: JSON.stringify({ target: generalTarget, jumuiyaTargets })
             });
-            bootstrap.Modal.getInstance(document.getElementById('targetModal')).hide();
-            loadMasterData();
+            const data = await res.json();
+            if (data.success || res.ok) {
+                bootstrap.Modal.getInstance(document.getElementById('targetModal')).hide();
+                loadMasterData();
+            } else {
+                alert('Failed to save targets.');
+            }
         });
 
         // Download Modal Handlers
@@ -686,13 +700,30 @@
             new bootstrap.Modal(document.getElementById('downloadModal')).show();
         }
 
-        function executeDownload(e) {
+        async function executeDownload(e) {
             e.preventDefault();
             const format = document.getElementById('downloadFormat').value;
             const scope = document.getElementById('downloadScope').value;
             
             bootstrap.Modal.getInstance(document.getElementById('downloadModal')).hide();
-            window.open(`/api/admin/download-data?format=${format}&scope=${scope}`, '_blank');
+
+            try {
+                const response = await fetch(`/api/admin/download-data?format=${format}&scope=${scope}`);
+                if (!response.ok) throw new Error('Network response was not ok');
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `St_Michael_Report_${scope}.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+            } catch (err) {
+                // Fallback direct window open if blob download encounters CORS or endpoint stream issues
+                window.open(`/api/admin/download-data?format=${format}&scope=${scope}`, '_blank');
+            }
         }
 
         // Event Form Submission
