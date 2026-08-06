@@ -1,563 +1,503 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=1200">
-    <title>St. Michael Admin Portal - Complete Original</title>
+// Full Production server.js - Restoring all features, models, endpoints, and authentication
+const express = require('express');
+const bodyParser = require('body-parser');
+const path = require('path');
+const { MongoClient } = require('mongodb');
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    if (req.method === 'OPTIONS') return res.sendStatus(200);
+    next();
+});
+
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(express.static(path.join(__dirname)));
+
+const MONGO_URI = process.env.MONGO_URI;
+let db = null;
+
+const automatedReflections = [
+    { title: "Walking in Divine Strength", reference: "Philippians 4:13", content: "I can do all things through Christ who strengthens me. No matter the challenges you face today, rely not on your own power, but on His infinite grace." },
+    { title: "Trusting the Journey", reference: "Proverbs 3:5-6", content: "Trust in the Lord with all your heart and lean not on your own understanding; in all your ways submit to him, and he will make your paths straight." },
+    { title: "A Heart of Pure Service", reference: "Colossians 3:23", content: "Whatever you do, work at it with all your heart, as working for the Lord, not for human masters." },
+    { title: "The Peace That Surpasses Understanding", reference: "John 14:27", content: "Peace I leave with you; my peace I give you. Do not let your hearts be troubled and do not be afraid." },
+    { title: "Renewed Hope", reference: "Isaiah 40:31", content: "Those who hope in the Lord will renew their strength. They will soar on wings like eagles; they will run and not grow weary." }
+];
+
+const VALID_PURPOSES = ['Christmas collection', 'Easter collection', 'Diocesan collection', 'Youth harambee', 'PMC contribution', 'Other'];
+
+const JUMUIYAS_LIST = [
+    { id: 'st_catherine', name: 'St. Catherine', username: 'catherine_admin', pass: 'Cath2026!' },
+    { id: 'st_ann', name: 'St. Ann', username: 'ann_admin', pass: 'Ann2026!' },
+    { id: 'st_michael', name: 'St. Michael', username: 'michael_admin', pass: 'Mich2026!' },
+    { id: 'st_raphael', name: 'St. Raphael', username: 'raphael_admin', pass: 'Raph2026!' },
+    { id: 'st_francisco', name: 'St. Francisco', username: 'francisco_admin', pass: 'Fran2026!' },
+    { id: 'st_monica', name: 'St. Monica', username: 'monica_admin', pass: 'Mon2026!' },
+    { id: 'st_stephen', name: 'St. Stephen', username: 'stephen_admin', pass: 'Steph2026!' },
+    { id: 'st_jacinta', name: 'St. Jacinta', username: 'jacinta_admin', pass: 'Jac2026!' },
+    { id: 'st_paul', name: 'St. Paul', username: 'paul_admin', pass: 'Paul2026!' },
+    { id: 'st_francis_assisi', name: 'St. Francis of Assisi', username: 'assisi_admin', pass: 'Assisi2026!' },
+    { id: 'st_charles_lwanga', name: 'St. Charles Lwanga', username: 'charles_admin', pass: 'Char2026!' }
+];
+
+let fallbackData = {
+    members: [],
+    pending: [],
+    jumuiyaSubmissions: [],
+    polls: [],
+    archives: [],
+    targetAmount: 500000,
+    jumuiyaTargets: {},
+    events: [{ id: '1', title: 'Sunday Holy Mass & Youth Fellowship', date: 'Next Sunday at 10:00 AM', description: 'Main service at St. Michael Kasaini Church.', type: 'upcoming' }],
+    messages: [],
+    readings: [{ id: '1', title: "Sunday Holy Mass Readings", firstReading: "1 Kings 3:5...", psalm: "Psalm 119...", secondReading: "Romans 8...", gospel: "Matthew 13..." }],
+    passwordRequests: []
+};
+
+async function readData() {
+    if (!db) return fallbackData;
+    try {
+        let doc = await db.collection('portal_data').findOne({ _id: 'main_store' });
+        if (!doc) {
+            await db.collection('portal_data').insertOne({ _id: 'main_store', ...fallbackData });
+            return fallbackData;
+        }
+        return {
+            members: doc.members || fallbackData.members,
+            pending: doc.pending || fallbackData.pending,
+            jumuiyaSubmissions: doc.jumuiyaSubmissions || fallbackData.jumuiyaSubmissions,
+            polls: doc.polls || fallbackData.polls,
+            archives: doc.archives || fallbackData.archives,
+            targetAmount: doc.targetAmount !== undefined ? doc.targetAmount : fallbackData.targetAmount,
+            jumuiyaTargets: doc.jumuiyaTargets || fallbackData.jumuiyaTargets,
+            events: doc.events || fallbackData.events,
+            messages: doc.messages || fallbackData.messages,
+            readings: doc.readings || fallbackData.readings,
+            passwordRequests: doc.passwordRequests || fallbackData.passwordRequests
+        };
+    } catch (e) {
+        return fallbackData;
+    }
+}
+
+async function writeData(newData) {
+    fallbackData = { ...fallbackData, ...newData };
+    if (db) {
+        try {
+            await db.collection('portal_data').updateOne(
+                { _id: 'main_store' },
+                { $set: fallbackData },
+                { upsert: true }
+            );
+        } catch (e) {
+            console.error('Database write error:', e.message);
+        }
+    }
+}
+
+async function getSpiritualContent() {
+    let reflection = null;
+    let patronSaint = { name: "St. Aloysius Gonzaga", feastDay: "June 21", message: "Model of purity, youth, and selfless charity." };
+    if (db) {
+        try {
+            reflection = await db.collection('settings').findOne({ type: 'reflection' });
+            const ps = await db.collection('settings').findOne({ type: 'patronSaint' });
+            if (ps) patronSaint = ps;
+        } catch (err) {}
+    }
+    if (!reflection) {
+        const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+        const auto = automatedReflections[dayOfYear % automatedReflections.length];
+        reflection = { title: auto.title, reference: auto.reference, content: auto.content };
+    }
+    return { reflection, patronSaint };
+}
+
+async function initDB() {
+    if (MONGO_URI) {
+        try {
+            const client = new MongoClient(MONGO_URI);
+            await client.connect();
+            db = client.db('kasaini_youth_db');
+            console.log('Connected successfully to MongoDB Atlas.');
+            const existing = await db.collection('portal_data').findOne({ _id: 'main_store' });
+            if (!existing) {
+                await db.collection('portal_data').insertOne({ _id: 'main_store', ...fallbackData });
+            } else {
+                fallbackData = { ...fallbackData, ...existing };
+            }
+        } catch (err) {
+            console.error('MongoDB connection error:', err.message);
+        }
+    }
+}
+initDB();
+
+const normalize = (str) => (str || '').toLowerCase().replace(/[\.\s]/g, '');
+const maskPhone = (phone) => (!phone || phone.length < 6) ? '****' : phone.slice(0, 3) + '****' + phone.slice(-3);
+
+// Page Route Endpoints
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
+app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
+app.get('/secret-admin-portal-kasaini-2026', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
+app.get('/jumuiya-portal', (req, res) => res.sendFile(path.join(__dirname, 'jumuiya-portal.html')));
+
+// Spiritual & Content API Endpoints
+app.get('/api/spiritual/content', async (req, res) => {
+    const content = await getSpiritualContent();
+    res.json({ success: true, ...content });
+});
+
+app.get('/api/analytics/jumuiya-graph', async (req, res) => {
+    const data = await readData();
+    const labels = JUMUIYAS_LIST.map(j => j.name);
+    const totalsMap = {};
+    labels.forEach(name => { totalsMap[name] = 0; });
+
+    (data.jumuiyaSubmissions || []).forEach(record => {
+        if (record.published && record.jumuiyaName) {
+            const matchedLabel = labels.find(l => normalize(l) === normalize(record.jumuiyaName));
+            if (matchedLabel) {
+                totalsMap[matchedLabel] += Number(record.amount || 0);
+            }
+        }
+    });
+    res.json({ success: true, labels, datasetsData: labels.map(name => totalsMap[name]) });
+});
+
+app.get('/api/jumuiyas/list', (req, res) => {
+    res.json({ success: true, jumuiyas: JUMUIYAS_LIST.map(j => ({ id: j.id, name: j.name, username: j.username })) });
+});
+
+app.post('/api/jumuiya/login', (req, res) => {
+    const { jumuiyaId, username, password } = req.body;
+    const jumuiya = JUMUIYAS_LIST.find(j => j.id === jumuiyaId);
+    if (jumuiya && jumuiya.username === username && jumuiya.pass === password) {
+        return res.json({ success: true, name: jumuiya.name });
+    }
+    res.json({ success: false, message: 'Invalid credentials.' });
+});
+
+// Fully updated Jumuiya portal endpoint providing submissions, registered members directory filtered for that group, and targets/graph values
+app.get('/api/jumuiya/data', async (req, res) => {
+    const { jumuiyaName } = req.query;
+    const data = await readData();
+    const targetNorm = normalize(jumuiyaName);
+    const submissions = (data.jumuiyaSubmissions || []).filter(s => normalize(s.jumuiyaName) === targetNorm);
+    const members = (data.members || []).filter(m => normalize(m.jumuiya) === targetNorm);
     
-    <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- html2pdf.js for true PDF report downloads -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    let jumuiyaTotal = 0;
+    submissions.forEach(s => {
+        if (s.published) jumuiyaTotal += Number(s.amount || 0);
+    });
 
-    <style>
-        body {
-            min-width: 1200px !important;
-            width: 1200px !important;
-            margin: 0 auto;
-            background-color: #f8f9fa;
-            overflow-x: auto;
-            font-family: Arial, sans-serif;
+    res.json({ 
+        success: true, 
+        submissions, 
+        members,
+        jumuiyaTotal,
+        jumuiyaTarget: (data.jumuiyaTargets && jumuiyaName) ? (data.jumuiyaTargets[jumuiyaName] || 0) : 0,
+        validPurposes: VALID_PURPOSES 
+    });
+});
+
+app.post('/api/jumuiya/submit-record', async (req, res) => {
+    const { jumuiyaName, name, amount, purpose } = req.body;
+    if (!name || !jumuiyaName) return res.json({ success: false, message: 'Missing fields.' });
+    const data = await readData();
+    const submissions = [...(data.jumuiyaSubmissions || []), {
+        id: Date.now().toString(),
+        jumuiyaName,
+        name: name.trim(),
+        amount: parseFloat(amount) || 0,
+        purpose: VALID_PURPOSES.includes(purpose) ? purpose : 'Other',
+        published: false
+    }];
+    await writeData({ jumuiyaSubmissions: submissions });
+    res.json({ success: true, message: 'Submitted successfully!' });
+});
+
+app.get('/api/youth/directory', async (req, res) => {
+    const data = await readData();
+    const { reflection, patronSaint } = await getSpiritualContent();
+    let contributionsMap = {};
+    JUMUIYAS_LIST.forEach(j => { contributionsMap[j.name] = 0; });
+    (data.jumuiyaSubmissions || []).forEach(r => {
+        if (r.published) {
+            const matched = JUMUIYAS_LIST.find(j => normalize(j.name) === normalize(r.jumuiyaName));
+            if (matched) contributionsMap[matched.name] += Number(r.amount || 0);
         }
-        .container, .container-fluid {
-            width: 1140px !important;
-            max-width: 1140px !important;
-            min-width: 1140px !important;
+    });
+    res.json({ 
+        success: true, 
+        members: (data.members || []).map(m => ({ ...m, phone: maskPhone(m.phone) })), 
+        masterContributions: (data.jumuiyaSubmissions || []).filter(s => s.published), 
+        contributionsMap,
+        jumuiyaTargets: data.jumuiyaTargets || {},
+        events: data.events || [], 
+        readings: data.readings || [], 
+        messages: data.messages || [],
+        reflection,
+        patronSaint,
+        validPurposes: VALID_PURPOSES
+    });
+});
+
+app.post('/api/youth/register', async (req, res) => {
+    const { name, phone, jumuiya, group, pass } = req.body;
+    if (!name || !pass) return res.json({ success: false, message: 'Name & password required.' });
+    const data = await readData();
+    const cleanName = name.trim().toLowerCase();
+    if ((data.members || []).some(m => m.name.toLowerCase() === cleanName) || (data.pending || []).some(p => p.name.toLowerCase() === cleanName)) {
+        return res.json({ success: false, message: 'Account exists.' });
+    }
+    const pending = [...(data.pending || []), { id: Date.now().toString(), name: name.trim(), phone: phone || '', jumuiya: jumuiya || 'St. Michael', group: group || 'Youth General', pass, date: new Date().toLocaleDateString() }];
+    await writeData({ pending });
+    res.json({ success: true, message: 'Registered successfully!' });
+});
+
+app.post('/api/youth/login', async (req, res) => {
+    const { name, pass } = req.body;
+    const data = await readData();
+    const cleanName = name.trim().toLowerCase();
+    const member = (data.members || []).find(m => m.name.toLowerCase() === cleanName);
+    if (member) {
+        if (member.pass === pass) return res.json({ success: true, name: member.name, jumuiya: member.jumuiya });
+        return res.json({ success: false, message: 'Incorrect password.' });
+    }
+    res.json({ success: false, message: 'Member not found or pending approval.' });
+});
+
+// Master Admin APIs
+app.post('/api/admin/login', (req, res) => {
+    const { username, password } = req.body;
+    res.json({ success: (username === 'Admin' && password === 'Admin0247') });
+});
+
+app.get('/api/admin/data', async (req, res) => {
+    const data = await readData();
+    const { reflection, patronSaint } = await getSpiritualContent();
+    let contributionsMap = {};
+    JUMUIYAS_LIST.forEach(j => { contributionsMap[j.name] = 0; });
+    (data.jumuiyaSubmissions || []).forEach(r => {
+        if (r.published) {
+            const matched = JUMUIYAS_LIST.find(j => normalize(j.name) === normalize(r.jumuiyaName));
+            if (matched) contributionsMap[matched.name] += Number(r.amount || 0);
         }
-        .card { 
-            border: none; 
-            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); 
-            margin-bottom: 20px;
+    });
+    res.json({ 
+        success: true, 
+        pending: data.pending || [], 
+        members: data.members || [], 
+        jumuiyaSubmissions: data.jumuiyaSubmissions || [],
+        polls: data.polls || [],
+        archives: data.archives || [],
+        targetAmount: data.targetAmount !== undefined ? data.targetAmount : 500000,
+        jumuiyaTargets: data.jumuiyaTargets || {},
+        contributionsMap,
+        readings: data.readings || [], 
+        events: data.events || [], 
+        messages: data.messages || [],
+        passwordRequests: data.passwordRequests || [],
+        reflection,
+        patronSaint,
+        validPurposes: VALID_PURPOSES
+    });
+});
+
+app.post('/api/admin/set-target', async (req, res) => {
+    try {
+        const { targetAmount, jumuiyaTargets } = req.body;
+        let updatePayload = {};
+        
+        if (targetAmount !== undefined) {
+            const newTarget = parseFloat(targetAmount);
+            if (!isNaN(newTarget)) updatePayload.targetAmount = newTarget;
         }
-        canvas { 
-            width: 100% !important; 
-            height: 350px !important; 
+        
+        if (jumuiyaTargets && typeof jumuiyaTargets === 'object') {
+            updatePayload.jumuiyaTargets = jumuiyaTargets;
         }
-        .topnav {
-            background: #212529;
-            color: white;
-            padding: 10px 20px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+
+        await writeData(updatePayload);
+        res.json({ success: true, targetAmount: fallbackData.targetAmount, jumuiyaTargets: fallbackData.jumuiyaTargets });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Server error updating target amounts.' });
+    }
+});
+
+app.post('/api/admin/save-event', async (req, res) => {
+    try {
+        const { id, title, date, description } = req.body;
+        const data = await readData();
+        let events = data.events || [];
+        if (id) {
+            events = events.map(ev => ev.id === id ? { ...ev, title, date, description } : ev);
+        } else {
+            events.push({ id: Date.now().toString(), title, date, description, type: 'upcoming' });
         }
-        .topnav .nav-items {
-            display: flex;
-            gap: 10px;
-            align-items: center;
+        await writeData({ events });
+        res.json({ success: true, events });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error saving event' });
+    }
+});
+
+app.post('/api/admin/save-reading', async (req, res) => {
+    try {
+        const { id, title, firstReading, psalm, secondReading, gospel } = req.body;
+        const data = await readData();
+        let readings = data.readings || [];
+        if (id) {
+            readings = readings.map(r => r.id === id ? { ...r, title, firstReading, psalm, secondReading, gospel } : r);
+        } else {
+            readings.push({ id: Date.now().toString(), title, firstReading, psalm, secondReading, gospel });
         }
-        .topnav a {
-            color: #adb5bd;
-            text-decoration: none;
-            padding: 6px 10px;
-            border-radius: 4px;
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
+        await writeData({ readings });
+        res.json({ success: true, readings });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error saving reading' });
+    }
+});
+
+app.post('/api/admin/toggle-publish', async (req, res) => {
+    try {
+        const { id } = req.body;
+        const data = await readData();
+        let submissions = data.jumuiyaSubmissions || [];
+        submissions = submissions.map(sub => {
+            if (sub.id === id) {
+                return { ...sub, published: !sub.published };
+            }
+            return sub;
+        });
+        await writeData({ jumuiyaSubmissions: submissions });
+        res.json({ success: true, jumuiyaSubmissions: submissions });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error updating publish status' });
+    }
+});
+
+app.post('/api/admin/approve-password', async (req, res) => {
+    try {
+        const { id } = req.body;
+        const data = await readData();
+        let requests = data.passwordRequests || [];
+        let members = data.members || [];
+        const reqIndex = requests.findIndex(r => r.id === id);
+        if (reqIndex !== -1) {
+            const approved = requests.splice(reqIndex, 1)[0];
+            members = members.map(m => m.name.toLowerCase() === approved.name.toLowerCase() ? { ...m, pass: approved.newPass } : m);
+            await writeData({ passwordRequests: requests, members });
         }
-        .topnav a:hover, .topnav a.active {
-            color: white;
-            background: #343a40;
-        }
-    </style>
-</head>
-<body>
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error approving password' });
+    }
+});
 
-    <!-- Login Overlay -->
-    <div id="loginOverlay" class="container mt-5" style="max-width: 450px !important; width: 450px !important;">
-        <div class="card p-4 mt-5 shadow-sm">
-            <h3 class="text-center mb-4 text-primary"><i class="fas fa-church me-2"></i>St. Michael Admin Portal</h3>
-            <div id="loginError" class="alert alert-danger d-none"></div>
-            <form id="loginForm">
-                <div class="mb-3">
-                    <label class="form-label">Username</label>
-                    <input type="text" id="adminUser" class="form-control" required>
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Password</label>
-                    <input type="password" id="adminPass" class="form-control" required>
-                </div>
-                <button type="submit" class="btn btn-primary w-100">Login to Portal</button>
-            </form>
-        </div>
-    </div>
+app.get('/api/admin/download-data', async (req, res) => {
+    try {
+        const { type } = req.query;
+        const data = await readData();
+        let totalCollected = 0;
+        let contributionsMap = {};
+        JUMUIYAS_LIST.forEach(j => { contributionsMap[j.name] = 0; });
 
-    <!-- Main Admin Dashboard Wrapper -->
-    <div id="adminDashboard" class="container-fluid d-none p-0">
-        <!-- Top Navigation Bar matching original layout -->
-        <div class="topnav">
-            <div class="fw-bold fs-5 text-white"><i class="fas fa-church me-2"></i>St. Michael Admin Portal</div>
-            <div class="nav-items">
-                <a href="#dashboard" class="active" onclick="switchSection('dashboard', event)"><i class="fas fa-chart-line"></i> Dashboard</a>
-                <a href="#contributions" onclick="switchSection('contributions', event)"><i class="fas fa-hand-holding-usd"></i> Contributions</a>
-                <a href="#records" onclick="switchSection('records', event)"><i class="fas fa-file-alt"></i> Records</a>
-                <a href="#members" onclick="switchSection('members', event)"><i class="fas fa-users"></i> Members</a>
-                <a href="#approvals" onclick="switchSection('approvals', event)"><i class="fas fa-user-clock"></i> Approvals</a>
-                <a href="#resets" onclick="switchSection('resets', event)"><i class="fas fa-key"></i> Resets</a>
-                <a href="#content" onclick="switchSection('content', event)"><i class="fas fa-newspaper"></i> Content</a>
-                <button class="btn btn-outline-danger btn-sm text-white border-danger" onclick="logoutAdmin()"><i class="fas fa-sign-out-alt me-1"></i> Logout</button>
-            </div>
-        </div>
-
-        <div class="container py-4">
-            <!-- Section: Dashboard -->
-            <div id="sec-dashboard" class="admin-section">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <h2 class="fw-bold text-dark">Dashboard Overview</h2>
-                    <div>
-                        <button class="btn btn-outline-success btn-sm me-2" onclick="downloadPDFReport('all')"><i class="fas fa-file-pdf me-1"></i> Download Official Reports</button>
-                        <button class="btn btn-outline-primary btn-sm me-2" onclick="openTargetModal()"><i class="fas fa-bullseye me-1"></i> Set Targets</button>
-                        <button class="btn btn-outline-secondary btn-sm" onclick="loadAdminData()"><i class="fas fa-sync-alt me-1"></i> Refresh</button>
-                    </div>
-                </div>
-
-                <div class="row mb-4">
-                    <div class="col-4">
-                        <div class="card p-3 bg-white border-start border-success border-4">
-                            <h6 class="text-muted">Total Collected</h6>
-                            <h3 id="statTotalCollected" class="text-success fw-bold mb-1">KES 5,350</h3>
-                            <small class="text-muted" id="statAchievedPct">1% Achieved</small>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <div class="card p-3 bg-white border-start border-primary border-4">
-                            <h6 class="text-muted">Total Target</h6>
-                            <h3 id="statTargetAmount" class="text-primary fw-bold mb-1">KES 500,000</h3>
-                            <small class="text-muted" id="statGoalText">Goal: 500,000 KES</small>
-                        </div>
-                    </div>
-                    <div class="col-4">
-                        <div class="card p-3 bg-white border-start border-warning border-4">
-                            <h6 class="text-muted">Overall Progress Bar</h6>
-                            <h3 id="statProgressText" class="text-warning fw-bold mb-1">1%</h3>
-                            <div class="progress mt-2" style="height: 8px;"><div id="statProgressBar" class="progress-bar bg-success" style="width: 1%;"></div></div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card p-4 bg-white mb-4">
-                    <h4 class="mb-3"><i class="fas fa-chart-bar me-2"></i>Jumuiya Collections vs Targets</h4>
-                    <canvas id="jumuiyaChart"></canvas>
-                </div>
-
-                <div class="card p-4 bg-white">
-                    <h4 class="mb-3"><i class="fas fa-list me-2"></i>Jumuiya Breakdown & Targets</h4>
-                    <div class="table-responsive">
-                        <table class="table table-striped align-middle">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Jumuiya Name</th>
-                                    <th>Amount Collected</th>
-                                    <th>Target</th>
-                                    <th>Progress</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="jumuiyaBreakdownBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Section: Contributions -->
-            <div id="sec-contributions" class="admin-section d-none">
-                <div class="card p-4 bg-white">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h4><i class="fas fa-hand-holding-usd me-2"></i>Jumuiya Financial Submissions</h4>
-                        <button class="btn btn-outline-secondary btn-sm" onclick="downloadPDFReport('financial')"><i class="fas fa-file-pdf me-1"></i>Download Financial PDF</button>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-striped align-middle">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Jumuiya</th>
-                                    <th>Reference ID</th>
-                                    <th>Youth / Amount</th>
-                                    <th>Purpose</th>
-                                    <th>Status</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="submissionsTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Section: Records -->
-            <div id="sec-records" class="admin-section d-none">
-                <div class="card p-4 bg-white">
-                    <h4 class="mb-3"><i class="fas fa-file-alt me-2"></i>Master Records & Reports Archive</h4>
-                    <p class="text-muted">Access official system logs, financial ledgers, and export complete audit trails.</p>
-                    <button class="btn btn-success" onclick="downloadPDFReport('all')"><i class="fas fa-download me-1"></i> Download Full System Backup PDF</button>
-                </div>
-            </div>
-
-            <!-- Section: Members -->
-            <div id="sec-members" class="admin-section d-none">
-                <div class="card p-4 bg-white">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h4><i class="fas fa-users me-2"></i>Registered Members Directory</h4>
-                        <button class="btn btn-outline-secondary btn-sm" onclick="downloadPDFReport('members')"><i class="fas fa-file-pdf me-1"></i>Download Members PDF</button>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-striped align-middle">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>ID</th>
-                                    <th>Name</th>
-                                    <th>Jumuiya</th>
-                                    <th>Phone</th>
-                                    <th>Group</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="membersTableBody"></tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Section: Approvals -->
-            <div id="sec-approvals" class="admin-section d-none">
-                <div class="card p-4 bg-white">
-                    <h4 class="mb-3"><i class="fas fa-user-clock me-2"></i>Pending Registrations Approval</h4>
-                    <div class="table-responsive">
-                        <table class="table table-striped align-middle">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Phone</th>
-                                    <th>Jumuiya</th>
-                                    <th>Group</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="pendingTableBody">
-                                <tr><td colspan="5" class="text-center text-muted">No pending registrations.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Section: Resets -->
-            <div id="sec-resets" class="admin-section d-none">
-                <div class="card p-4 bg-white">
-                    <h4 class="mb-3"><i class="fas fa-key me-2"></i>Password Reset Requests</h4>
-                    <div class="table-responsive">
-                        <table class="table table-striped align-middle">
-                            <thead class="table-dark">
-                                <tr>
-                                    <th>Name</th>
-                                    <th>Phone</th>
-                                    <th>Status</th>
-                                    <th>Action</th>
-                                </tr>
-                            </thead>
-                            <tbody id="resetsTableBody">
-                                <tr><td colspan="4" class="text-center text-muted">No pending password reset requests.</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Section: Content -->
-            <div id="sec-content" class="admin-section d-none">
-                <div class="card p-4 bg-white mb-4">
-                    <h4 class="mb-3"><i class="fas fa-newspaper me-2"></i>Manage Events & Readings</h4>
-                    <div class="row">
-                        <div class="col-6">
-                            <h5>Post New Event</h5>
-                            <form id="eventForm" onsubmit="handlePostEvent(event)">
-                                <div class="mb-3"><label class="form-label">Event Title</label><input type="text" id="eventTitle" class="form-control" required></div>
-                                <div class="mb-3"><label class="form-label">Date & Time</label><input type="text" id="eventDate" class="form-control" required></div>
-                                <div class="mb-3"><label class="form-label">Description</label><textarea id="eventDesc" class="form-control" rows="2" required></textarea></div>
-                                <button type="submit" class="btn btn-success btn-sm">Save Event</button>
-                            </form>
-                        </div>
-                        <div class="col-6">
-                            <h5>Post Mass Readings</h5>
-                            <form id="readingForm" onsubmit="handlePostReading(event)">
-                                <div class="mb-3"><label class="form-label">Title / Date</label><input type="text" id="readingTitle" class="form-control" required></div>
-                                <div class="mb-3"><label class="form-label">Scripture Details</label><textarea id="readingDesc" class="form-control" rows="4" required></textarea></div>
-                                <button type="submit" class="btn btn-primary btn-sm">Post Readings</button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Hidden Report Container for html2pdf.js generation -->
-    <div id="pdfReportContainer" style="display:none; padding: 30px; background: white; color: #333; width: 1140px;">
-        <h1 style="color: #1a365d; border-bottom: 2px solid #3182ce; padding-bottom: 10px;">St. Michael Kasaini Master Report</h1>
-        <div id="pdfReportMeta" style="margin-bottom: 20px; font-size: 14px; color: #666;"></div>
-        <div id="pdfReportContent"></div>
-    </div>
-
-    <script>
-        let adminDataCache = null;
-        let chartInstance = null;
-
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const username = document.getElementById('adminUser').value;
-            const password = document.getElementById('adminPass').value;
-            try {
-                const res = await fetch('/api/admin/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
-                });
-                const data = await res.json();
-                if (data.success) {
-                    document.getElementById('loginOverlay').classList.add('d-none');
-                    document.getElementById('adminDashboard').classList.remove('d-none');
-                    loadAdminData();
-                } else {
-                    const errBox = document.getElementById('loginError');
-                    errBox.textContent = 'Invalid administrator credentials.';
-                    errBox.classList.remove('d-none');
-                }
-            } catch (err) {
-                if(username) {
-                    document.getElementById('loginOverlay').classList.add('d-none');
-                    document.getElementById('adminDashboard').classList.remove('d-none');
-                    loadAdminData();
-                }
+        (data.jumuiyaSubmissions || []).forEach(r => {
+            if (r.published) {
+                const amt = Number(r.amount || 0);
+                totalCollected += amt;
+                const matched = JUMUIYAS_LIST.find(j => normalize(j.name) === normalize(r.jumuiyaName));
+                if (matched) contributionsMap[matched.name] += amt;
             }
         });
 
-        function logoutAdmin() {
-            document.getElementById('adminDashboard').classList.add('d-none');
-            document.getElementById('loginOverlay').classList.remove('d-none');
-        }
+        const maxVal = Math.max(...Object.values(contributionsMap), 1);
 
-        function switchSection(sectionId, event) {
-            if (event) event.preventDefault();
-            document.querySelectorAll('.topnav a').forEach(a => a.classList.remove('active'));
-            if (event && event.currentTarget) event.currentTarget.classList.add('active');
-            document.querySelectorAll('.admin-section').forEach(sec => sec.classList.add('d-none'));
-            const targetSec = document.getElementById(`sec-${sectionId}`);
-            if (targetSec) targetSec.classList.remove('d-none');
-        }
+        let html = `<!DOCTYPE html><html><head><title>St. Michael Kasaini Master Report</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 30px; color: #333; }
+            h1 { color: #1a365d; border-bottom: 2px solid #3182ce; padding-bottom: 10px; }
+            .meta { margin-bottom: 20px; font-size: 14px; color: #666; }
+            .summary-box { background: #ebf8ff; border-left: 5px solid #3182ce; padding: 15px; margin-bottom: 25px; font-size: 16px; font-weight: bold; }
+            .chart-container { margin: 25px 0; background: #f8fafc; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px; }
+            .chart-bar-row { display: flex; align-items: center; margin-bottom: 12px; font-size: 13px; }
+            .chart-label { width: 180px; font-weight: bold; }
+            .chart-bar-bg { flex-grow: 1; background: #e2e8f0; height: 22px; border-radius: 4px; overflow: hidden; margin: 0 15px; }
+            .chart-bar-fill { background: #3182ce; height: 100%; border-radius: 4px; }
+            table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+            th, td { border: 1px solid #cbd5e0; padding: 10px; text-align: left; }
+            th { background: #edf2f7; color: #2d3748; }
+        </style></head><body>
+        <h1>St. Michael Kasaini Master Admin Report</h1>
+        <div class="meta">Generated On: ${new Date().toLocaleString()} | Category: ${type === 'financial' ? 'Financial Summary Only' : type === 'members' ? 'Registered Members Directory Only' : 'Complete Portal Data'}</div>`;
 
-        async function loadAdminData() {
-            try {
-                const res = await fetch('/api/admin/data');
-                const data = await res.json();
-                if (data.success) {
-                    adminDataCache = data;
-                    renderDashboardUI(data);
-                }
-            } catch (err) {
-                adminDataCache = {
-                    targetAmount: 500000,
-                    members: [
-                        { customId: 'K1', name: 'Alphonse Muteti', phone: '0732***216', jumuiya: 'St. Catherine', group: 'YCA' },
-                        { customId: 'K3', name: 'Gloria Kim', phone: '0735***271', jumuiya: 'St. Catherine', group: 'YSC' },
-                        { customId: 'K4', name: 'Robert Wambua', phone: '0727***862', jumuiya: 'St. Ann', group: 'YSC' },
-                        { customId: 'K5', name: 'Marceline Ndinda', phone: '0732***781', jumuiya: 'St. Michael', group: 'YSC' },
-                        { customId: 'K7', name: 'Innocent Muthusi', phone: '0736***732', jumuiya: 'St. Catherine', group: 'YSC' },
-                        { customId: 'K8', name: 'John Kioko', phone: '0736***828', jumuiya: '-', group: 'YSC' },
-                        { customId: 'K9', name: 'Augustine Munyao', phone: '0767***292', jumuiya: '-', group: 'YSC' }
-                    ],
-                    pending: [],
-                    resets: [],
-                    jumuiyaSubmissions: [
-                        { jumuiyaName: 'St. Ann', referenceId: '104231', name: 'Faith Nzula', amount: 100, purpose: 'Diocesan collection', published: true },
-                        { jumuiyaName: 'St. Ann', referenceId: '131809', name: 'Robert Wambua', amount: 100, purpose: 'Diocesan collection', published: true },
-                        { jumuiyaName: 'St. Ann', referenceId: '145510', name: 'Alice Mutave', amount: 100, purpose: 'Diocesan collection', published: true },
-                        { jumuiyaName: 'St. Ann', referenceId: '173601', name: 'Lydia Ndunge', amount: 100, purpose: 'Diocesan collection', published: true },
-                        { jumuiyaName: 'St. Ann', referenceId: '187971', name: 'Alphonse Kioko', amount: 100, purpose: 'Diocesan collection', published: true },
-                        { jumuiyaName: 'St. Ann', referenceId: '201960', name: 'Edwin mutua', amount: 100, purpose: 'Diocesan collection', published: true }
-                    ],
-                    contributionsMap: {
-                        'St. Catherine': 800,
-                        'St. Ann': 1500,
-                        'St. Michael': 1500,
-                        'St. Raphael': 0,
-                        'St. Francisco': 0,
-                        'St. Monica': 50,
-                        'St. Stephen': 0,
-                        'St. Jacinta': 0,
-                        'St. Paul': 1200
-                    }
-                };
-                renderDashboardUI(adminDataCache);
-            }
-        }
+        if (type === 'financial' || type === 'all' || !type) {
+            html += `<div class="summary-box">
+                Total Collected: KES ${totalCollected.toLocaleString()} / Target: KES ${(data.targetAmount || 500000).toLocaleString()}
+            </div>
+            <div class="chart-container">
+                <h3>Jumuiya Performance Analytics Breakdown</h3>`;
 
-        function renderDashboardUI(data) {
-            let totalCollected = 0;
-            const contributionsMap = data.contributionsMap || {};
-            Object.values(contributionsMap).forEach(v => totalCollected += Number(v));
-            const target = data.targetAmount || 500000;
-            const pct = Math.round((totalCollected / target) * 100);
-
-            document.getElementById('statTotalCollected').textContent = `KES ${totalCollected.toLocaleString()}`;
-            document.getElementById('statTargetAmount').textContent = `KES ${target.toLocaleString()}`;
-            document.getElementById('statAchievedPct').textContent = `${pct}% Achieved`;
-            document.getElementById('statGoalText').textContent = `Goal: ${target.toLocaleString()} KES`;
-            document.getElementById('statProgressText').textContent = `${pct}%`;
-            document.getElementById('statProgressBar').style.width = `${Math.min(pct, 100)}%`;
-
-            const labels = Object.keys(contributionsMap);
-            const values = Object.values(contributionsMap);
-            const ctx = document.getElementById('jumuiyaChart').getContext('2d');
-            if (chartInstance) chartInstance.destroy();
-            chartInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [
-                        { label: 'Collected (KES)', data: values, backgroundColor: '#198754', borderRadius: 4 },
-                        { label: 'Target (KES)', data: labels.map(() => 45455), backgroundColor: '#9ec5fe', borderRadius: 4 }
-                    ]
-                },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
-            });
-
-            const breakdownBody = document.getElementById('jumuiyaBreakdownBody');
-            breakdownBody.innerHTML = Object.entries(contributionsMap).map(([jName, amt]) => {
-                const jTarget = 45455;
-                const jPct = Math.round((amt / jTarget) * 100);
-                return `<tr>
-                    <td><i class="fas fa-church text-secondary me-2"></i>${jName}</td>
-                    <td><span class="badge bg-primary">KES ${amt.toLocaleString()}</span></td>
-                    <td>KES ${jTarget.toLocaleString()}</td>
-                    <td><div class="progress" style="height:6px; width:100px;"><div class="progress-bar bg-info" style="width: ${Math.min(jPct, 100)}%;"></div></div> ${jPct}%</td>
-                    <td><button class="btn btn-sm btn-outline-primary" onclick="editJumuiyaTarget('${jName}')">Edit Target</button></td>
-                </tr>`;
-            }).join('');
-
-            const membersBody = document.getElementById('membersTableBody');
-            membersBody.innerHTML = (data.members || []).map(m => `<tr>
-                <td><span class="text-primary fw-bold">${m.customId || 'N/A'}</span></td>
-                <td>${m.name}</td>
-                <td><span class="badge bg-secondary">${m.jumuiya}</span></td>
-                <td>${m.phone}</td>
-                <td>${m.group}</td>
-                <td>
-                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editMember('${m.customId}')">Edit</button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="removeMember('${m.customId}')">Remove</button>
-                </td>
-            </tr>`).join('');
-
-            const subBody = document.getElementById('submissionsTableBody');
-            subBody.innerHTML = (data.jumuiyaSubmissions || []).map(s => `<tr>
-                <td>${s.jumuiyaName}</td>
-                <td>${s.referenceId || 'N/A'}</td>
-                <td>${s.name}<br><small class="text-muted">KES ${s.amount}</small></td>
-                <td>${s.purpose}</td>
-                <td><span class="badge ${s.published ? 'bg-success' : 'bg-warning'}">${s.published ? 'Published' : 'Pending'}</span></td>
-                <td>
-                    <button class="btn btn-sm btn-outline-secondary me-1" onclick="togglePublish('${s.referenceId}')">${s.published ? 'Unpublish' : 'Publish'}</button>
-                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editSubmission('${s.referenceId}')">Edit</button>
-                    <button class="btn btn-sm btn-outline-danger" onclick="deleteSubmission('${s.referenceId}')">Delete</button>
-                </td>
-            </tr>`).join('');
-        }
-
-        function openTargetModal() {
-            const newTarget = prompt('Enter new master target amount (KES):', adminDataCache?.targetAmount || 500000);
-            if (newTarget && !isNaN(newTarget)) {
-                adminDataCache.targetAmount = Number(newTarget);
-                renderDashboardUI(adminDataCache);
-                alert('Master target updated successfully!');
-            }
-        }
-
-        function editJumuiyaTarget(jName) {
-            const amt = prompt(`Enter new target for ${jName}:`, '45455');
-            if (amt) alert(`Target for ${jName} updated to KES ${amt}`);
-        }
-
-        function editMember(id) { alert('Editing member ID: ' + id); }
-        function removeMember(id) { 
-            if(confirm('Are you sure you want to remove member ' + id + '?')) {
-                adminDataCache.members = adminDataCache.members.filter(m => m.customId !== id);
-                renderDashboardUI(adminDataCache);
-            }
-        }
-
-        function togglePublish(id) {
-            const sub = adminDataCache.jumuiyaSubmissions.find(s => s.referenceId === id);
-            if (sub) {
-                sub.published = !sub.published;
-                renderDashboardUI(adminDataCache);
-            }
-        }
-
-        function editSubmission(id) { alert('Editing financial submission reference: ' + id); }
-        function deleteSubmission(id) {
-            if(confirm('Delete submission ' + id + '?')) {
-                adminDataCache.jumuiyaSubmissions = adminDataCache.jumuiyaSubmissions.filter(s => s.referenceId !== id);
-                renderDashboardUI(adminDataCache);
-            }
-        }
-
-        function handlePostEvent(e) {
-            e.preventDefault();
-            alert('Event posted successfully!');
-            document.getElementById('eventForm').reset();
-        }
-
-        function handlePostReading(e) {
-            e.preventDefault();
-            alert('Mass readings posted successfully!');
-            document.getElementById('readingForm').reset();
-        }
-
-        function downloadPDFReport(type) {
-            if (!adminDataCache) return alert('Data is still loading, please wait.');
-            const metaDiv = document.getElementById('pdfReportMeta');
-            const contentDiv = document.getElementById('pdfReportContent');
-            
-            metaDiv.textContent = `Generated On: ${new Date().toLocaleString()} | Category: ${type === 'financial' ? 'Financial Summary Only' : type === 'members' ? 'Registered Members Directory Only' : 'Complete Portal Data'}`;
-            
-            let htmlContent = '';
-            if (type === 'financial' || type === 'all') {
-                let totalCollected = 0;
-                Object.values(adminDataCache.contributionsMap || {}).forEach(v => totalCollected += Number(v));
-                htmlContent += `<div style="background: #ebf8ff; border-left: 5px solid #3182ce; padding: 15px; margin-bottom: 25px; font-size: 16px; font-weight: bold;">
-                    Total Collected: KES ${totalCollected.toLocaleString()} / Target: KES ${(adminDataCache.targetAmount || 500000).toLocaleString()}
+            for (const [name, amt] of Object.entries(contributionsMap)) {
+                const pct = Math.round((amt / maxVal) * 100);
+                html += `<div class="chart-bar-row">
+                    <div class="chart-label">${name}</div>
+                    <div class="chart-bar-bg"><div class="chart-bar-fill" style="width: ${pct}%;"></div></div>
+                    <div>KES ${amt.toLocaleString()}</div>
                 </div>`;
             }
-            if (type === 'members' || type === 'all') {
-                htmlContent += `<h3>Registered Youth Directory</h3><table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px;">
-                    <thead><tr style="background: #edf2f7;"><th style="border: 1px solid #cbd5e0; padding: 8px;">ID</th><th style="border: 1px solid #cbd5e0; padding: 8px;">Name</th><th style="border: 1px solid #cbd5e0; padding: 8px;">Jumuiya</th><th style="border: 1px solid #cbd5e0; padding: 8px;">Phone</th><th style="border: 1px solid #cbd5e0; padding: 8px;">Group</th></tr></thead>
-                    <tbody>`;
-                (adminDataCache.members || []).forEach(m => {
-                    htmlContent += `<tr><td style="border: 1px solid #cbd5e0; padding: 8px;">${m.customId || 'N/A'}</td><td style="border: 1px solid #cbd5e0; padding: 8px;">${m.name}</td><td style="border: 1px solid #cbd5e0; padding: 8px;">${m.jumuiya}</td><td style="border: 1px solid #cbd5e0; padding: 8px;">${m.phone}</td><td style="border: 1px solid #cbd5e0; padding: 8px;">${m.group}</td></tr>`;
-                });
-                htmlContent += `</tbody></table>`;
-            }
-
-            contentDiv.innerHTML = htmlContent;
-            const element = document.getElementById('pdfReportContainer');
-            element.style.display = 'block';
-
-            const opt = {
-                margin:       10,
-                filename:     `St_Michael_Report_${type}_${Date.now()}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-
-            html2pdf().from(element).set(opt).save().then(() => {
-                element.style.display = 'none';
-            });
+            html += `</div>`;
         }
-    </script>
-</body>
-</html>
+
+        if (type === 'members' || type === 'all' || !type) {
+            html += `<h3>Registered Youth Directory</h3><table><thead><tr><th>#</th><th>ID</th><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th></tr></thead><tbody>`;
+            const members = data.members || [];
+            if (members.length === 0) {
+                html += `<tr><td colspan="6" style="text-align:center;">No members found.</td></tr>`;
+            } else {
+                members.forEach((m, idx) => {
+                    html += `<tr><td>${idx + 1}</td><td>${m.customId || 'N/A'}</td><td>${m.name}</td><td>${m.phone}</td><td>${m.jumuiya}</td><td>${m.group}</td></tr>`;
+                });
+            }
+            html += `</tbody></table>`;
+        }
+
+        html += `<script>window.onload = () => { window.print(); }</script></body></html>`;
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+        res.send(html);
+    } catch (e) {
+        res.status(500).send('Error generating report.');
+    }
+});
+
+app.post('/api/admin/approve', async (req, res) => {
+    const { id } = req.body;
+    const data = await readData();
+    const index = (data.pending || []).findIndex(p => p.id === id);
+    if (index !== -1) {
+        const approved = data.pending.splice(index, 1)[0];
+        const members = [...(data.members || []), { ...approved, customId: `K${(data.members || []).length + 1}` }];
+        await writeData({ pending: data.pending, members });
+    }
+    res.json({ success: true });
+});
+
+app.post('/api/admin/reject', async (req, res) => {
+    const { id } = req.body;
+    const data = await readData();
+    await writeData({ pending: (data.pending || []).filter(p => p.id !== id) });
+    res.json({ success: true });
+});
+
+app.listen(PORT, () => {
+    console.log(`St. Michael Kasaini Server running on http://localhost:${PORT}`);
+});
