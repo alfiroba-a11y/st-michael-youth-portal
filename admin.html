@@ -444,13 +444,13 @@
                     "St. Stephen": 0, "St. Jacinta": 0, "St. Paul": 1200, "St. Francis of Assisi": 300
                 },
                 jumuiyaTargets: {},
-                target: 500000,
+                targetAmount: 500000,
                 jumuiyaSubmissions: [],
                 pending: [],
                 members: [],
                 events: [],
                 readings: [],
-                passwordResets: []
+                passwordRequests: []
             };
         }
 
@@ -552,7 +552,7 @@
         function renderDashboard(data) {
             const contributionsMap = data.contributionsMap || {};
             const jumuiyaTargetsObj = data.jumuiyaTargets || {};
-            const generalTargetVal = data.target !== undefined ? Number(data.target) : 500000;
+            const generalTargetVal = data.targetAmount !== undefined ? Number(data.targetAmount) : 500000;
 
             document.getElementById('generalTargetInput').value = generalTargetVal;
 
@@ -667,10 +667,10 @@
 
             // Password Reset Requests Table
             let prHtml = '<table class="table table-bordered align-middle"><thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead><tbody>';
-            if (!data.passwordResets || data.passwordResets.length === 0) {
+            if (!data.passwordRequests || data.passwordRequests.length === 0) {
                 prHtml += '<tr><td colspan="4" class="text-muted">No pending password reset requests.</td></tr>';
             } else {
-                data.passwordResets.forEach(pr => {
+                data.passwordRequests.forEach(pr => {
                     prHtml += `<tr>
                         <td>${esc(pr.name)}</td>
                         <td>${maskPhoneNumber(pr.phone)}</td>
@@ -788,8 +788,8 @@
             errorAlert.classList.add('d-none');
 
             try {
-                await apiCall('/api/admin/update-target', { method: 'POST', body: JSON.stringify({ target: generalTarget, jumuiyaTargets }) });
-                cachedMasterData.target = generalTarget;
+                await apiCall('/api/admin/set-target', { method: 'POST', body: JSON.stringify({ targetAmount: generalTarget, jumuiyaTargets }) });
+                cachedMasterData.targetAmount = generalTarget;
                 cachedMasterData.jumuiyaTargets = jumuiyaTargets;
                 renderDashboard(cachedMasterData);
                 successAlert.classList.remove('d-none');
@@ -820,7 +820,7 @@
             const labels = Object.keys(data.contributionsMap || {});
             for (const [jumuiya, amount] of Object.entries(data.contributionsMap || {})) {
                 const collected = Number(amount) || 0;
-                const target = targets[jumuiya] !== undefined ? Number(targets[jumuiya]) : Math.round((data.target || 0) / (labels.length || 1));
+                const target = targets[jumuiya] !== undefined ? Number(targets[jumuiya]) : Math.round((data.targetAmount || 0) / (labels.length || 1));
                 const pct = target > 0 ? Math.min(Math.round((collected / target) * 100), 100) : 0;
                 rows.push([jumuiya, collected, target, pct + '%']);
             }
@@ -859,7 +859,7 @@
                 });
                 y = doc.lastAutoTable.finalY + 6;
                 doc.setFontSize(10);
-                doc.text(`Total Collected: KES ${Object.values(data.contributionsMap || {}).reduce((a, b) => a + (Number(b) || 0), 0).toLocaleString()}  |  Overall Target: KES ${(Number(data.target) || 0).toLocaleString()}`, 14, y);
+                doc.text(`Total Collected: KES ${Object.values(data.contributionsMap || {}).reduce((a, b) => a + (Number(b) || 0), 0).toLocaleString()}  |  Overall Target: KES ${(Number(data.targetAmount) || 0).toLocaleString()}`, 14, y);
                 y += 10;
 
                 const subRows = buildSubmissionRows(data);
@@ -933,7 +933,7 @@
                 description: document.getElementById('eventDesc').value
             };
             try {
-                await apiCall('/api/admin/events', { method: 'POST', body: JSON.stringify(payload) });
+                await apiCall('/api/admin/save-event', { method: 'POST', body: JSON.stringify(payload) });
                 document.getElementById('eventForm').reset();
                 await loadMasterData();
                 showGlobalStatus('Event published.', 'success');
@@ -950,7 +950,7 @@
                 gospel: document.getElementById('gospel').value
             };
             try {
-                await apiCall('/api/admin/readings', { method: 'POST', body: JSON.stringify(payload) });
+                await apiCall('/api/admin/save-reading', { method: 'POST', body: JSON.stringify(payload) });
                 document.getElementById('readingForm').reset();
                 await loadMasterData();
                 showGlobalStatus('Readings published.', 'success');
@@ -1056,7 +1056,7 @@
                     }
                     case 'approve-password': {
                         if (!confirm('Approve this new password request?')) return;
-                        await apiCall('/api/admin/approve-password-reset', { method: 'POST', body: JSON.stringify({ id }) });
+                        await apiCall('/api/admin/approve-password', { method: 'POST', body: JSON.stringify({ id }) });
                         await loadMasterData();
                         break;
                     }
