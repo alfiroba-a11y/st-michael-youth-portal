@@ -50,32 +50,124 @@
             </div>
         </div>
 
-        <!-- Overall Financial Goals & Progress -->
-        <div class="row mb-4">
-            <div class="col-lg-12">
-                <div class="card shadow-sm p-4">
-                    <h4 class="text-primary mb-3">🎯 Annual Financial Targets & Overview</h4>
-                    <div class="row align-items-center mb-3">
-                        <div class="col-md-4">
-                            <h6 class="text-muted">Total Collection vs Target</h6>
-                            <h3><span id="totalCollectedDisplay" class="text-success">KES 0</span> <small class="text-muted fs-6">/ <span id="totalTargetDisplay">KES 500,000</span></small></h3>
-                        </div>
-                        <div class="col-md-8">
-                            <div class="d-flex justify-content-between mb-1">
-                                <span class="small fw-bold text-muted" id="progressPercentageText">0% Achieved</span>
-                                <span class="small fw-bold text-muted">Goal: KES <span id="goalInputDisplay">500,000</span></span>
-                            </div>
-                            <div class="progress" style="height: 25px;">
-                                <div id="overallProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="text-end">
-                        <button class="btn btn-outline-primary btn-sm" onclick="openTargetModal()">⚙️ Update Annual Target & Jumuiya Targets</button>
-                    </div>
+        <!-- Update Targets Modal -->
+<div class="modal fade" id="targetModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content p-4">
+            <h4 class="mb-3 text-primary">⚙️ Configure Annual Target & Individual Jumuiya Targets</h4>
+            <p class="text-muted small">Set the overall annual financial goal and individual targets for each Jumuiya.</p>
+            <form id="targetForm" onsubmit="saveAllTargets(event)">
+                <div class="mb-4">
+                    <label class="form-label fw-bold">Overall Annual Target (KES)</label>
+                    <input type="number" id="globalTargetInput" class="form-control" placeholder="e.g. 500000" required>
                 </div>
-            </div>
+                
+                <h5 class="mb-3 text-secondary fs-6">Individual Jumuiya Targets (KES)</h5>
+                <div class="row" id="jumuiyaInputsContainer" style="max-height: 350px; overflow-y: auto; padding-right: 5px;">
+                    <!-- Dynamically injected via openTargetModal() -->
+                </div>
+
+                <div class="d-flex justify-content-end gap-2 mt-4">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Save All Targets</button>
+                </div>
+            </form>
         </div>
+    </div>
+</div>
+        // List of all 11 Jumuiyas matching your backend structure
+const JUMUIYAS_DIRECTORY = [
+    { id: 'st_catherine', name: 'St. Catherine' },
+    { id: 'st_ann', name: 'St. Ann' },
+    { id: 'st_michael', name: 'St. Michael' },
+    { id: 'st_raphael', name: 'St. Raphael' },
+    { id: 'st_francisco', name: 'St. Francisco' },
+    { id: 'st_monica', name: 'St. Monica' },
+    { id: 'st_stephen', name: 'St. Stephen' },
+    { id: 'st_jacinta', name: 'St. Jacinta' },
+    { id: 'st_paul', name: 'St. Paul' },
+    { id: 'st_francis_assisi', name: 'St. Francis of Assisi' },
+    { id: 'st_charles_lwanga', name: 'St. Charles Lwanga' }
+];
+
+// Global holder for fetched settings data
+let currentPortalData = {};
+
+async function openTargetModal() {
+    // Fetch latest admin data to get active targets
+    try {
+        const res = await fetch('/api/admin/data');
+        const data = await res.json();
+        if (data.success) {
+            currentPortalData = data;
+        }
+    } catch (e) {
+        console.error('Error fetching portal data for targets:', e);
+    }
+
+    // Set global target input value
+    const globalInput = document.getElementById('globalTargetInput');
+    if (globalInput) {
+        globalInput.value = currentPortalData.targetAmount || 500000;
+    }
+
+    // Render individual Jumuiya inputs dynamically
+    const container = document.getElementById('jumuiyaInputsContainer');
+    if (container) {
+        container.innerHTML = '';
+        const savedTargets = currentPortalData.jumuiyaTargets || {};
+
+        JUMUIYAS_DIRECTORY.forEach(j => {
+            const val = savedTargets[j.id] !== undefined ? savedTargets[j.id] : '';
+            container.innerHTML += `
+                <div class="col-md-6 mb-3">
+                    <label class="form-label small fw-bold text-muted">${j.name}</label>
+                    <input type="number" class="form-control jumuiya-target-input" data-jumuiya-id="${j.id}" value="${val}" placeholder="Target amount">
+                </div>
+            `;
+        });
+    }
+
+    // Show bootstrap modal safely
+    const modalEl = document.getElementById('targetModal');
+    const modal = new bootstrap.Modal(modalEl);
+    modal.show();
+}
+
+async function saveAllTargets(event) {
+    event.preventDefault();
+
+    const targetAmount = parseFloat(document.getElementById('globalTargetInput').value) || 0;
+    const jumuiyaTargets = {};
+
+    // Collect all inputs from the dynamic container
+    document.querySelectorAll('.jumuiya-target-input').forEach(input => {
+        const id = input.getAttribute('data-jumuiya-id');
+        jumuiyaTargets[id] = parseFloat(input.value) || 0;
+    });
+
+    try {
+        const response = await fetch('/api/admin/set-target', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ targetAmount, jumuiyaTargets })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Annual and individual Jumuiya targets updated successfully!');
+            const modalEl = document.getElementById('targetModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+            location.reload(); // Refresh dashboard to reflect new values instantly
+        } else {
+            alert('Failed to save targets. Please try again.');
+        }
+    } catch (err) {
+        console.error('Error saving targets:', err);
+        alert('An error occurred while saving targets.');
+    }
+}
 
         <!-- Visual Bar Chart Card -->
         <div class="card shadow-sm p-4 mb-4">
@@ -239,36 +331,61 @@
         </div>
     </div>
 
-    <!-- Download Document Selection Modal -->
-    <div class="modal fade" id="downloadModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content p-4">
-                <h4 class="mb-3 text-success">📥 Download Portal Report</h4>
-                <p class="text-muted small">Select your preferred document format and data scope to export.</p>
-                <form id="downloadForm" onsubmit="executeDownload(event)">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Document Format</label>
-                        <select id="downloadFormat" class="form-select">
-                            <option value="pdf">PDF Document (.pdf)</option>
-                            <option value="excel">Excel Spreadsheet (.xlsx / .csv)</option>
-                        </select>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Data Scope</label>
-                        <select id="downloadScope" class="form-select">
-                            <option value="all">Complete Portal Data (All Jumuiyas & Members)</option>
-                            <option value="financial">Financial Contributions Summary Only</option>
-                            <option value="members">Registered Members Directory Only</option>
-                        </select>
-                    </div>
-                    <div class="d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success btn-sm">Download Document</button>
-                    </div>
-                </form>
-            </div>
+  <!-- Download Document Selection Modal -->
+<div class="modal fade" id="downloadModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content p-4">
+            <h4 class="mb-3 text-success">📥 Download Portal Report</h4>
+            <p class="text-muted small">Select your preferred document format and data scope to export.</p>
+            <form id="downloadForm" onsubmit="executeDownload(event)">
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Document Format</label>
+                    <select id="downloadFormat" class="form-select">
+                        <option value="pdf">PDF Document (.pdf)</option>
+                        <option value="excel">Excel Spreadsheet (.xlsx / .csv)</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-bold">Data Scope</label>
+                    <select id="downloadScope" class="form-select">
+                        <option value="all">Complete Portal Data (All Jumuiyas & Members)</option>
+                        <option value="financial">Financial Contributions Summary Only</option>
+                        <option value="members">Registered Members Directory Only</option>
+                    </select>
+                </div>
+                <div class="d-flex justify-content-end gap-2">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success btn-sm">Download Document</button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
+
+<script>
+function executeDownload(event) {
+    event.preventDefault();
+    
+    const scope = document.getElementById('downloadScope').value;
+    let endpoint = '/api/admin/download-data';
+    
+    if (scope === 'financial') {
+        endpoint += '?type=financial';
+    } else if (scope === 'members') {
+        endpoint += '?type=members';
+    } else {
+        endpoint += '?type=all';
+    }
+    
+    window.open(endpoint, '_blank');
+    
+    const modalEl = document.getElementById('downloadModal');
+    const modalInstance = bootstrap.Modal.getInstance(modalEl);
+    if (modalInstance) {
+        modalInstance.hide();
+    }
+}
+</script>
 
     <!-- Edit Record Modal -->
     <div class="modal fade" id="editModal" tabindex="-1">
