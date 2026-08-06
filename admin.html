@@ -738,15 +738,16 @@
             // Re-render dashboard instantly with new targets
             renderDashboard(cachedMasterData);
 
-            // Attempt background server save
+            // Attempt background server save with error handling
             try {
-                await fetch('/api/admin/update-target', {
+                const response = await fetch('/api/admin/update-target', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ target: generalTarget, jumuiyaTargets })
                 });
+                if (!response.ok) throw new Error('Server target update failed');
             } catch (err) {
-                console.log('Saved locally');
+                console.log('Saved locally (Server sync failed):', err);
             }
 
             // Close modal after 1 second
@@ -766,9 +767,11 @@
         async function executeDownload(e) {
             e.preventDefault();
             const format = document.getElementById('downloadFormat').value;
-            const scope = document.getElementById('downloadScope').value; // e.g. 'financial_records' or 'registered_members'
+            const scope = document.getElementById('downloadScope').value; 
             
-            bootstrap.Modal.getInstance(document.getElementById('downloadModal')).hide();
+            const modalEl = document.getElementById('downloadModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
 
             try {
                 const response = await fetch(`/api/admin/download-data?format=${format}&scope=${scope}`);
@@ -789,27 +792,40 @@
         }
 
         // Event Form Submission
-        document.getElementById('eventForm').addEventListener('submit', async (e) => {
+        document.getElementById('eventForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
             const payload = {
                 title: document.getElementById('eventTitle').value,
                 date: document.getElementById('eventDate').value,
                 description: document.getElementById('eventDesc').value
             };
-            await fetch('/api/admin/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            document.getElementById('eventForm').reset();
-            loadMasterData();
+            try {
+                const res = await fetch('/api/admin/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (res.ok) {
+                    document.getElementById('eventForm').reset();
+                    loadMasterData();
+                } else {
+                    alert('Failed to save event.');
+                }
+            } catch (error) {
+                console.error('Error saving event:', error);
+            }
         });
 
         async function deleteEvent(id) {
             if (confirm('Delete this event?')) {
-                await fetch('/api/admin/events/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                loadMasterData();
+                try {
+                    const res = await fetch('/api/admin/events/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+                    if (res.ok) loadMasterData();
+                    else alert('Failed to delete event.');
+                } catch (error) {
+                    console.error('Error deleting event:', error);
+                }
             }
         }
 
         // Reading Form Submission
-        document.getElementById('readingForm').addEventListener('submit', async (e) => {
+        document.getElementById('readingForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
             const payload = {
                 title: document.getElementById('readingTitle').value,
@@ -818,21 +834,39 @@
                 secondReading: document.getElementById('secondReading').value,
                 gospel: document.getElementById('gospel').value
             };
-            await fetch('/api/admin/readings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            document.getElementById('readingForm').reset();
-            loadMasterData();
+            try {
+                const res = await fetch('/api/admin/readings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (res.ok) {
+                    document.getElementById('readingForm').reset();
+                    loadMasterData();
+                } else {
+                    alert('Failed to save reading.');
+                }
+            } catch (error) {
+                console.error('Error saving reading:', error);
+            }
         });
 
         async function deleteReading(id) {
             if (confirm('Delete this reading?')) {
-                await fetch('/api/admin/readings/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                loadMasterData();
+                try {
+                    const res = await fetch('/api/admin/readings/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+                    if (res.ok) loadMasterData();
+                    else alert('Failed to delete reading.');
+                } catch (error) {
+                    console.error('Error deleting reading:', error);
+                }
             }
         }
 
         async function togglePublish(id) {
-            await fetch('/api/admin/toggle-publish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            loadMasterData();
+            try {
+                const res = await fetch('/api/admin/toggle-publish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+                if (res.ok) loadMasterData();
+                else alert('Failed to toggle publish state.');
+            } catch (error) {
+                console.error('Error toggling publish:', error);
+            }
         }
 
         function openEditModal(id, name, amount, purpose) {
@@ -850,9 +884,17 @@
                 amount: document.getElementById('editAmount').value,
                 purpose: document.getElementById('editPurpose').value
             };
-            await fetch('/api/admin/edit-jumuiya-record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
-            loadMasterData();
+            try {
+                const res = await fetch('/api/admin/edit-jumuiya-record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (res.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+                    loadMasterData();
+                } else {
+                    alert('Failed to update record.');
+                }
+            } catch (error) {
+                console.error('Error editing record:', error);
+            }
         }
 
         // Member Edit Functions
@@ -865,7 +907,7 @@
             new bootstrap.Modal(document.getElementById('editMemberModal')).show();
         }
 
-        document.getElementById('editMemberForm').addEventListener('submit', async (e) => {
+        document.getElementById('editMemberForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
             const payload = {
                 id: document.getElementById('editUserId').value,
@@ -874,14 +916,28 @@
                 jumuiya: document.getElementById('editMemberJumuiya').value,
                 group: document.getElementById('editMemberGroup').value
             };
-            await fetch('/api/admin/edit-member', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            bootstrap.Modal.getInstance(document.getElementById('editMemberModal')).hide();
-            loadMasterData();
+            try {
+                const res = await fetch('/api/admin/edit-member', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                if (res.ok) {
+                    bootstrap.Modal.getInstance(document.getElementById('editMemberModal')).hide();
+                    loadMasterData();
+                } else {
+                    alert('Failed to update member.');
+                }
+            } catch (error) {
+                console.error('Error editing member:', error);
+            }
         });
-async function approvePasswordReset(id) {
+
+        async function approvePasswordReset(id) {
             if (confirm('Approve this new password request?')) {
-                await fetch('/api/admin/approve-password-reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                loadMasterData();
+                try {
+                    const res = await fetch('/api/admin/approve-password-reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+                    if (res.ok) loadMasterData();
+                    else alert('Failed to approve password reset.');
+                } catch (error) {
+                    console.error('Error approving password reset:', error);
+                }
             }
         }
 
@@ -926,27 +982,50 @@ async function approvePasswordReset(id) {
 
         async function deleteJumuiyaRecord(id) {
             if (confirm('Are you sure you want to permanently delete this submission record?')) {
-                await fetch('/api/admin/delete-jumuiya-record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                loadMasterData();
+                try {
+                    const response = await fetch('/api/admin/delete-jumuiya-record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+                    if (response.ok) {
+                        loadMasterData();
+                    } else {
+                        alert('Failed to delete the record.');
+                    }
+                } catch (error) {
+                    console.error('Error deleting record:', error);
+                }
             }
         }
 
         async function approveUser(id) {
-            await fetch('/api/admin/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            loadMasterData();
+            try {
+                const res = await fetch('/api/admin/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+                if (res.ok) loadMasterData();
+                else alert('Failed to approve user.');
+            } catch (error) {
+                console.error('Error approving user:', error);
+            }
         }
 
         async function rejectUser(id) {
             if (confirm('Are you sure you want to reject this registration?')) {
-                await fetch('/api/admin/reject', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                loadMasterData();
+                try {
+                    const res = await fetch('/api/admin/reject', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+                    if (res.ok) loadMasterData();
+                    else alert('Failed to reject registration.');
+                } catch (error) {
+                    console.error('Error rejecting user:', error);
+                }
             }
         }
 
         async function removeMember(id) {
             if (confirm('Are you sure you want to remove this member?')) {
-                await fetch('/api/admin/remove-member', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                loadMasterData();
+                try {
+                    const res = await fetch('/api/admin/remove-member', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+                    if (res.ok) loadMasterData();
+                    else alert('Failed to remove member.');
+                } catch (error) {
+                    console.error('Error removing member:', error);
+                }
             }
         }
     </script>
