@@ -39,7 +39,7 @@
 
     <!-- Dashboard Section (Hidden by default until login) -->
     <div id="dashboardSection" class="d-none">
-        <!-- Top Navbar Instead of Sidebar -->
+        <!-- Top Navbar -->
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm px-4">
             <div class="container-fluid">
                 <a class="navbar-brand fw-bold" href="#">St. Michael Admin Portal</a>
@@ -72,7 +72,7 @@
                         <i class="fas fa-download me-1"></i> Download Report
                     </button>
                     <button class="btn btn-sm btn-outline-primary" onclick="openTargetModal()">
-                        <i class="fas fa-bullseye me-1"></i> Set Annual Target
+                        <i class="fas fa-bullseye me-1"></i> Set Targets
                     </button>
                 </div>
             </div>
@@ -88,7 +88,7 @@
                 </div>
                 <div class="col">
                     <div class="card p-3 border-start border-primary border-4">
-                        <h6 class="text-muted">Annual Financial Target</h6>
+                        <h6 class="text-muted">Total Target</h6>
                         <h3 id="totalTargetDisplay" class="text-primary fw-bold">KES 500,000</h3>
                         <small class="text-muted">Goal: <span id="goalInputDisplay">500000</span> KES</small>
                     </div>
@@ -256,14 +256,9 @@
     <div class="modal fade" id="targetModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content p-4">
-                <h4 class="mb-3 text-primary">🎯 Set Financial Targets</h4>
+                <h4 class="mb-3 text-primary">🎯 Set Jumuiya Targets</h4>
+                <p class="text-muted small">Configure individual targets for each Jumuiya. The total target updates automatically.</p>
                 <form id="targetForm">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Overall Annual Target (KES)</label>
-                        <input type="number" id="annualTargetInput" class="form-control" required>
-                    </div>
-                    <hr>
-                    <p class="text-muted small">Individual Jumuiya Custom Targets:</p>
                     <div id="jumuiyaTargetsContainer" class="row g-3 mb-3">
                         <!-- Dynamically generated Jumuiya inputs -->
                     </div>
@@ -338,7 +333,7 @@
         </div>
     </div>
 
-    <!-- Edit Member Details Modal (Names, Phone, Group) -->
+    <!-- Edit Member Details Modal -->
     <div class="modal fade" id="editMemberModal" tabindex="-1">
         <div class="modal-dialog">
             <div class="modal-content p-4">
@@ -424,14 +419,12 @@
             const data = await res.json();
             if (data.success) {
                 cachedMasterData = data;
-                const globalTarget = data.annualTarget || 500000;
-                document.getElementById('annualTargetInput').value = globalTarget;
-                let totalCollectedAll = 0;
-
-                let cHtml = '';
                 const contributionsMap = data.contributionsMap || {};
-                const defaultJumuiyaTarget = Math.round(globalTarget / 11);
                 const jumuiyaTargetsObj = data.jumuiyaTargets || {};
+                
+                let totalCollectedAll = 0;
+                let calculatedTotalTarget = 0;
+                let cHtml = '';
                 let targetInputsHtml = '';
 
                 const jumuiyaLabels = Object.keys(contributionsMap);
@@ -442,7 +435,9 @@
                     const collected = Number(amount) || 0;
                     totalCollectedAll += collected;
                     
-                    const jumuiyaTarget = jumuiyaTargetsObj[jumuiya] !== undefined ? jumuiyaTargetsObj[jumuiya] : defaultJumuiyaTarget;
+                    const jumuiyaTarget = jumuiyaTargetsObj[jumuiya] !== undefined ? Number(jumuiyaTargetsObj[jumuiya]) : Math.round(500000 / 11);
+                    calculatedTotalTarget += jumuiyaTarget;
+
                     const percentage = jumuiyaTarget > 0 ? Math.min(Math.round((collected / jumuiyaTarget) * 100), 100) : 0;
                     
                     jumuiyaCollectedData.push(collected);
@@ -451,7 +446,7 @@
                     cHtml += `<tr>
                         <td><strong>⛪ ${jumuiya}</strong></td>
                         <td><span class="badge bg-primary fs-6">KES ${collected.toLocaleString()}</span></td>
-                        <td><span class="text-muted fw-bold">KES ${Number(jumuiyaTarget).toLocaleString()}</span></td>
+                        <td><span class="text-muted fw-bold">KES ${jumuiyaTarget.toLocaleString()}</span></td>
                         <td>
                             <div class="d-flex align-items-center">
                                 <div class="progress flex-grow-1 me-2" style="height: 15px;">
@@ -461,7 +456,7 @@
                             </div>
                         </td>
                         <td>
-                            <button class="btn btn-outline-primary btn-sm" onclick="openTargetModalForJumuiya('${jumuiya}', ${jumuiyaTarget})">Edit Target</button>
+                            <button class="btn btn-outline-primary btn-sm" onclick="openTargetModalForJumuiya('${jumuiya}')">Edit Target</button>
                         </td>
                     </tr>`;
 
@@ -472,6 +467,7 @@
                         </div>
                     `;
                 }
+                
                 document.getElementById('contributionsSummaryList').innerHTML = cHtml || '<tr><td colspan="5" class="text-muted">No contributions recorded.</td></tr>';
                 document.getElementById('jumuiyaTargetsContainer').innerHTML = targetInputsHtml;
 
@@ -510,11 +506,11 @@
                     }
                 });
 
-                // Update Overall Progress Card
-                const overallPercentage = globalTarget > 0 ? Math.min(Math.round((totalCollectedAll / globalTarget) * 100), 100) : 0;
+                // Update Overall Target Cards & Progress
+                const overallPercentage = calculatedTotalTarget > 0 ? Math.min(Math.round((totalCollectedAll / calculatedTotalTarget) * 100), 100) : 0;
                 document.getElementById('totalCollectedDisplay').textContent = `KES ${totalCollectedAll.toLocaleString()}`;
-                document.getElementById('totalTargetDisplay').textContent = `KES ${globalTarget.toLocaleString()}`;
-                document.getElementById('goalInputDisplay').textContent = globalTarget.toLocaleString();
+                document.getElementById('totalTargetDisplay').textContent = `KES ${calculatedTotalTarget.toLocaleString()}`;
+                document.getElementById('goalInputDisplay').textContent = calculatedTotalTarget.toLocaleString();
                 document.getElementById('progressPercentageText').textContent = `${overallPercentage}% Achieved`;
                 
                 const progressBar = document.getElementById('overallProgressBar');
@@ -652,7 +648,7 @@
             new bootstrap.Modal(document.getElementById('targetModal')).show();
         }
 
-        function openTargetModalForJumuiya(jumuiyaName, currentTarget) {
+        function openTargetModalForJumuiya(jumuiyaName) {
             openTargetModal();
             setTimeout(() => {
                 const inputField = document.querySelector(`.jumuiya-target-field[data-jumuiya="${jumuiyaName}"]`);
@@ -665,18 +661,20 @@
 
         document.getElementById('targetForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const annualTarget = document.getElementById('annualTargetInput').value;
             
             const jumuiyaTargets = {};
+            let sumTargets = 0;
             document.querySelectorAll('.jumuiya-target-field').forEach(input => {
                 const jName = input.getAttribute('data-jumuiya');
-                jumuiyaTargets[jName] = Number(input.value) || 0;
+                const val = Number(input.value) || 0;
+                jumuiyaTargets[jName] = val;
+                sumTargets += val;
             });
 
             await fetch('/api/admin/update-target', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ target: annualTarget, jumuiyaTargets })
+                body: JSON.stringify({ target: sumTargets, jumuiyaTargets })
             });
             bootstrap.Modal.getInstance(document.getElementById('targetModal')).hide();
             loadMasterData();
