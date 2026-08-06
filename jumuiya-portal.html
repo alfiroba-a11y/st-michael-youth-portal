@@ -240,7 +240,7 @@
 
         async function loadJumuiyaData() {
             try {
-                // 1. Fetch contributions/submissions
+                // 1. Fetch contributions/submissions specifically for this Jumuiya
                 const res = await fetch(`/api/jumuiya/data?jumuiyaName=${encodeURIComponent(currentJumuiyaName)}`);
                 const data = await res.json();
                 const tbody = document.getElementById('jumuiyaRecordsList');
@@ -260,13 +260,10 @@
                     tbody.innerHTML = `<tr><td colspan="6" class="text-muted text-center">No contributions recorded yet for ${currentJumuiyaName}.</td></tr>`;
                 }
 
-                // 2. Fetch registered members from the main directory matching this Jumuiya
-                const membersRes = await fetch(`/api/jumuiya/members?jumuiyaName=${encodeURIComponent(currentJumuiyaName)}`);
-                const membersData = await membersRes.json();
+                // 2. Render registered members returned inside the data payload or fallback endpoint
                 const membersTbody = document.getElementById('jumuiyaMembersDirectoryList');
-
-                if (membersData.success && membersData.members && membersData.members.length > 0) {
-                    membersTbody.innerHTML = membersData.members.map(m => `
+                if (data.success && data.members && data.members.length > 0) {
+                    membersTbody.innerHTML = data.members.map(m => `
                         <tr>
                             <td><strong class="text-primary">${m.customId || 'N/A'}</strong></td>
                             <td>${m.name}</td>
