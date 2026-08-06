@@ -1,4 +1,4 @@
-// Complete server.js with all data schemas, target updates, and downloads intact
+// Full and complete server.js restoring all routes, logins, reflections, readings, and targets
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
@@ -21,6 +21,14 @@ app.use(express.static(path.join(__dirname)));
 
 const MONGO_URI = process.env.MONGO_URI;
 let db = null;
+
+const automatedReflections = [
+    { title: "Walking in Divine Strength", reference: "Philippians 4:13", content: "I can do all things through Christ who strengthens me. No matter the challenges you face today, rely not on your own power, but on His infinite grace." },
+    { title: "Trusting the Journey", reference: "Proverbs 3:5-6", content: "Trust in the Lord with all your heart and lean not on your own understanding; in all your ways submit to him, and he will make your paths straight." },
+    { title: "A Heart of Pure Service", reference: "Colossians 3:23", content: "Whatever you do, work at it with all your heart, as working for the Lord, not for human masters." },
+    { title: "The Peace That Surpasses Understanding", reference: "John 14:27", content: "Peace I leave with you; my peace I give you. Do not let your hearts be troubled and do not be afraid." },
+    { title: "Renewed Hope", reference: "Isaiah 40:31", content: "Those who hope in the Lord will renew their strength. They will soar on wings like eagles; they will run and not grow weary." }
+];
 
 const VALID_PURPOSES = ['Christmas collection', 'Easter collection', 'Diocesan collection', 'Youth harambee', 'PMC contribution', 'Other'];
 
@@ -46,9 +54,9 @@ let fallbackData = {
     archives: [],
     targetAmount: 500000,
     jumuiyaTargets: {},
-    events: [],
+    events: [{ id: '1', title: 'Sunday Holy Mass & Youth Fellowship', date: 'Next Sunday at 10:00 AM', description: 'Main service at St. Michael Kasaini Church.', type: 'upcoming' }],
     messages: [],
-    readings: []
+    readings: [{ id: '1', title: "Sunday Holy Mass Readings", firstReading: "1 Kings 3:5...", psalm: "Psalm 119...", secondReading: "Romans 8...", gospel: "Matthew 13..." }]
 };
 
 async function readData() {
@@ -91,6 +99,24 @@ async function writeData(newData) {
     }
 }
 
+async function getSpiritualContent() {
+    let reflection = null;
+    let patronSaint = { name: "St. Aloysius Gonzaga", feastDay: "June 21", message: "Model of purity, youth, and selfless charity." };
+    if (db) {
+        try {
+            reflection = await db.collection('settings').findOne({ type: 'reflection' });
+            const ps = await db.collection('settings').findOne({ type: 'patronSaint' });
+            if (ps) patronSaint = ps;
+        } catch (err) {}
+    }
+    if (!reflection) {
+        const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
+        const auto = automatedReflections[dayOfYear % automatedReflections.length];
+        reflection = { title: auto.title, reference: auto.reference, content: auto.content };
+    }
+    return { reflection, patronSaint };
+}
+
 async function initDB() {
     if (MONGO_URI) {
         try {
@@ -114,14 +140,141 @@ initDB();
 const normalize = (str) => (str || '').toLowerCase().replace(/[\.\s]/g, '');
 const maskPhone = (phone) => (!phone || phone.length < 6) ? '****' : phone.slice(0, 3) + '****' + phone.slice(-3);
 
-// Core Page Routes
+// Page Route Endpoints
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
+app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
 app.get('/secret-admin-portal-kasaini-2026', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('/jumuiya-portal', (req, res) => res.sendFile(path.join(__dirname, 'jumuiya-portal.html')));
 
-// Full Admin Data API
+// Spiritual & Content API Endpoints
+app.get('/api/spiritual/content', async (req, res) => {
+    const content = await getSpiritualContent();
+    res.json({ success: true, ...content });
+});
+
+app.get('/api/analytics/jumuiya-graph', async (req, res) => {
+    const data = await readData();
+    const labels = JUMUIYAS_LIST.map(j => j.name);
+    const totalsMap = {};
+    labels.forEach(name => { totalsMap[name] = 0; });
+
+    (data.jumuiyaSubmissions || []).forEach(record => {
+        if (record.published && record.jumuiyaName) {
+            const matchedLabel = labels.find(l => normalize(l) === normalize(record.jumuiyaName));
+            if (matchedLabel) {
+                totalsMap[matchedLabel] += Number(record.amount || 0);
+            }
+        }
+    });
+    res.json({ success: true, labels, datasetsData: labels.map(name => totalsMap[name]) });
+});
+
+app.get('/api/jumuiyas/list', (req, res) => {
+    res.json({ success: true, jumuiyas: JUMUIYAS_LIST.map(j => ({ id: j.id, name: j.name, username: j.username })) });
+});
+
+app.post('/api/jumuiya/login', (req, res) => {
+    const { jumuiyaId, username, password } = req.body;
+    const jumuiya = JUMUIYAS_LIST.find(j => j.id === jumuiyaId);
+    if (jumuiya && jumuiya.username === username && jumuiya.pass === password) {
+        return res.json({ success: true, name: jumuiya.name });
+    }
+    res.json({ success: false, message: 'Invalid credentials.' });
+});
+
+app.get('/api/jumuiya/data', async (req, res) => {
+    const { jumuiyaName } = req.query;
+    const data = await readData();
+    const targetNorm = normalize(jumuiyaName);
+    const submissions = (data.jumuiyaSubmissions || []).filter(s => normalize(s.jumuiyaName) === targetNorm);
+    res.json({ success: true, submissions, validPurposes: VALID_PURPOSES });
+});
+
+app.post('/api/jumuiya/submit-record', async (req, res) => {
+    const { jumuiyaName, name, amount, purpose } = req.body;
+    if (!name || !jumuiyaName) return res.json({ success: false, message: 'Missing fields.' });
+    const data = await readData();
+    const submissions = [...(data.jumuiyaSubmissions || []), {
+        id: Date.now().toString(),
+        jumuiyaName,
+        name: name.trim(),
+        amount: parseFloat(amount) || 0,
+        purpose: VALID_PURPOSES.includes(purpose) ? purpose : 'Other',
+        published: false
+    }];
+    await writeData({ jumuiyaSubmissions: submissions });
+    res.json({ success: true, message: 'Submitted successfully!' });
+});
+
+app.get('/api/youth/directory', async (req, res) => {
+    const data = await readData();
+    const { reflection, patronSaint } = await getSpiritualContent();
+    let contributionsMap = {};
+    JUMUIYAS_LIST.forEach(j => { contributionsMap[j.name] = 0; });
+    (data.jumuiyaSubmissions || []).forEach(r => {
+        if (r.published) {
+            const matched = JUMUIYAS_LIST.find(j => normalize(j.name) === normalize(r.jumuiyaName));
+            if (matched) contributionsMap[matched.name] += Number(r.amount || 0);
+        }
+    });
+    res.json({ 
+        success: true, 
+        members: (data.members || []).map(m => ({ ...m, phone: maskPhone(m.phone) })), 
+        masterContributions: (data.jumuiyaSubmissions || []).filter(s => s.published), 
+        contributionsMap,
+        jumuiyaTargets: data.jumuiyaTargets || {},
+        events: data.events || [], 
+        readings: data.readings || [], 
+        messages: data.messages || [],
+        reflection,
+        patronSaint,
+        validPurposes: VALID_PURPOSES
+    });
+});
+
+app.post('/api/youth/register', async (req, res) => {
+    const { name, phone, jumuiya, group, pass } = req.body;
+    if (!name || !pass) return res.json({ success: false, message: 'Name & password required.' });
+    const data = await readData();
+    const cleanName = name.trim().toLowerCase();
+    if ((data.members || []).some(m => m.name.toLowerCase() === cleanName) || (data.pending || []).some(p => p.name.toLowerCase() === cleanName)) {
+        return res.json({ success: false, message: 'Account exists.' });
+    }
+    const pending = [...(data.pending || []), { id: Date.now().toString(), name: name.trim(), phone: phone || '', jumuiya: jumuiya || 'St. Michael', group: group || 'Youth General', pass, date: new Date().toLocaleDateString() }];
+    await writeData({ pending });
+    res.json({ success: true, message: 'Registered successfully!' });
+});
+
+app.post('/api/youth/login', async (req, res) => {
+    const { name, pass } = req.body;
+    const data = await readData();
+    const cleanName = name.trim().toLowerCase();
+    const member = (data.members || []).find(m => m.name.toLowerCase() === cleanName);
+    if (member) {
+        if (member.pass === pass) return res.json({ success: true, name: member.name, jumuiya: member.jumuiya });
+        return res.json({ success: false, message: 'Incorrect password.' });
+    }
+    res.json({ success: false, message: 'Member not found or pending approval.' });
+});
+
+// Master Admin APIs
+app.post('/api/admin/login', (req, res) => {
+    const { username, password } = req.body;
+    res.json({ success: (username === 'Admin' && password === 'Admin0247') });
+});
+
 app.get('/api/admin/data', async (req, res) => {
     const data = await readData();
+    const { reflection, patronSaint } = await getSpiritualContent();
+    let contributionsMap = {};
+    JUMUIYAS_LIST.forEach(j => { contributionsMap[j.name] = 0; });
+    (data.jumuiyaSubmissions || []).forEach(r => {
+        if (r.published) {
+            const matched = JUMUIYAS_LIST.find(j => normalize(j.name) === normalize(r.jumuiyaName));
+            if (matched) contributionsMap[matched.name] += Number(r.amount || 0);
+        }
+    });
     res.json({ 
         success: true, 
         pending: data.pending || [], 
@@ -129,15 +282,18 @@ app.get('/api/admin/data', async (req, res) => {
         jumuiyaSubmissions: data.jumuiyaSubmissions || [],
         polls: data.polls || [],
         archives: data.archives || [],
-        events: data.events || [],
-        messages: data.messages || [],
-        readings: data.readings || [],
         targetAmount: data.targetAmount !== undefined ? data.targetAmount : 500000,
-        jumuiyaTargets: data.jumuiyaTargets || {}
+        jumuiyaTargets: data.jumuiyaTargets || {},
+        contributionsMap,
+        readings: data.readings || [], 
+        events: data.events || [], 
+        messages: data.messages || [],
+        reflection,
+        patronSaint,
+        validPurposes: VALID_PURPOSES
     });
 });
 
-// Target Update Endpoint
 app.post('/api/admin/set-target', async (req, res) => {
     try {
         const { targetAmount, jumuiyaTargets } = req.body;
@@ -159,7 +315,6 @@ app.post('/api/admin/set-target', async (req, res) => {
     }
 });
 
-// Admin Report Download API
 app.get('/api/admin/download-data', async (req, res) => {
     try {
         const { type } = req.query;
@@ -236,7 +391,6 @@ app.get('/api/admin/download-data', async (req, res) => {
     }
 });
 
-// Member Management Endpoints
 app.post('/api/admin/approve', async (req, res) => {
     const { id } = req.body;
     const data = await readData();
@@ -257,5 +411,5 @@ app.post('/api/admin/reject', async (req, res) => {
 });
 
 app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`St. Michael Kasaini Server running on http://localhost:${PORT}`);
 });
