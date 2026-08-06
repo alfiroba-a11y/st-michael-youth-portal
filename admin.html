@@ -435,7 +435,7 @@
                     document.getElementById('loginWrapper').classList.remove('my-auto');
                     document.getElementById('loginWrapper').classList.add('d-none');
                     document.getElementById('dashboardSection').classList.remove('d-none');
-                    await loadMasterData();
+                    loadMasterData();
                 } else {
                     // Fallback local bypass for offline UI testing if API fails
                     document.getElementById('loginWrapper').classList.remove('my-auto');
@@ -454,39 +454,23 @@
 
         async function loadMasterData() {
             try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5-second timeout
-
-                const res = await fetch('/api/admin/data', { signal: controller.signal });
-                clearTimeout(timeoutId);
-
-                if (!res.ok) throw new Error('Network response was not ok');
+                const res = await fetch('/api/admin/data');
                 const data = await res.json();
-                if (data && data.success) {
+                if (data.success) {
                     cachedMasterData = data;
                 }
             } catch (e) {
-                console.log('Using local state cache due to fetch error:', e);
+                console.log('Using local state cache');
             }
-            
-            // Ensure cachedMasterData exists to prevent rendering failure
-            if (typeof cachedMasterData === 'undefined' || !cachedMasterData) {
-                cachedMasterData = {};
-            }
-            
             renderDashboard(cachedMasterData);
         }
 
         function renderDashboard(data) {
-            const safeData = data || {};
-            const contributionsMap = safeData.contributionsMap || {};
-            const jumuiyaTargetsObj = safeData.jumuiyaTargets || {};
-            const generalTargetVal = safeData.target !== undefined ? Number(safeData.target) : 500000;
+            const contributionsMap = data.contributionsMap || {};
+            const jumuiyaTargetsObj = data.jumuiyaTargets || {};
+            const generalTargetVal = data.target !== undefined ? Number(data.target) : 500000;
             
-            const generalTargetInput = document.getElementById('generalTargetInput');
-            if (generalTargetInput) {
-                generalTargetInput.value = generalTargetVal;
-            }
+            document.getElementById('generalTargetInput').value = generalTargetVal;
 
             let totalCollectedAll = 0;
             let cHtml = '';
@@ -532,80 +516,60 @@
                 `;
             }
             
-            const contributionsSummaryList = document.getElementById('contributionsSummaryList');
-            if (contributionsSummaryList) {
-                contributionsSummaryList.innerHTML = cHtml || '<tr><td colspan="5" class="text-muted">No contributions recorded.</td></tr>';
-            }
-            
-            const jumuiyaTargetsContainer = document.getElementById('jumuiyaTargetsContainer');
-            if (jumuiyaTargetsContainer) {
-                jumuiyaTargetsContainer.innerHTML = targetInputsHtml;
-            }
+            document.getElementById('contributionsSummaryList').innerHTML = cHtml || '<tr><td colspan="5" class="text-muted">No contributions recorded.</td></tr>';
+            document.getElementById('jumuiyaTargetsContainer').innerHTML = targetInputsHtml;
 
-            // Render Chart.js Graph safely
-            const chartCanvas = document.getElementById('jumuiyaChart');
-            if (chartCanvas && typeof Chart !== 'undefined') {
-                const ctx = chartCanvas.getContext('2d');
-                if (typeof myJumuiyaChart !== 'undefined' && myJumuiyaChart instanceof Chart) {
-                    myJumuiyaChart.destroy();
-                }
-                myJumuiyaChart = new Chart(ctx, {
-                    type: 'bar',
-                    data: {
-                        labels: jumuiyaLabels,
-                        datasets: [
-                            {
-                                label: 'Collected (KES)',
-                                data: jumuiyaCollectedData,
-                                backgroundColor: 'rgba(25, 135, 84, 0.7)',
-                                borderColor: 'rgba(25, 135, 84, 1)',
-                                borderWidth: 1
-                            },
-                            {
-                                label: 'Target (KES)',
-                                data: jumuiyaTargetData,
-                                backgroundColor: 'rgba(13, 110, 253, 0.3)',
-                                borderColor: 'rgba(13, 110, 253, 1)',
-                                borderWidth: 1
-                            }
-                        ]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        scales: {
-                            y: { beginAtZero: true }
+            // Render Chart.js Graph
+            const ctx = document.getElementById('jumuiyaChart').getContext('2d');
+            if (myJumuiyaChart instanceof Chart) {
+                myJumuiyaChart.destroy();
+            }
+            myJumuiyaChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: jumuiyaLabels,
+                    datasets: [
+                        {
+                            label: 'Collected (KES)',
+                            data: jumuiyaCollectedData,
+                            backgroundColor: 'rgba(25, 135, 84, 0.7)',
+                            borderColor: 'rgba(25, 135, 84, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Target (KES)',
+                            data: jumuiyaTargetData,
+                            backgroundColor: 'rgba(13, 110, 253, 0.3)',
+                            borderColor: 'rgba(13, 110, 253, 1)',
+                            borderWidth: 1
                         }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
                     }
-                });
-            }
+                }
+            });
 
-            // Update Overall Target Cards & Progress safely
+            // Update Overall Target Cards & Progress
             const overallPercentage = generalTargetVal > 0 ? Math.min(Math.round((totalCollectedAll / generalTargetVal) * 100), 100) : 0;
-            
-            const totalCollectedDisplay = document.getElementById('totalCollectedDisplay');
-            if (totalCollectedDisplay) totalCollectedDisplay.textContent = `KES ${totalCollectedAll.toLocaleString()}`;
-            
-            const totalTargetDisplay = document.getElementById('totalTargetDisplay');
-            if (totalTargetDisplay) totalTargetDisplay.textContent = `KES ${generalTargetVal.toLocaleString()}`;
-            
-            const goalInputDisplay = document.getElementById('goalInputDisplay');
-            if (goalInputDisplay) goalInputDisplay.textContent = generalTargetVal.toLocaleString();
-            
-            const progressPercentageText = document.getElementById('progressPercentageText');
-            if (progressPercentageText) progressPercentageText.textContent = `${overallPercentage}% Achieved`;
+            document.getElementById('totalCollectedDisplay').textContent = `KES ${totalCollectedAll.toLocaleString()}`;
+            document.getElementById('totalTargetDisplay').textContent = `KES ${generalTargetVal.toLocaleString()}`;
+            document.getElementById('goalInputDisplay').textContent = generalTargetVal.toLocaleString();
+            document.getElementById('progressPercentageText').textContent = `${overallPercentage}% Achieved`;
             
             const progressBar = document.getElementById('overallProgressBar');
-            if (progressBar) {
-                progressBar.style.width = `${overallPercentage}%`;
-                progressBar.setAttribute('aria-valuenow', overallPercentage);
-                progressBar.textContent = `${overallPercentage}%`;
-            }
+            progressBar.style.width = `${overallPercentage}%`;
+            progressBar.setAttribute('aria-valuenow', overallPercentage);
+            progressBar.textContent = `${overallPercentage}%`;
 
-            // Events Admin List safely
+            // Events Admin List
             let eHtml = '<ul class="list-group">';
-            if (safeData.events && safeData.events.length > 0) {
-                safeData.events.forEach(ev => {
+            if (data.events && data.events.length > 0) {
+                data.events.forEach(ev => {
                     const eventId = ev.id || ev._id;
                     eHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
                         <div><strong>${ev.title || 'Untitled Event'}</strong> (${ev.date || ''})<br><small>${ev.description || ''}</small></div>
@@ -616,13 +580,12 @@
                 eHtml += '<li class="list-group-item text-muted">No active events posted.</li>';
             }
             eHtml += '</ul>';
-            const eventsListAdmin = document.getElementById('eventsListAdmin');
-            if (eventsListAdmin) eventsListAdmin.innerHTML = eHtml;
+            document.getElementById('eventsListAdmin').innerHTML = eHtml;
 
-            // Readings Admin List safely
+            // Readings Admin List
             let rHtml = '<ul class="list-group">';
-            if (safeData.readings && safeData.readings.length > 0) {
-                safeData.readings.forEach(rd => {
+            if (data.readings && data.readings.length > 0) {
+                data.readings.forEach(rd => {
                     const readingId = rd.id || rd._id;
                     rHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
                         <div>
@@ -639,91 +602,82 @@
                 rHtml += '<li class="list-group-item text-muted">No active readings posted.</li>';
             }
             rHtml += '</ul>';
-            const readingsListAdmin = document.getElementById('readingsListAdmin');
-            if (readingsListAdmin) readingsListAdmin.innerHTML = rHtml;
+            document.getElementById('readingsListAdmin').innerHTML = rHtml;
 
-            // Password Reset Requests Table safely
+            // Password Reset Requests Table
             let prHtml = '<table class="table table-bordered align-middle"><thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead><tbody>';
-            if (!safeData.passwordResets || safeData.passwordResets.length === 0) {
+            if (!data.passwordResets || data.passwordResets.length === 0) {
                 prHtml += '<tr><td colspan="4" class="text-muted">No pending password reset requests.</td></tr>';
             } else {
-                safeData.passwordResets.forEach(pr => {
+                data.passwordResets.forEach(pr => {
                     const memberId = pr.id || pr._id;
-                    const maskedPhone = typeof maskPhoneNumber === 'function' ? maskPhoneNumber(pr.phone) : pr.phone;
                     prHtml += `<tr>
-                        <td>${pr.name || ''}</td>
-                        <td>${maskedPhone}</td>
+                        <td>${pr.name}</td>
+                        <td>${maskPhoneNumber(pr.phone)}</td>
                         <td><span class="badge bg-warning text-dark">Forgot Password / Awaiting Approval</span></td>
                         <td><button class="btn btn-success btn-sm" onclick="approvePasswordReset('${memberId}')">Approve New Password</button></td>
                     </tr>`;
                 });
             }
             prHtml += '</tbody></table>';
-            const passwordResetList = document.getElementById('passwordResetList');
-            if (passwordResetList) passwordResetList.innerHTML = prHtml;
+            document.getElementById('passwordResetList').innerHTML = prHtml;
 
-            // Jumuiya Submissions Table safely
+            // Jumuiya Submissions Table (Row numbers removed)
             let sHtml = '';
-            if (!safeData.jumuiyaSubmissions || safeData.jumuiyaSubmissions.length === 0) {
+            if (!data.jumuiyaSubmissions || data.jumuiyaSubmissions.length === 0) {
                 sHtml = '<tr><td colspan="6" class="text-muted text-center">No submissions received yet from Jumuiya admins.</td></tr>';
             } else {
-                safeData.jumuiyaSubmissions.forEach((s) => {
-                    const subId = s.id || s._id || '';
+                data.jumuiyaSubmissions.forEach((s) => {
                     sHtml += `
                         <tr>
-                            <td><strong>${s.jumuiyaName || ''}</strong></td>
-                            <td>${subId ? subId.slice(-6) : ''}</td>
-                            <td>${s.name || ''} <br><small class="text-muted">KES ${s.amount || 0}</small></td>
-                            <td>${s.purpose || ''}</td>
+                            <td><strong>${s.jumuiyaName}</strong></td>
+                            <td>${s.id.slice(-6)}</td>
+                            <td>${s.name} <br><small class="text-muted">KES ${s.amount || 0}</small></td>
+                            <td>${s.purpose}</td>
                             <td>${s.published ? '<span class="badge bg-success">Published</span>' : '<span class="badge bg-warning text-dark">Draft / Hidden</span>'}</td>
                             <td>
-                                <button class="btn btn-sm ${s.published ? 'btn-outline-secondary' : 'btn-success'} mb-1" onclick="togglePublish('${subId}')">
+                                <button class="btn btn-sm ${s.published ? 'btn-outline-secondary' : 'btn-success'} mb-1" onclick="togglePublish('${s.id}')">
                                     ${s.published ? 'Unpublish' : 'Publish'}
                                 </button>
-                                <button class="btn btn-sm btn-outline-primary mb-1" onclick="openEditModal('${subId}', '${s.name || ''}', '${s.amount || 0}', '${s.purpose || ''}')">Edit</button>
-                                <button class="btn btn-sm btn-outline-danger mb-1" onclick="deleteJumuiyaRecord('${subId}')">Delete</button>
+                                <button class="btn btn-sm btn-outline-primary mb-1" onclick="openEditModal('${s.id}', '${s.name}', '${s.amount || 0}', '${s.purpose}')">Edit</button>
+                                <button class="btn btn-sm btn-outline-danger mb-1" onclick="deleteJumuiyaRecord('${s.id}')">Delete</button>
                             </td>
                         </tr>
                     `;
                 });
             }
-            const masterJumuiyaRecordsList = document.getElementById('masterJumuiyaRecordsList');
-            if (masterJumuiyaRecordsList) masterJumuiyaRecordsList.innerHTML = sHtml;
+            document.getElementById('masterJumuiyaRecordsList').innerHTML = sHtml;
 
-            // Pending Registrations Table safely
+            // Pending Registrations Table
             let pHtml = '<table class="table table-bordered"><thead><tr><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th><th>Action</th></tr></thead><tbody>';
-            if (!safeData.pending || safeData.pending.length === 0) {
+            if (!data.pending || data.pending.length === 0) {
                 pHtml += '<tr><td colspan="5" class="text-muted">No pending registrations.</td></tr>';
             } else {
-                safeData.pending.forEach(p => {
-                    const pId = p.id || p._id;
-                    const maskedPhone = typeof maskPhoneNumber === 'function' ? maskPhoneNumber(p.phone) : p.phone;
-                    pHtml += `<tr><td>${p.name || ''}</td><td>${maskedPhone}</td><td>${p.jumuiya || ''}</td><td>${p.group || ''}</td><td><button class="btn btn-success btn-sm" onclick="approveUser('${pId}')">Approve</button> <button class="btn btn-outline-danger btn-sm" onclick="rejectUser('${pId}')">Reject</button></td></tr>`;
+                data.pending.forEach(p => {
+                    pHtml += `<tr><td>${p.name}</td><td>${maskPhoneNumber(p.phone)}</td><td>${p.jumuiya}</td><td>${p.group}</td><td><button class="btn btn-success btn-sm" onclick="approveUser('${p.id}')">Approve</button> <button class="btn btn-outline-danger btn-sm" onclick="rejectUser('${p.id}')">Reject</button></td></tr>`;
                 });
             }
             pHtml += '</tbody></table>';
-            const pendingList = document.getElementById('pendingList');
-            if (pendingList) pendingList.innerHTML = pHtml;
+            document.getElementById('pendingList').innerHTML = pHtml;
 
-            // Members Table safely
+            // Members Table
             let mHtml = '<table class="table table-bordered table-striped"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Phone</th><th>Group</th><th>Action</th></tr></thead><tbody>';
-            if (!safeData.members || safeData.members.length === 0) {
+            if (!data.members || data.members.length === 0) {
                 mHtml += '<tr><td colspan="6" class="text-muted">No registered members yet.</td></tr>';
             } else {
-                safeData.members.forEach((m) => {
+                data.members.forEach((m) => {
                     const memberId = m.id || m._id;
                     const safeName = (m.name || '').replace(/'/g, "\\'");
                     const safePhone = (m.phone || '').replace(/'/g, "\\'");
                     const safeJumuiya = (m.jumuiya || '').replace(/'/g, "\\'");
                     const safeGroup = (m.group || '').replace(/'/g, "\\'");
-                    const maskedPhone = typeof maskPhoneNumber === 'function' ? maskPhoneNumber(m.phone) : m.phone;
 
                     mHtml += `<tr>
                         <td><strong class="text-primary">${m.customId || 'N/A'}</strong></td>
-                        <td>${m.name || ''}</td>
+                        <td>${m.name}</td>
                         <td><span class="badge bg-info text-dark">${m.jumuiya || 'St. Michael'}</span></td>
-                        <td>${maskedPhone}</td>
-                        <td>${m.group || ''}</td>
+                        <td>${maskPhoneNumber(m.phone)}</td>
+                        <td>${m.group}</td>
                         <td>
                             <button class="btn btn-outline-primary btn-sm mb-1" onclick="openEditMemberModal('${memberId}', '${safeName}', '${safePhone}', '${safeJumuiya}', '${safeGroup}')">Edit</button>
                             <button class="btn btn-danger btn-sm mb-1" onclick="removeMember('${memberId}')">Remove</button>
@@ -732,7 +686,231 @@
                 });
             }
             mHtml += '</tbody></table>';
-            const memberList = document.getElementById('memberList');
-            if (memberList) memberList.innerHTML = mHtml;
+            document.getElementById('memberList').innerHTML = mHtml;
+        }
+
+        // Auto-calculate general target sum when individual Jumuiya inputs change
+        function recalculateGeneralTarget() {
+            let sum = 0;
+            document.querySelectorAll('.jumuiya-target-field').forEach(input => {
+                sum += Number(input.value) || 0;
+            });
+            document.getElementById('generalTargetInput').value = sum;
+        }
+
+        // Target Modal Trigger Helpers
+        function openTargetModal() {
+            document.getElementById('targetSuccessAlert').classList.add('d-none');
+            new bootstrap.Modal(document.getElementById('targetModal')).show();
+        }
+
+        function openTargetModalForJumuiya(jumuiyaName) {
+            openTargetModal();
+            setTimeout(() => {
+                const inputField = document.querySelector(`.jumuiya-target-field[data-jumuiya="${jumuiyaName}"]`);
+                if (inputField) {
+                    inputField.focus();
+                    inputField.select();
+                }
+            }, 300);
+        }
+
+        document.getElementById('targetForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const generalTarget = Number(document.getElementById('generalTargetInput').value) || 0;
+            const jumuiyaTargets = {};
+            
+            document.querySelectorAll('.jumuiya-target-field').forEach(input => {
+                const jName = input.getAttribute('data-jumuiya');
+                const val = Number(input.value) || 0;
+                jumuiyaTargets[jName] = val;
+            });
+
+            // Update local cache immediately so changes reflect instantly
+            cachedMasterData.target = generalTarget;
+            cachedMasterData.jumuiyaTargets = jumuiyaTargets;
+
+            // Show visual success alert
+            const successAlert = document.getElementById('targetSuccessAlert');
+            successAlert.classList.remove('d-none');
+
+            // Re-render dashboard instantly with new targets
+            renderDashboard(cachedMasterData);
+
+            // Attempt background server save
+            try {
+                await fetch('/api/admin/update-target', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ target: generalTarget, jumuiyaTargets })
+                });
+            } catch (err) {
+                console.log('Saved locally');
+            }
+
+            // Close modal after 1 second
+            setTimeout(() => {
+                const modalEl = document.getElementById('targetModal');
+                const modal = bootstrap.Modal.getInstance(modalEl);
+                if (modal) modal.hide();
+            }, 1000);
+        });
+
+        // Download Modal Handlers
+        function openDownloadModal(defaultFormat = 'pdf') {
+            document.getElementById('downloadFormat').value = defaultFormat;
+            new bootstrap.Modal(document.getElementById('downloadModal')).show();
+        }
+
+        async function executeDownload(e) {
+            e.preventDefault();
+            const format = document.getElementById('downloadFormat').value;
+            const scope = document.getElementById('downloadScope').value;
+            
+            bootstrap.Modal.getInstance(document.getElementById('downloadModal')).hide();
+
+            try {
+                const response = await fetch(`/api/admin/download-data?format=${format}&scope=${scope}`);
+                if (!response.ok) throw new Error('Network response was not ok');
+                
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `St_Michael_Report_${scope}.${format === 'pdf' ? 'pdf' : 'xlsx'}`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                window.URL.revokeObjectURL(url);
+            } catch (err) {
+                window.open(`/api/admin/download-data?format=${format}&scope=${scope}`, '_blank');
+            }
+        }
+
+        // Event Form Submission
+        document.getElementById('eventForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                title: document.getElementById('eventTitle').value,
+                date: document.getElementById('eventDate').value,
+                description: document.getElementById('eventDesc').value
+            };
+            await fetch('/api/admin/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            document.getElementById('eventForm').reset();
+            loadMasterData();
+        });
+
+        async function deleteEvent(id) {
+            if (confirm('Delete this event?')) {
+                await fetch('/api/admin/events/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+                loadMasterData();
+            }
+        }
+
+        // Reading Form Submission
+        document.getElementById('readingForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                title: document.getElementById('readingTitle').value,
+                firstReading: document.getElementById('firstReading').value,
+                psalm: document.getElementById('psalm').value,
+                secondReading: document.getElementById('secondReading').value,
+                gospel: document.getElementById('gospel').value
+            };
+            await fetch('/api/admin/readings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            document.getElementById('readingForm').reset();
+            loadMasterData();
+        });
+
+        async function deleteReading(id) {
+            if (confirm('Delete this reading?')) {
+                await fetch('/api/admin/readings/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+                loadMasterData();
+            }
+        }
+
+        async function togglePublish(id) {
+            await fetch('/api/admin/toggle-publish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+            loadMasterData();
+        }
+
+        function openEditModal(id, name, amount, purpose) {
+            document.getElementById('editRecId').value = id;
+            document.getElementById('editName').value = name;
+            document.getElementById('editAmount').value = amount;
+            document.getElementById('editPurpose').value = purpose;
+            new bootstrap.Modal(document.getElementById('editModal')).show();
+        }
+
+        async function saveEditedRecord() {
+            const payload = {
+                id: document.getElementById('editRecId').value,
+                name: document.getElementById('editName').value,
+                amount: document.getElementById('editAmount').value,
+                purpose: document.getElementById('editPurpose').value
+            };
+            await fetch('/api/admin/edit-jumuiya-record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
+            loadMasterData();
+        }
+
+        // Member Edit Functions
+        function openEditMemberModal(id, name, phone, jumuiya, group) {
+            document.getElementById('editUserId').value = id;
+            document.getElementById('editMemberName').value = name;
+            document.getElementById('editMemberPhone').value = phone;
+            document.getElementById('editMemberJumuiya').value = jumuiya;
+            document.getElementById('editMemberGroup').value = group;
+            new bootstrap.Modal(document.getElementById('editMemberModal')).show();
+        }
+
+        document.getElementById('editMemberForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = {
+                id: document.getElementById('editUserId').value,
+                name: document.getElementById('editMemberName').value,
+                phone: document.getElementById('editMemberPhone').value,
+                jumuiya: document.getElementById('editMemberJumuiya').value,
+                group: document.getElementById('editMemberGroup').value
+            };
+            await fetch('/api/admin/edit-member', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            bootstrap.Modal.getInstance(document.getElementById('editMemberModal')).hide();
+            loadMasterData();
+        });
+
+        async function approvePasswordReset(id) {
+            if (confirm('Approve this new password request?')) {
+                await fetch('/api/admin/approve-password-reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+                loadMasterData();
+            }
+        }
+
+        async function deleteJumuiyaRecord(id) {
+            if (confirm('Are you sure you want to permanently delete this submission record?')) {
+                await fetch('/api/admin/delete-jumuiya-record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+                loadMasterData();
+            }
+        }
+
+        async function approveUser(id) {
+            await fetch('/api/admin/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+            loadMasterData();
+        }
+
+        async function rejectUser(id) {
+            if (confirm('Are you sure you want to reject this registration?')) {
+                await fetch('/api/admin/reject', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+                loadMasterData();
+            }
+        }
+
+        async function removeMember(id) {
+            if (confirm('Are you sure you want to remove this member?')) {
+                await fetch('/api/admin/remove-member', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
+                loadMasterData();
+            }
         }
     </script>
+</body>
+</html>
