@@ -1,4 +1,4 @@
-// Full and complete server.js restoring all routes, logins, reflections, readings, and targets
+// Full Production server.js - Restoring all features, models, endpoints, and authentication
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
