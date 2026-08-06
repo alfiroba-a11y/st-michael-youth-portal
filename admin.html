@@ -384,31 +384,12 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         let cachedMasterData = {
-            contributionsMap: {
-                "St. Catherine": 800,
-                "St. Ann": 1500,
-                "St. Michael": 1500,
-                "St. Raphael": 0,
-                "St. Francisco": 0,
-                "St. Monica": 50,
-                "St. Stephen": 0,
-                "St. Jacinta": 0,
-                "St. Paul": 1200,
-                "St. Francis of Assisi": 300
-            },
+            contributionsMap: {},
             jumuiyaTargets: {},
             target: 500000,
-            jumuiyaSubmissions: [
-                { id: "sub_1", jumuiyaName: "St. Michael", name: "John Mwangi", amount: 1500, purpose: "Monthly Contribution", published: true },
-                { id: "sub_2", jumuiyaName: "St. Ann", name: "Mary Wanjiku", amount: 1500, purpose: "Church Project", published: true },
-                { id: "sub_3", jumuiyaName: "St. Paul", name: "Peter Omondi", amount: 1200, purpose: "Youth Harambee", published: true }
-            ],
+            jumuiyaSubmissions: [],
             pending: [],
-            members: [
-                { id: "m_1", customId: "STM-001", name: "John Mwangi", jumuiya: "St. Michael", phone: "0712345678", group: "Youth" },
-                { id: "m_2", customId: "STM-002", name: "Mary Wanjiku", jumuiya: "St. Ann", phone: "0723456789", group: "Choir" },
-                { id: "m_3", customId: "STM-003", name: "Peter Omondi", jumuiya: "St. Paul", phone: "0734567890", group: "Youth" }
-            ],
+            members: [],
             events: [],
             readings: [],
             passwordResets: []
@@ -438,16 +419,20 @@
                 const data = await res.json();
 
                 if (data.success) {
-                    if (data.data) cachedMasterData = data.data;
+                    document.getElementById('loginWrapper').classList.remove('my-auto');
+                    document.getElementById('loginWrapper').classList.add('d-none');
+                    document.getElementById('dashboardSection').classList.remove('d-none');
+                    loadMasterData();
+                } else {
+                    const alertEl = document.getElementById('adminAlert');
+                    alertEl.textContent = data.message || 'Invalid login credentials';
+                    alertEl.classList.remove('d-none');
                 }
             } catch (err) {
-                console.log('Using local state cache');
+                const alertEl = document.getElementById('adminAlert');
+                alertEl.textContent = 'Server connection error during login.';
+                alertEl.classList.remove('d-none');
             }
-
-            document.getElementById('loginWrapper').classList.remove('my-auto');
-            document.getElementById('loginWrapper').classList.add('d-none');
-            document.getElementById('dashboardSection').classList.remove('d-none');
-            renderDashboard(cachedMasterData);
         });
 
         async function loadMasterData() {
@@ -456,11 +441,11 @@
                 const data = await res.json();
                 if (data.success) {
                     cachedMasterData = data;
+                    renderDashboard(cachedMasterData);
                 }
             } catch (e) {
-                console.log('Using local state cache');
+                console.log('Failed to fetch master data');
             }
-            renderDashboard(cachedMasterData);
         }
 
         function renderDashboard(data) {
@@ -620,7 +605,7 @@
             prHtml += '</tbody></table>';
             document.getElementById('passwordResetList').innerHTML = prHtml;
 
-            // Jumuiya Submissions Table (Row numbers removed)
+            // Jumuiya Submissions Table
             let sHtml = '';
             if (!data.jumuiyaSubmissions || data.jumuiyaSubmissions.length === 0) {
                 sHtml = '<tr><td colspan="6" class="text-muted text-center">No submissions received yet from Jumuiya admins.</td></tr>';
