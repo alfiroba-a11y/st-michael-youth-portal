@@ -31,8 +31,8 @@
     <div id="dashboardSection" class="container py-4 d-none flex-grow-1" style="max-width: 1200px;">
         <div class="d-flex justify-content-between align-items-center mb-4 bg-white p-3 rounded shadow-sm">
             <div>
-               <h2>🛡️ Master Admin Control Panel</h2>
-                <small class="text-muted">Overseeing all 11 Jumuiyas, member registrations, events, readings, and published feeds</small>
+              <h2>🛡️ Master Admin Control Panel</h2>
+<small class="text-muted">Overseeing all 11 Jumuiyas, member registrations, events, readings, and published feeds</small>
             </div>
             <div>
                 <a href="/jumuiya-portal" class="btn btn-outline-primary btn-sm me-2" target="_blank">🌐 View Jumuiya Portal Grid</a>
@@ -50,26 +50,22 @@
             </div>
         </div>
 
-        <!-- Update Targets Modal -->
+        <!-- Single Jumuiya Target Modal -->
 <div class="modal fade" id="targetModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog">
         <div class="modal-content p-4">
-            <h4 class="mb-3 text-primary">⚙️ Configure Annual Target & Individual Jumuiya Targets</h4>
-            <p class="text-muted small">Set the overall annual financial goal and individual targets for each Jumuiya.</p>
-            <form id="targetForm" onsubmit="saveAllTargets(event)">
+            <h4 class="mb-3 text-primary">⚙️ Edit Target for <span id="modalJumuiyaName"></span></h4>
+            <p class="text-muted small">Update the individual financial target for this specific Jumuiya.</p>
+            <form id="targetForm" onsubmit="saveSingleJumuiyaTarget(event)">
+                <input type="hidden" id="modalJumuiyaId">
                 <div class="mb-4">
-                    <label class="form-label fw-bold">Overall Annual Target (KES)</label>
-                    <input type="number" id="globalTargetInput" class="form-control" placeholder="e.g. 500000" required>
-                </div>
-                
-                <h5 class="mb-3 text-secondary fs-6">Individual Jumuiya Targets (KES)</h5>
-                <div class="row" id="jumuiyaInputsContainer" style="max-height: 350px; overflow-y: auto; padding-right: 5px;">
-                    <!-- Dynamically injected via openTargetModal() -->
+                    <label class="form-label fw-bold">Jumuiya Target (KES)</label>
+                    <input type="number" id="singleJumuiyaTargetInput" class="form-control" placeholder="e.g. 45000" required>
                 </div>
 
                 <div class="d-flex justify-content-end gap-2 mt-4">
                     <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary btn-sm">Save All Targets</button>
+                    <button type="submit" class="btn btn-primary btn-sm">Save</button>
                 </div>
             </form>
         </div>
@@ -94,7 +90,7 @@ const JUMUIYAS_DIRECTORY = [
 
 let currentPortalData = {};
 
-async function openTargetModal() {
+async function openTargetModal(jumuiyaId, jumuiyaName) {
     try {
         const res = await fetch('/api/admin/data');
         const data = await res.json();
@@ -105,25 +101,13 @@ async function openTargetModal() {
         console.error('Error fetching portal data for targets:', e);
     }
 
-    const globalInput = document.getElementById('globalTargetInput');
-    if (globalInput) {
-        globalInput.value = currentPortalData.targetAmount || 500000;
-    }
+    document.getElementById('modalJumuiyaId').value = jumuiyaId;
+    document.getElementById('modalJumuiyaName').innerText = jumuiyaName;
 
-    const container = document.getElementById('jumuiyaInputsContainer');
-    if (container) {
-        container.innerHTML = '';
-        const savedTargets = currentPortalData.jumuiyaTargets || {};
-
-        JUMUIYAS_DIRECTORY.forEach(j => {
-            const val = savedTargets[j.id] !== undefined ? savedTargets[j.id] : '';
-            container.innerHTML += `
-                <div class="col-md-6 mb-3">
-                    <label class="form-label small fw-bold text-muted">${j.name}</label>
-                    <input type="number" class="form-control jumuiya-target-input" data-jumuiya-id="${j.id}" value="${val}" placeholder="Target amount">
-                </div>
-            `;
-        });
+    const savedTargets = currentPortalData.jumuiyaTargets || {};
+    const inputField = document.getElementById('singleJumuiyaTargetInput');
+    if (inputField) {
+        inputField.value = savedTargets[jumuiyaId] !== undefined ? savedTargets[jumuiyaId] : '';
     }
 
     const modalEl = document.getElementById('targetModal');
@@ -133,39 +117,68 @@ async function openTargetModal() {
     }
 }
 
-async function saveAllTargets(event) {
+async function saveSingleJumuiyaTarget(event) {
     event.preventDefault();
 
-    const targetAmount = parseFloat(document.getElementById('globalTargetInput').value) || 0;
-    const jumuiyaTargets = {};
+    const jumuiyaId = document.getElementById('modalJumuiyaId').value;
+    const newTarget = parseFloat(document.getElementById('singleJumuiyaTargetInput').value) || 0;
 
-    // Collect all inputs from the dynamic container
-    document.querySelectorAll('.jumuiya-target-input').forEach(input => {
-        const id = input.getAttribute('data-jumuiya-id');
-        jumuiyaTargets[id] = parseFloat(input.value) || 0;
-    });
+    let existingTargets = currentPortalData.jumuiyaTargets || {};
+    existingTargets[jumuiyaId] = newTarget;
 
     try {
         const response = await fetch('/api/admin/set-target', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ targetAmount, jumuiyaTargets })
+            body: JSON.stringify({ jumuiyaTargets: existingTargets })
         });
 
         const result = await response.json();
         if (result.success) {
-            alert('Annual and individual Jumuiya targets updated successfully!');
+            alert('Jumuiya target updated successfully!');
             const modalEl = document.getElementById('targetModal');
             const modal = bootstrap.Modal.getInstance(modalEl);
             if (modal) modal.hide();
-            location.reload(); // Refresh dashboard to reflect new values instantly
+            location.reload(); 
         } else {
-            alert('Failed to save targets. Please try again.');
+            alert('Failed to save target. Please try again.');
         }
     } catch (err) {
-        console.error('Error saving targets:', err);
-        alert('An error occurred while saving targets.');
+        console.error('Error saving target:', err);
+        alert('An error occurred while saving the target.');
     }
+}
+
+// Function to populate the Summary Table with unique individual targets & progress bars
+function renderContributionsSummary(data) {
+    const tbody = document.getElementById('contributionsSummaryList');
+    if (!tbody) return;
+
+    tbody.innerHTML = '';
+    const contributionsMap = data.contributionsMap || {};
+    const savedTargets = data.jumuiyaTargets || {};
+
+    JUMUIYAS_DIRECTORY.forEach(j => {
+        const collected = contributionsMap[j.name] || 0;
+        const target = savedTargets[j.id] || 0;
+        const percentage = target > 0 ? Math.min(Math.round((collected / target) * 100), 100) : 0;
+
+        tbody.innerHTML += `
+            <tr>
+                <td class="fw-bold">${j.name}</td>
+                <td>KES ${collected.toLocaleString()}</td>
+                <td>KES ${target.toLocaleString()}</td>
+                <td>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: ${percentage}%;" aria-valuenow="${percentage}" aria-valuemin="0" aria-valuemax="100">${percentage}%</div>
+                    </div>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary" onclick="openTargetModal('${j.id}', '${j.name}')">Edit Target</button>
+                </td>
+            </tr>
+        `;
+    });
 }
 </script>
 
@@ -260,6 +273,7 @@ async function saveAllTargets(event) {
                 </div>
             </div>
         </div>
+
         <!-- Password Reset Approvals -->
         <div class="card shadow-sm p-4 mb-4">
             <h4 class="text-danger mb-3">🔑 Password Reset Requests</h4>
@@ -305,32 +319,7 @@ async function saveAllTargets(event) {
 
     </div>
 
-    <!-- Target & Jumuiya Targets Update Modal -->
-    <div class="modal fade" id="targetModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content p-4">
-                <h4 class="mb-3 text-primary">⚙️ Configure Annual Target & Individual Jumuiya Targets</h4>
-                <form id="targetForm">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Overall Annual Target Amount (KES)</label>
-                        <input type="number" id="annualTargetInput" class="form-control" required value="500000">
-                    </div>
-                    <hr>
-                    <h5 class="text-secondary mb-3">Individual Jumuiya Target Breakdown</h5>
-                    <p class="text-muted small">Set custom target amounts for each specific Jumuiya or leave as default.</p>
-                    <div id="jumuiyaTargetsContainer" class="row g-3 mb-4">
-                        <!-- Dynamically populated Jumuiya target input boxes -->
-                    </div>
-                    <div class="d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary btn-sm">Save All Targets</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-  <!-- Download Document Selection Modal -->
+<!-- Download Document Selection Modal -->
 <div class="modal fade" id="downloadModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content p-4">
@@ -347,8 +336,8 @@ async function saveAllTargets(event) {
                 <div class="mb-3">
                     <label class="form-label fw-bold">Data Scope</label>
                     <select id="downloadScope" class="form-select">
-                        <option value="all">Complete Portal Data (All Jumuiyas & Members)</option>
                         <option value="financial">Financial Contributions Summary Only</option>
+                        <option value="all">Complete Portal Data (All Jumuiyas & Members)</option>
                         <option value="members">Registered Members Directory Only</option>
                     </select>
                 </div>
@@ -362,18 +351,31 @@ async function saveAllTargets(event) {
 </div>
 
 <script>
+function openDownloadModal(format) {
+    const formatSelect = document.getElementById('downloadFormat');
+    if (formatSelect) {
+        formatSelect.value = format;
+    }
+    const modalEl = document.getElementById('downloadModal');
+    if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+
 function executeDownload(event) {
     event.preventDefault();
     
     const scope = document.getElementById('downloadScope').value;
-    let endpoint = '/api/admin/download-data';
+    const format = document.getElementById('downloadFormat').value;
+    let endpoint = `/api/admin/download-data?format=${format}`;
     
     if (scope === 'financial') {
-        endpoint += '?type=financial';
+        endpoint += '&type=financial';
     } else if (scope === 'members') {
-        endpoint += '?type=members';
+        endpoint += '&type=members';
     } else {
-        endpoint += '?type=all';
+        endpoint += '&type=all';
     }
     
     window.open(endpoint, '_blank');
