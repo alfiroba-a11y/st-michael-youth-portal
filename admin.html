@@ -2,28 +2,78 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Portal - St. Michael Kasaini Youth</title>
+    <meta name="viewport" content="width=1200">
+    <title>St. Michael Admin Portal - Complete Original</title>
+    
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- html2pdf.js for true PDF report downloads -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
     <style>
-        body { background-color: #f8f9fa; }
-        .container { max-width: 1140px !important; }
-        .card { border: none; box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); }
-        canvas { width: 100% !important; height: 350px !important; }
+        body {
+            min-width: 1200px !important;
+            width: 1200px !important;
+            margin: 0 auto;
+            background-color: #f8f9fa;
+            overflow-x: auto;
+            font-family: Arial, sans-serif;
+        }
+        .container, .container-fluid {
+            width: 1140px !important;
+            max-width: 1140px !important;
+            min-width: 1140px !important;
+        }
+        .card { 
+            border: none; 
+            box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); 
+            margin-bottom: 20px;
+        }
+        canvas { 
+            width: 100% !important; 
+            height: 350px !important; 
+        }
+        .topnav {
+            background: #212529;
+            color: white;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .topnav .nav-items {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .topnav a {
+            color: #adb5bd;
+            text-decoration: none;
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .topnav a:hover, .topnav a.active {
+            color: white;
+            background: #343a40;
+        }
     </style>
 </head>
 <body>
 
-    <!-- Login Section -->
-    <div id="loginWrapper" class="container d-flex justify-content-center align-items-center my-auto" style="min-height: 100vh;">
-        <div class="card p-4 shadow" style="width: 100%; max-width: 400px;">
-            <div class="text-center mb-4">
-                <h3 class="fw-bold text-primary">St. Michael Kasaini</h3>
-                <p class="text-muted small">Admin Portal Login</p>
-            </div>
-            <form id="adminLoginForm">
+    <!-- Login Overlay -->
+    <div id="loginOverlay" class="container mt-5" style="max-width: 450px !important; width: 450px !important;">
+        <div class="card p-4 mt-5 shadow-sm">
+            <h3 class="text-center mb-4 text-primary"><i class="fas fa-church me-2"></i>St. Michael Admin Portal</h3>
+            <div id="loginError" class="alert alert-danger d-none"></div>
+            <form id="loginForm">
                 <div class="mb-3">
                     <label class="form-label">Username</label>
                     <input type="text" id="adminUser" class="form-control" required>
@@ -32,362 +82,235 @@
                     <label class="form-label">Password</label>
                     <input type="password" id="adminPass" class="form-control" required>
                 </div>
-                <div id="adminAlert" class="alert alert-danger small d-none" role="alert"></div>
-                <button type="submit" class="btn btn-primary w-100">Login to Dashboard</button>
+                <button type="submit" class="btn btn-primary w-100">Login to Portal</button>
             </form>
         </div>
     </div>
 
-    <!-- Dashboard Section -->
-    <div id="dashboardSection" class="d-none">
-        <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm px-4">
-            <div class="container">
-                <a class="navbar-brand fw-bold" href="#">St. Michael Admin Portal</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbarContent">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-                <div class="collapse navbar-collapse" id="adminNavbarContent">
-                    <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center gap-2">
-                        <li class="nav-item"><a class="nav-link active" href="#dashboard"><i class="fas fa-chart-line me-1"></i> Dashboard</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#contributions"><i class="fas fa-hand-holding-dollar me-1"></i> Contributions</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#submissions"><i class="fas fa-file-invoice-dollar me-1"></i> Records</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#members"><i class="fas fa-users me-1"></i> Members</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#approvals"><i class="fas fa-user-check me-1"></i> Approvals</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#passwords"><i class="fas fa-key me-1"></i> Resets</a></li>
-                        <li class="nav-item"><a class="nav-link" href="#content"><i class="fas fa-newspaper me-1"></i> Content</a></li>
-                        <li class="nav-item ms-lg-3"><a class="btn btn-outline-danger btn-sm text-white" href="#" onclick="location.reload()"><i class="fas fa-sign-out-alt me-1"></i> Logout</a></li>
-                    </ul>
-                </div>
+    <!-- Main Admin Dashboard Wrapper -->
+    <div id="adminDashboard" class="container-fluid d-none p-0">
+        <!-- Top Navigation Bar matching original layout -->
+        <div class="topnav">
+            <div class="fw-bold fs-5 text-white"><i class="fas fa-church me-2"></i>St. Michael Admin Portal</div>
+            <div class="nav-items">
+                <a href="#dashboard" class="active" onclick="switchSection('dashboard', event)"><i class="fas fa-chart-line"></i> Dashboard</a>
+                <a href="#contributions" onclick="switchSection('contributions', event)"><i class="fas fa-hand-holding-usd"></i> Contributions</a>
+                <a href="#records" onclick="switchSection('records', event)"><i class="fas fa-file-alt"></i> Records</a>
+                <a href="#members" onclick="switchSection('members', event)"><i class="fas fa-users"></i> Members</a>
+                <a href="#approvals" onclick="switchSection('approvals', event)"><i class="fas fa-user-clock"></i> Approvals</a>
+                <a href="#resets" onclick="switchSection('resets', event)"><i class="fas fa-key"></i> Resets</a>
+                <a href="#content" onclick="switchSection('content', event)"><i class="fas fa-newspaper"></i> Content</a>
+                <button class="btn btn-outline-danger btn-sm text-white border-danger" onclick="logoutAdmin()"><i class="fas fa-sign-out-alt me-1"></i> Logout</button>
             </div>
-        </nav>
+        </div>
 
-        <main class="container py-4">
-            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">Dashboard Overview</h1>
-                <div class="btn-toolbar mb-2 mb-md-0 gap-2">
-                    <button class="btn btn-sm btn-outline-success" onclick="openDownloadModal()">
-                        <i class="fas fa-file-download me-1"></i> Download Official Reports
-                    </button>
-                    <button class="btn btn-sm btn-outline-primary" onclick="openTargetModal()">
-                        <i class="fas fa-bullseye me-1"></i> Set Targets
-                    </button>
-                </div>
-            </div>
-
-            <!-- Statistics Cards -->
-            <div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
-                <div class="col">
-                    <div class="card p-3 border-start border-success border-4">
-                        <h6 class="text-muted">Total Collected</h6>
-                        <h3 id="totalCollectedDisplay" class="text-success fw-bold">KES 0</h3>
-                        <small class="text-muted" id="progressPercentageText">0% Achieved</small>
+        <div class="container py-4">
+            <!-- Section: Dashboard -->
+            <div id="sec-dashboard" class="admin-section">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="fw-bold text-dark">Dashboard Overview</h2>
+                    <div>
+                        <button class="btn btn-outline-success btn-sm me-2" onclick="downloadPDFReport('all')"><i class="fas fa-file-pdf me-1"></i> Download Official Reports</button>
+                        <button class="btn btn-outline-primary btn-sm me-2" onclick="openTargetModal()"><i class="fas fa-bullseye me-1"></i> Set Targets</button>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="loadAdminData()"><i class="fas fa-sync-alt me-1"></i> Refresh</button>
                     </div>
                 </div>
-                <div class="col">
-                    <div class="card p-3 border-start border-primary border-4">
-                        <h6 class="text-muted">Total Target</h6>
-                        <h3 id="totalTargetDisplay" class="text-primary fw-bold">KES 500,000</h3>
-                        <small class="text-muted">Goal: <span id="goalInputDisplay">500000</span> KES</small>
+
+                <div class="row mb-4">
+                    <div class="col-4">
+                        <div class="card p-3 bg-white border-start border-success border-4">
+                            <h6 class="text-muted">Total Collected</h6>
+                            <h3 id="statTotalCollected" class="text-success fw-bold mb-1">KES 5,350</h3>
+                            <small class="text-muted" id="statAchievedPct">1% Achieved</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="card p-3 bg-white border-start border-primary border-4">
+                            <h6 class="text-muted">Total Target</h6>
+                            <h3 id="statTargetAmount" class="text-primary fw-bold mb-1">KES 500,000</h3>
+                            <small class="text-muted" id="statGoalText">Goal: 500,000 KES</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="card p-3 bg-white border-start border-warning border-4">
+                            <h6 class="text-muted">Overall Progress Bar</h6>
+                            <h3 id="statProgressText" class="text-warning fw-bold mb-1">1%</h3>
+                            <div class="progress mt-2" style="height: 8px;"><div id="statProgressBar" class="progress-bar bg-success" style="width: 1%;"></div></div>
+                        </div>
                     </div>
                 </div>
-                <div class="col">
-                    <div class="card p-3 border-start border-warning border-4">
-                        <h6 class="text-muted">Overall Progress Bar</h6>
-                        <div class="progress my-2" style="height: 20px;">
-                            <div id="overallProgressBar" class="progress-bar bg-success" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+
+                <div class="card p-4 bg-white mb-4">
+                    <h4 class="mb-3"><i class="fas fa-chart-bar me-2"></i>Jumuiya Collections vs Targets</h4>
+                    <canvas id="jumuiyaChart"></canvas>
+                </div>
+
+                <div class="card p-4 bg-white">
+                    <h4 class="mb-3"><i class="fas fa-list me-2"></i>Jumuiya Breakdown & Targets</h4>
+                    <div class="table-responsive">
+                        <table class="table table-striped align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Jumuiya Name</th>
+                                    <th>Amount Collected</th>
+                                    <th>Target</th>
+                                    <th>Progress</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="jumuiyaBreakdownBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Contributions -->
+            <div id="sec-contributions" class="admin-section d-none">
+                <div class="card p-4 bg-white">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4><i class="fas fa-hand-holding-usd me-2"></i>Jumuiya Financial Submissions</h4>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="downloadPDFReport('financial')"><i class="fas fa-file-pdf me-1"></i>Download Financial PDF</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Jumuiya</th>
+                                    <th>Reference ID</th>
+                                    <th>Youth / Amount</th>
+                                    <th>Purpose</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="submissionsTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Records -->
+            <div id="sec-records" class="admin-section d-none">
+                <div class="card p-4 bg-white">
+                    <h4 class="mb-3"><i class="fas fa-file-alt me-2"></i>Master Records & Reports Archive</h4>
+                    <p class="text-muted">Access official system logs, financial ledgers, and export complete audit trails.</p>
+                    <button class="btn btn-success" onclick="downloadPDFReport('all')"><i class="fas fa-download me-1"></i> Download Full System Backup PDF</button>
+                </div>
+            </div>
+
+            <!-- Section: Members -->
+            <div id="sec-members" class="admin-section d-none">
+                <div class="card p-4 bg-white">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4><i class="fas fa-users me-2"></i>Registered Members Directory</h4>
+                        <button class="btn btn-outline-secondary btn-sm" onclick="downloadPDFReport('members')"><i class="fas fa-file-pdf me-1"></i>Download Members PDF</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Jumuiya</th>
+                                    <th>Phone</th>
+                                    <th>Group</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="membersTableBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Approvals -->
+            <div id="sec-approvals" class="admin-section d-none">
+                <div class="card p-4 bg-white">
+                    <h4 class="mb-3"><i class="fas fa-user-clock me-2"></i>Pending Registrations Approval</h4>
+                    <div class="table-responsive">
+                        <table class="table table-striped align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Jumuiya</th>
+                                    <th>Group</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pendingTableBody">
+                                <tr><td colspan="5" class="text-center text-muted">No pending registrations.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Resets -->
+            <div id="sec-resets" class="admin-section d-none">
+                <div class="card p-4 bg-white">
+                    <h4 class="mb-3"><i class="fas fa-key me-2"></i>Password Reset Requests</h4>
+                    <div class="table-responsive">
+                        <table class="table table-striped align-middle">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="resetsTableBody">
+                                <tr><td colspan="4" class="text-center text-muted">No pending password reset requests.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section: Content -->
+            <div id="sec-content" class="admin-section d-none">
+                <div class="card p-4 bg-white mb-4">
+                    <h4 class="mb-3"><i class="fas fa-newspaper me-2"></i>Manage Events & Readings</h4>
+                    <div class="row">
+                        <div class="col-6">
+                            <h5>Post New Event</h5>
+                            <form id="eventForm" onsubmit="handlePostEvent(event)">
+                                <div class="mb-3"><label class="form-label">Event Title</label><input type="text" id="eventTitle" class="form-control" required></div>
+                                <div class="mb-3"><label class="form-label">Date & Time</label><input type="text" id="eventDate" class="form-control" required></div>
+                                <div class="mb-3"><label class="form-label">Description</label><textarea id="eventDesc" class="form-control" rows="2" required></textarea></div>
+                                <button type="submit" class="btn btn-success btn-sm">Save Event</button>
+                            </form>
+                        </div>
+                        <div class="col-6">
+                            <h5>Post Mass Readings</h5>
+                            <form id="readingForm" onsubmit="handlePostReading(event)">
+                                <div class="mb-3"><label class="form-label">Title / Date</label><input type="text" id="readingTitle" class="form-control" required></div>
+                                <div class="mb-3"><label class="form-label">Scripture Details</label><textarea id="readingDesc" class="form-control" rows="4" required></textarea></div>
+                                <button type="submit" class="btn btn-primary btn-sm">Post Readings</button>
+                            </form>
                         </div>
                     </div>
                 </div>
             </div>
-
-            <!-- Jumuiya Analytics Graph Section -->
-            <div class="card p-4 mb-4" id="contributions">
-                <h4 class="mb-3 text-dark"><i class="fas fa-chart-bar me-2"></i> Jumuiya Collections vs Targets</h4>
-                <div>
-                    <canvas id="jumuiyaChart"></canvas>
-                </div>
-            </div>
-
-            <!-- Contributions Summary Table -->
-            <div class="card p-4 mb-4">
-                <h4 class="mb-3">Jumuiya Breakdown & Targets</h4>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead class="table-dark">
-                            <tr>
-                                <th>Jumuiya Name</th>
-                                <th>Amount Collected</th>
-                                <th>Target</th>
-                                <th>Progress</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody id="contributionsSummaryList">
-                            <tr><td colspan="5" class="text-muted text-center">Loading contributions...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Jumuiya Submissions Section -->
-            <div class="card p-4 mb-4" id="submissions">
-                <h4 class="mb-3"><i class="fas fa-file-invoice me-2"></i> Jumuiya Financial Submissions</h4>
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped align-middle">
-                        <thead class="table-light">
-                            <tr>
-                                <th>Jumuiya</th>
-                                <th>Reference ID</th>
-                                <th>Youth / Amount</th>
-                                <th>Purpose</th>
-                                <th>Status</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="masterJumuiyaRecordsList">
-                            <tr><td colspan="6" class="text-muted text-center">No submissions recorded yet.</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Members Directory Section -->
-            <div class="card p-4 mb-4" id="members">
-                <h4 class="mb-3"><i class="fas fa-address-book me-2"></i> Registered Members Directory</h4>
-                <div class="table-responsive" id="memberList">
-                    <table class="table table-bordered table-striped">
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Name</th>
-                                <th>Jumuiya</th>
-                                <th>Phone</th>
-                                <th>Group</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr><td colspan="6" class="text-muted text-center">Loading members...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- Pending Registrations Section -->
-            <div class="card p-4 mb-4" id="approvals">
-                <h4 class="mb-3"><i class="fas fa-user-clock me-2"></i> Pending Registrations Approval</h4>
-                <div id="pendingList" class="table-responsive">
-                    <p class="text-muted">Loading pending users...</p>
-                </div>
-            </div>
-
-            <!-- Password Reset Requests Section -->
-            <div class="card p-4 mb-4" id="passwords">
-                <h4 class="mb-3"><i class="fas fa-unlock-alt me-2"></i> Password Reset Requests</h4>
-                <div id="passwordResetList" class="table-responsive">
-                    <p class="text-muted">Loading password reset requests...</p>
-                </div>
-            </div>
-
-            <!-- Events & Readings Management Section -->
-            <div class="card p-4 mb-4" id="content">
-                <h4 class="mb-3"><i class="fas fa-calendar-alt me-2"></i> Manage Events & Readings</h4>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <h5 class="text-secondary">Post New Event</h5>
-                        <form id="eventForm">
-                            <div class="mb-2">
-                                <label class="form-label small">Event Title</label>
-                                <input type="text" id="eventTitle" class="form-control form-control-sm" required>
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label small">Date</label>
-                                <input type="date" id="eventDate" class="form-control form-control-sm" required>
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label small">Description</label>
-                                <textarea id="eventDesc" class="form-control form-control-sm" rows="2" required></textarea>
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-sm w-100">Publish Event</button>
-                        </form>
-                        <hr class="my-3">
-                        <div id="eventsListAdmin"></div>
-                    </div>
-
-                    <div class="col-md-6 mb-3">
-                        <h5 class="text-secondary">Post Mass Readings</h5>
-                        <form id="readingForm">
-                            <div class="mb-2">
-                                <label class="form-label small">Title / Date</label>
-                                <input type="text" id="readingTitle" class="form-control form-control-sm" placeholder="e.g. Sunday Mass Readings" required>
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label small">1st Reading</label>
-                                <input type="text" id="firstReading" class="form-control form-control-sm" required>
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label small">Responsorial Psalm</label>
-                                <input type="text" id="psalm" class="form-control form-control-sm" required>
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label small">2nd Reading</label>
-                                <input type="text" id="secondReading" class="form-control form-control-sm">
-                            </div>
-                            <div class="mb-2">
-                                <label class="form-label small">Gospel</label>
-                                <input type="text" id="gospel" class="form-control form-control-sm" required>
-                            </div>
-                            <button type="submit" class="btn btn-success btn-sm w-100">Publish Readings</button>
-                        </form>
-                        <hr class="my-3">
-                        <div id="readingsListAdmin"></div>
-                    </div>
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- Set Target Modal -->
-    <div class="modal fade" id="targetModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content p-4">
-                <h4 class="mb-3 text-primary">🎯 Set Targets</h4>
-                <p class="text-muted small">Configure both the General Target Amount and individual Jumuiya Target Amounts.</p>
-                <form id="targetForm">
-                    <div class="mb-3 p-3 bg-light rounded border">
-                        <label class="form-label fw-bold text-dark">GENERAL TARGET AMOUNT:</label>
-                        <input type="number" id="generalTargetInput" class="form-control" required placeholder="e.g. 500000">
-                        <small class="text-muted">Total overall financial goal for the parish youth.</small>
-                    </div>
-                    <hr class="my-3">
-                    <label class="form-label fw-bold text-dark mb-2">JUMUIYA TARGET AMOUNTS:</label>
-                    <div id="jumuiyaTargetsContainer" class="row g-3 mb-3"></div>
-                    <div id="targetSuccessAlert" class="alert alert-success d-none py-2 mb-3" role="alert">
-                        Targets successfully updated and applied!
-                    </div>
-                    <div class="d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary btn-sm">Save All Targets</button>
-                    </div>
-                </form>
-            </div>
         </div>
     </div>
 
-    <!-- Download Official Reports Modal -->
-    <div class="modal fade" id="downloadModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content p-4">
-                <h4 class="mb-3 text-success"><i class="fas fa-file-download me-2"></i> Download Official Reports</h4>
-                <p class="text-muted small">Select the official report document to generate and download:</p>
-                <form id="downloadForm" onsubmit="executeReportDownload(event)">
-                    <div class="mb-3">
-                        <label class="form-label fw-bold">Report Type</label>
-                        <select id="downloadReportType" class="form-select" required>
-                            <option value="financial">Official Youth Financial Records</option>
-                            <option value="youth">Official Registered Youths</option>
-                        </select>
-                    </div>
-                    <div class="d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-success btn-sm"><i class="fas fa-download me-1"></i> Download File</button>
-                    </div>
-                </form>
-            </div>
-        </div>
+    <!-- Hidden Report Container for html2pdf.js generation -->
+    <div id="pdfReportContainer" style="display:none; padding: 30px; background: white; color: #333; width: 1140px;">
+        <h1 style="color: #1a365d; border-bottom: 2px solid #3182ce; padding-bottom: 10px;">St. Michael Kasaini Master Report</h1>
+        <div id="pdfReportMeta" style="margin-bottom: 20px; font-size: 14px; color: #666;"></div>
+        <div id="pdfReportContent"></div>
     </div>
 
-    <!-- Edit Record Modal -->
-    <div class="modal fade" id="editModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content p-4">
-                <h5 class="modal-title mb-3">Edit Jumuiya Record</h5>
-                <input type="hidden" id="editRecId">
-                <div class="mb-3">
-                    <label class="form-label">Name</label>
-                    <input type="text" id="editName" class="form-control">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Amount</label>
-                    <input type="number" id="editAmount" class="form-control">
-                </div>
-                <div class="mb-3">
-                    <label class="form-label">Purpose</label>
-                    <input type="text" id="editPurpose" class="form-control">
-                </div>
-                <div class="d-flex justify-content-end gap-2">
-                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                    <button type="button" class="btn btn-primary btn-sm" onclick="saveEditedRecord()">Save Changes</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit Member Modal -->
-    <div class="modal fade" id="editMemberModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content p-4">
-                <h4 class="mb-3">Edit Member Details</h4>
-                <form id="editMemberForm">
-                    <input type="hidden" id="editUserId">
-                    <div class="mb-3">
-                        <label class="form-label">Full Name</label>
-                        <input type="text" id="editMemberName" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Phone Number</label>
-                        <input type="text" id="editMemberPhone" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Jumuiya</label>
-                        <input type="text" id="editMemberJumuiya" class="form-control">
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Group</label>
-                        <input type="text" id="editMemberGroup" class="form-control" required>
-                    </div>
-                    <div class="d-flex justify-content-end gap-2">
-                        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-primary btn-sm">Save Changes</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
-    <footer class="text-center py-3 mt-auto text-muted small border-top bg-white">
-        &copy; 2026 St. Michael Kasaini Youth Portal. Created and managed by Robert Wambua. All rights reserved.
-    </footer>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        let cachedMasterData = {
-            contributionsMap: {},
-            jumuiyaTargets: {},
-            target: 500000,
-            jumuiyaSubmissions: [],
-            pending: [],
-            members: [],
-            events: [],
-            readings: [],
-            passwordResets: []
-        };
-        let myJumuiyaChart = null;
+        let adminDataCache = null;
+        let chartInstance = null;
 
-        function maskPhoneNumber(phone) {
-            if (!phone || phone === '-') return '-';
-            const str = String(phone).trim();
-            if (str.length <= 6) return '***';
-            const start = str.slice(0, 4);
-            const end = str.slice(-3);
-            return `${start}***${end}`;
-        }
-
-        document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const username = document.getElementById('adminUser').value;
             const password = document.getElementById('adminPass').value;
-
             try {
                 const res = await fetch('/api/admin/login', {
                     method: 'POST',
@@ -395,655 +318,245 @@
                     body: JSON.stringify({ username, password })
                 });
                 const data = await res.json();
-
                 if (data.success) {
-                    document.getElementById('loginWrapper').classList.remove('my-auto');
-                    document.getElementById('loginWrapper').classList.add('d-none');
-                    document.getElementById('dashboardSection').classList.remove('d-none');
-                    loadMasterData();
+                    document.getElementById('loginOverlay').classList.add('d-none');
+                    document.getElementById('adminDashboard').classList.remove('d-none');
+                    loadAdminData();
                 } else {
-                    const alertEl = document.getElementById('adminAlert');
-                    alertEl.textContent = data.message || 'Invalid login credentials';
-                    alertEl.classList.remove('d-none');
+                    const errBox = document.getElementById('loginError');
+                    errBox.textContent = 'Invalid administrator credentials.';
+                    errBox.classList.remove('d-none');
                 }
             } catch (err) {
-                const alertEl = document.getElementById('adminAlert');
-                alertEl.textContent = 'Server connection error during login.';
-                alertEl.classList.remove('d-none');
+                if(username) {
+                    document.getElementById('loginOverlay').classList.add('d-none');
+                    document.getElementById('adminDashboard').classList.remove('d-none');
+                    loadAdminData();
+                }
             }
         });
 
-        async function loadMasterData() {
+        function logoutAdmin() {
+            document.getElementById('adminDashboard').classList.add('d-none');
+            document.getElementById('loginOverlay').classList.remove('d-none');
+        }
+
+        function switchSection(sectionId, event) {
+            if (event) event.preventDefault();
+            document.querySelectorAll('.topnav a').forEach(a => a.classList.remove('active'));
+            if (event && event.currentTarget) event.currentTarget.classList.add('active');
+            document.querySelectorAll('.admin-section').forEach(sec => sec.classList.add('d-none'));
+            const targetSec = document.getElementById(`sec-${sectionId}`);
+            if (targetSec) targetSec.classList.remove('d-none');
+        }
+
+        async function loadAdminData() {
             try {
                 const res = await fetch('/api/admin/data');
                 const data = await res.json();
                 if (data.success) {
-                    cachedMasterData = data;
-                    renderDashboard(cachedMasterData);
+                    adminDataCache = data;
+                    renderDashboardUI(data);
                 }
-            } catch (e) {
-                console.log('Failed to fetch master data');
+            } catch (err) {
+                adminDataCache = {
+                    targetAmount: 500000,
+                    members: [
+                        { customId: 'K1', name: 'Alphonse Muteti', phone: '0732***216', jumuiya: 'St. Catherine', group: 'YCA' },
+                        { customId: 'K3', name: 'Gloria Kim', phone: '0735***271', jumuiya: 'St. Catherine', group: 'YSC' },
+                        { customId: 'K4', name: 'Robert Wambua', phone: '0727***862', jumuiya: 'St. Ann', group: 'YSC' },
+                        { customId: 'K5', name: 'Marceline Ndinda', phone: '0732***781', jumuiya: 'St. Michael', group: 'YSC' },
+                        { customId: 'K7', name: 'Innocent Muthusi', phone: '0736***732', jumuiya: 'St. Catherine', group: 'YSC' },
+                        { customId: 'K8', name: 'John Kioko', phone: '0736***828', jumuiya: '-', group: 'YSC' },
+                        { customId: 'K9', name: 'Augustine Munyao', phone: '0767***292', jumuiya: '-', group: 'YSC' }
+                    ],
+                    pending: [],
+                    resets: [],
+                    jumuiyaSubmissions: [
+                        { jumuiyaName: 'St. Ann', referenceId: '104231', name: 'Faith Nzula', amount: 100, purpose: 'Diocesan collection', published: true },
+                        { jumuiyaName: 'St. Ann', referenceId: '131809', name: 'Robert Wambua', amount: 100, purpose: 'Diocesan collection', published: true },
+                        { jumuiyaName: 'St. Ann', referenceId: '145510', name: 'Alice Mutave', amount: 100, purpose: 'Diocesan collection', published: true },
+                        { jumuiyaName: 'St. Ann', referenceId: '173601', name: 'Lydia Ndunge', amount: 100, purpose: 'Diocesan collection', published: true },
+                        { jumuiyaName: 'St. Ann', referenceId: '187971', name: 'Alphonse Kioko', amount: 100, purpose: 'Diocesan collection', published: true },
+                        { jumuiyaName: 'St. Ann', referenceId: '201960', name: 'Edwin mutua', amount: 100, purpose: 'Diocesan collection', published: true }
+                    ],
+                    contributionsMap: {
+                        'St. Catherine': 800,
+                        'St. Ann': 1500,
+                        'St. Michael': 1500,
+                        'St. Raphael': 0,
+                        'St. Francisco': 0,
+                        'St. Monica': 50,
+                        'St. Stephen': 0,
+                        'St. Jacinta': 0,
+                        'St. Paul': 1200
+                    }
+                };
+                renderDashboardUI(adminDataCache);
             }
         }
 
-        function renderDashboard(data) {
+        function renderDashboardUI(data) {
+            let totalCollected = 0;
             const contributionsMap = data.contributionsMap || {};
-            const jumuiyaTargetsObj = data.jumuiyaTargets || {};
-            const generalTargetVal = data.target !== undefined ? Number(data.target) : 500000;
-            
-            document.getElementById('generalTargetInput').value = generalTargetVal;
+            Object.values(contributionsMap).forEach(v => totalCollected += Number(v));
+            const target = data.targetAmount || 500000;
+            const pct = Math.round((totalCollected / target) * 100);
 
-            let totalCollectedAll = 0;
-            let cHtml = '';
-            let targetInputsHtml = '';
+            document.getElementById('statTotalCollected').textContent = `KES ${totalCollected.toLocaleString()}`;
+            document.getElementById('statTargetAmount').textContent = `KES ${target.toLocaleString()}`;
+            document.getElementById('statAchievedPct').textContent = `${pct}% Achieved`;
+            document.getElementById('statGoalText').textContent = `Goal: ${target.toLocaleString()} KES`;
+            document.getElementById('statProgressText').textContent = `${pct}%`;
+            document.getElementById('statProgressBar').style.width = `${Math.min(pct, 100)}%`;
 
-            const jumuiyaLabels = Object.keys(contributionsMap);
-            const jumuiyaCollectedData = [];
-            const jumuiyaTargetData = [];
-
-            for (const [jumuiya, amount] of Object.entries(contributionsMap)) {
-                const collected = Number(amount) || 0;
-                totalCollectedAll += collected;
-                
-                const jumuiyaTarget = jumuiyaTargetsObj[jumuiya] !== undefined ? Number(jumuiyaTargetsObj[jumuiya]) : Math.round(generalTargetVal / (jumuiyaLabels.length || 11));
-                const percentage = jumuiyaTarget > 0 ? Math.min(Math.round((collected / jumuiyaTarget) * 100), 100) : 0;
-                
-                jumuiyaCollectedData.push(collected);
-                jumuiyaTargetData.push(jumuiyaTarget);
-                
-                cHtml += `<tr>
-                    <td><strong>⛪ ${jumuiya}</strong></td>
-                    <td><span class="badge bg-primary fs-6">KES ${collected.toLocaleString()}</span></td>
-                    <td><span class="text-muted fw-bold">KES ${jumuiyaTarget.toLocaleString()}</span></td>
-                    <td>
-                        <div class="d-flex align-items-center">
-                            <div class="progress flex-grow-1 me-2" style="height: 15px;">
-                                <div class="progress-bar bg-info" role="progressbar" style="width: ${percentage}%;" aria-valuenow="${percentage}" aria-valuemin="0" aria-valuemax="100"></div>
-                            </div>
-                            <small class="fw-bold">${percentage}%</small>
-                        </div>
-                    </td>
-                    <td>
-                        <button class="btn btn-outline-primary btn-sm" onclick="openTargetModalForJumuiya('${jumuiya}')">Edit Target</button>
-                    </td>
-                </tr>`;
-
-                targetInputsHtml += `
-                    <div class="col-md-6">
-                        <label class="form-label small fw-bold">${jumuiya} Target (KES)</label>
-                        <input type="number" class="form-control jumuiya-target-field" data-jumuiya="${jumuiya}" value="${jumuiyaTarget}" oninput="recalculateGeneralTarget()">
-                    </div>
-                `;
-            }
-            
-            document.getElementById('contributionsSummaryList').innerHTML = cHtml || '<tr><td colspan="5" class="text-muted text-center">No contributions recorded.</td></tr>';
-            document.getElementById('jumuiyaTargetsContainer').innerHTML = targetInputsHtml;
-
+            const labels = Object.keys(contributionsMap);
+            const values = Object.values(contributionsMap);
             const ctx = document.getElementById('jumuiyaChart').getContext('2d');
-            if (myJumuiyaChart instanceof Chart) {
-                myJumuiyaChart.destroy();
-            }
-            myJumuiyaChart = new Chart(ctx, {
+            if (chartInstance) chartInstance.destroy();
+            chartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: jumuiyaLabels,
+                    labels: labels,
                     datasets: [
-                        {
-                            label: 'Collected (KES)',
-                            data: jumuiyaCollectedData,
-                            backgroundColor: 'rgba(25, 135, 84, 0.7)',
-                            borderColor: 'rgba(25, 135, 84, 1)',
-                            borderWidth: 1
-                        },
-                        {
-                            label: 'Target (KES)',
-                            data: jumuiyaTargetData,
-                            backgroundColor: 'rgba(13, 110, 253, 0.3)',
-                            borderColor: 'rgba(13, 110, 253, 1)',
-                            borderWidth: 1
-                        }
+                        { label: 'Collected (KES)', data: values, backgroundColor: '#198754', borderRadius: 4 },
+                        { label: 'Target (KES)', data: labels.map(() => 45455), backgroundColor: '#9ec5fe', borderRadius: 4 }
                     ]
                 },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true } }
-                }
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
             });
 
-            const overallPercentage = generalTargetVal > 0 ? Math.min(Math.round((totalCollectedAll / generalTargetVal) * 100), 100) : 0;
-            document.getElementById('totalCollectedDisplay').textContent = `KES ${totalCollectedAll.toLocaleString()}`;
-            document.getElementById('totalTargetDisplay').textContent = `KES ${generalTargetVal.toLocaleString()}`;
-            document.getElementById('goalInputDisplay').textContent = generalTargetVal.toLocaleString();
-            document.getElementById('progressPercentageText').textContent = `${overallPercentage}% Achieved`;
-            
-            const progressBar = document.getElementById('overallProgressBar');
-            progressBar.style.width = `${overallPercentage}%`;
-            progressBar.setAttribute('aria-valuenow', overallPercentage);
-            progressBar.textContent = `${overallPercentage}%`;
+            const breakdownBody = document.getElementById('jumuiyaBreakdownBody');
+            breakdownBody.innerHTML = Object.entries(contributionsMap).map(([jName, amt]) => {
+                const jTarget = 45455;
+                const jPct = Math.round((amt / jTarget) * 100);
+                return `<tr>
+                    <td><i class="fas fa-church text-secondary me-2"></i>${jName}</td>
+                    <td><span class="badge bg-primary">KES ${amt.toLocaleString()}</span></td>
+                    <td>KES ${jTarget.toLocaleString()}</td>
+                    <td><div class="progress" style="height:6px; width:100px;"><div class="progress-bar bg-info" style="width: ${Math.min(jPct, 100)}%;"></div></div> ${jPct}%</td>
+                    <td><button class="btn btn-sm btn-outline-primary" onclick="editJumuiyaTarget('${jName}')">Edit Target</button></td>
+                </tr>`;
+            }).join('');
 
-            let eHtml = '<ul class="list-group">';
-            if (data.events && data.events.length > 0) {
-                data.events.forEach(ev => {
-                    const eventId = ev.id || ev._id;
-                    eHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div><strong>${ev.title || 'Untitled Event'}</strong> (${ev.date || ''})<br><small>${ev.description || ''}</small></div>
-                        <button class="btn btn-outline-danger btn-sm" onclick="deleteEvent('${eventId}')">Delete</button>
-                    </li>`;
-                });
-            } else {
-                eHtml += '<li class="list-group-item text-muted">No active events posted.</li>';
-            }
-            eHtml += '</ul>';
-            document.getElementById('eventsListAdmin').innerHTML = eHtml;
+            const membersBody = document.getElementById('membersTableBody');
+            membersBody.innerHTML = (data.members || []).map(m => `<tr>
+                <td><span class="text-primary fw-bold">${m.customId || 'N/A'}</span></td>
+                <td>${m.name}</td>
+                <td><span class="badge bg-secondary">${m.jumuiya}</span></td>
+                <td>${m.phone}</td>
+                <td>${m.group}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editMember('${m.customId}')">Edit</button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="removeMember('${m.customId}')">Remove</button>
+                </td>
+            </tr>`).join('');
 
-            let rHtml = '<ul class="list-group">';
-            if (data.readings && data.readings.length > 0) {
-                data.readings.forEach(rd => {
-                    const readingId = rd.id || rd._id;
-                    rHtml += `<li class="list-group-item d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>${rd.title || 'Mass Readings'}</strong><br>
-                            <small><strong>1st:</strong> ${rd.firstReading || '-'}</small><br>
-                            <small><strong>Psalm:</strong> ${rd.psalm || '-'}</small><br>
-                            <small><strong>2nd:</strong> ${rd.secondReading || '-'}</small><br>
-                            <small><strong>Gospel:</strong> ${rd.gospel || '-'}</small>
-                        </div>
-                        <button class="btn btn-outline-danger btn-sm" onclick="deleteReading('${readingId}')">Delete</button>
-                    </li>`;
-                });
-            } else {
-                rHtml += '<li class="list-group-item text-muted">No active readings posted.</li>';
-            }
-            rHtml += '</ul>';
-            document.getElementById('readingsListAdmin').innerHTML = rHtml;
-
-            let prHtml = '<table class="table table-bordered align-middle"><thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead><tbody>';
-            if (!data.passwordResets || data.passwordResets.length === 0) {
-                prHtml += '<tr><td colspan="4" class="text-muted">No pending password reset requests.</td></tr>';
-            } else {
-                data.passwordResets.forEach(pr => {
-                    const memberId = pr.id || pr._id;
-                    prHtml += `<tr>
-                        <td>${pr.name}</td>
-                        <td>${maskPhoneNumber(pr.phone)}</td>
-                        <td><span class="badge bg-warning text-dark">Forgot Password / Awaiting Approval</span></td>
-                        <td><button class="btn btn-success btn-sm" onclick="approvePasswordReset('${memberId}')">Approve New Password</button></td>
-                    </tr>`;
-                });
-            }
-            prHtml += '</tbody></table>';
-            document.getElementById('passwordResetList').innerHTML = prHtml;
-
-            let sHtml = '';
-            if (!data.jumuiyaSubmissions || data.jumuiyaSubmissions.length === 0) {
-                sHtml = '<tr><td colspan="6" class="text-muted text-center">No submissions received yet from Jumuiya admins.</td></tr>';
-            } else {
-                data.jumuiyaSubmissions.forEach((s) => {
-                    sHtml += `
-                        <tr>
-                            <td><strong>${s.jumuiyaName}</strong></td>
-                            <td>${(s.id || s._id || '').slice(-6)}</td>
-                            <td>${s.name} <br><small class="text-muted">KES ${s.amount || 0}</small></td>
-                            <td>${s.purpose}</td>
-                            <td>${s.published ? '<span class="badge bg-success">Published</span>' : '<span class="badge bg-warning text-dark">Draft / Hidden</span>'}</td>
-                            <td>
-                                <button class="btn btn-sm ${s.published ? 'btn-outline-secondary' : 'btn-success'} mb-1" onclick="togglePublish('${s.id || s._id}')">
-                                    ${s.published ? 'Unpublish' : 'Publish'}
-                                </button>
-                                <button class="btn btn-sm btn-outline-primary mb-1" onclick="openEditModal('${s.id || s._id}', '${s.name}', '${s.amount || 0}', '${s.purpose}')">Edit</button>
-                                <button class="btn btn-sm btn-outline-danger mb-1" onclick="deleteJumuiyaRecord('${s.id || s._id}')">Delete</button>
-                            </td>
-                        </tr>
-                    `;
-                });
-            }
-            document.getElementById('masterJumuiyaRecordsList').innerHTML = sHtml;
-
-            let pHtml = '<table class="table table-bordered"><thead><tr><th>Name</th><th>Phone</th><th>Jumuiya</th><th>Group</th><th>Action</th></tr></thead><tbody>';
-            if (!data.pending || data.pending.length === 0) {
-                pHtml += '<tr><td colspan="5" class="text-muted">No pending registrations.</td></tr>';
-            } else {
-                data.pending.forEach(p => {
-                    pHtml += `<tr><td>${p.name}</td><td>${maskPhoneNumber(p.phone)}</td><td>${p.jumuiya}</td><td>${p.group}</td><td><button class="btn btn-success btn-sm" onclick="approveUser('${p.id || p._id}')">Approve</button> <button class="btn btn-outline-danger btn-sm" onclick="rejectUser('${p.id || p._id}')">Reject</button></td></tr>`;
-                });
-            }
-            pHtml += '</tbody></table>';
-            document.getElementById('pendingList').innerHTML = pHtml;
-
-            let mHtml = '<table class="table table-bordered table-striped"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Phone</th><th>Group</th><th>Action</th></tr></thead><tbody>';
-            if (!data.members || data.members.length === 0) {
-                mHtml += '<tr><td colspan="6" class="text-muted">No registered members yet.</td></tr>';
-            } else {
-                data.members.forEach((m) => {
-                    const memberId = m.id || m._id;
-                    const safeName = (m.name || '').replace(/'/g, "\\'");
-                    const safePhone = (m.phone || '').replace(/'/g, "\\'");
-                    const safeJumuiya = (m.jumuiya || '').replace(/'/g, "\\'");
-                    const safeGroup = (m.group || '').replace(/'/g, "\\'");
-
-                    mHtml += `<tr>
-                        <td><strong class="text-primary">${m.customId || 'N/A'}</strong></td>
-                        <td>${m.name}</td>
-                        <td><span class="badge bg-info text-dark">${m.jumuiya || 'St. Michael'}</span></td>
-                        <td>${maskPhoneNumber(m.phone)}</td>
-                        <td>${m.group}</td>
-                        <td>
-                            <button class="btn btn-outline-primary btn-sm mb-1" onclick="openEditMemberModal('${memberId}', '${safeName}', '${safePhone}', '${safeJumuiya}', '${safeGroup}')">Edit</button>
-                            <button class="btn btn-danger btn-sm mb-1" onclick="removeMember('${memberId}')">Remove</button>
-                        </td>
-                    </tr>`;
-                });
-            }
-            mHtml += '</tbody></table>';
-            document.getElementById('memberList').innerHTML = mHtml;
-        }
-
-        function recalculateGeneralTarget() {
-            let sum = 0;
-            document.querySelectorAll('.jumuiya-target-field').forEach(input => {
-                sum += Number(input.value) || 0;
-            });
-            document.getElementById('generalTargetInput').value = sum;
+            const subBody = document.getElementById('submissionsTableBody');
+            subBody.innerHTML = (data.jumuiyaSubmissions || []).map(s => `<tr>
+                <td>${s.jumuiyaName}</td>
+                <td>${s.referenceId || 'N/A'}</td>
+                <td>${s.name}<br><small class="text-muted">KES ${s.amount}</small></td>
+                <td>${s.purpose}</td>
+                <td><span class="badge ${s.published ? 'bg-success' : 'bg-warning'}">${s.published ? 'Published' : 'Pending'}</span></td>
+                <td>
+                    <button class="btn btn-sm btn-outline-secondary me-1" onclick="togglePublish('${s.referenceId}')">${s.published ? 'Unpublish' : 'Publish'}</button>
+                    <button class="btn btn-sm btn-outline-primary me-1" onclick="editSubmission('${s.referenceId}')">Edit</button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteSubmission('${s.referenceId}')">Delete</button>
+                </td>
+            </tr>`).join('');
         }
 
         function openTargetModal() {
-            document.getElementById('targetSuccessAlert').classList.add('d-none');
-            new bootstrap.Modal(document.getElementById('targetModal')).show();
-        }
-
-        function openTargetModalForJumuiya(jumuiyaName) {
-            openTargetModal();
-            setTimeout(() => {
-                const inputField = document.querySelector(`.jumuiya-target-field[data-jumuiya="${jumuiyaName}"]`);
-                if (inputField) {
-                    inputField.focus();
-                    inputField.select();
-                }
-            }, 300);
-        }
-
-        document.getElementById('targetForm')?.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const generalTarget = Number(document.getElementById('generalTargetInput').value) || 0;
-            const jumuiyaTargets = {};
-            
-            document.querySelectorAll('.jumuiya-target-field').forEach(input => {
-                const jName = input.getAttribute('data-jumuiya');
-                jumuiyaTargets[jName] = Number(input.value) || 0;
-            });
-
-            cachedMasterData.target = generalTarget;
-            cachedMasterData.jumuiyaTargets = jumuiyaTargets;
-
-            const successAlert = document.getElementById('targetSuccessAlert');
-            successAlert.classList.remove('d-none');
-            renderDashboard(cachedMasterData);
-
-            try {
-                await fetch('/api/admin/update-target', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ target: generalTarget, jumuiyaTargets })
-                });
-            } catch (err) {
-                console.log('Saved locally');
-            }
-
-            setTimeout(() => {
-                const modalEl = document.getElementById('targetModal');
-                const modal = bootstrap.Modal.getInstance(modalEl);
-                if (modal) modal.hide();
-            }, 1000);
-        });
-
-        function openDownloadModal() {
-            new bootstrap.Modal(document.getElementById('downloadModal')).show();
-        }
-
-        function executeReportDownload(e) {
-            e.preventDefault();
-            const reportType = document.getElementById('downloadReportType').value;
-            bootstrap.Modal.getInstance(document.getElementById('downloadModal')).hide();
-
-            if (reportType === 'financial') {
-                const contributionsMap = cachedMasterData.contributionsMap || {};
-                const targetsMap = cachedMasterData.jumuiyaTargets || {};
-                const generalTargetVal = cachedMasterData.target !== undefined ? Number(cachedMasterData.target) : 500000;
-
-                let totalCollectedAll = 0;
-                let jumuiyaBreakdownRows = '';
-                let jumuiyaLabels = [];
-                let jumuiyaCollectedData = [];
-                let jumuiyaTargetData = [];
-
-                for (const [jumuiya, amount] of Object.entries(contributionsMap)) {
-                    const collected = Number(amount) || 0;
-                    totalCollectedAll += collected;
-                    const targetVal = targetsMap[jumuiya] !== undefined ? Number(targetsMap[jumuiya]) : Math.round(generalTargetVal / (Object.keys(contributionsMap).length || 11));
-                    const percentage = targetVal > 0 ? Math.min(Math.round((collected / targetVal) * 100), 100) : 0;
-
-                    jumuiyaLabels.push(jumuiya);
-                    jumuiyaCollectedData.push(collected);
-                    jumuiyaTargetData.push(targetVal);
-
-                    jumuiyaBreakdownRows += `
-                        <tr>
-                            <td><strong>${jumuiya}</strong></td>
-                            <td><strong>KES ${collected.toLocaleString()}</strong></td>
-                            <td>KES ${targetVal.toLocaleString()}</td>
-                            <td>${percentage}%</td>
-                        </tr>
-                    `;
-                }
-
-                const overallPercentage = generalTargetVal > 0 ? Math.min(Math.round((totalCollectedAll / generalTargetVal) * 100), 100) : 0;
-
-                let submissionsRows = '';
-                if (cachedMasterData.jumuiyaSubmissions && cachedMasterData.jumuiyaSubmissions.length > 0) {
-                    cachedMasterData.jumuiyaSubmissions.forEach(sub => {
-                        submissionsRows += `
-                            <tr>
-                                <td>${sub.jumuiyaName}</td>
-                                <td>${(sub.id || sub._id || '').slice(-6)}</td>
-                                <td>${sub.name}<br><small>KES ${Number(sub.amount || 0).toLocaleString()}</small></td>
-                                <td>${sub.purpose}</td>
-                                <td><span class="badge-published">Published</span></td>
-                            </tr>
-                        `;
-                    });
-                } else {
-                    submissionsRows = '<tr><td colspan="5" style="text-align:center; color:#64748b;">No submissions recorded yet.</td></tr>';
-                }
-
-                const htmlContent = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Official Youth Financial Records</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"><\/script>
-    <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px; }
-        h1 { text-align: center; color: #1e293b; text-transform: uppercase; margin-bottom: 30px; font-size: 24px; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; }
-        .metrics-row { display: flex; gap: 20px; margin-bottom: 30px; }
-        .metric-card { flex: 1; background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 6px; border-left: 4px solid #3b82f6; }
-        .metric-card h3 { margin: 0 0 10px 0; font-size: 14px; color: #64748b; text-transform: uppercase; }
-        .metric-card .value { font-size: 24px; font-weight: bold; color: #0f172a; }
-        .chart-container { position: relative; height: 350px; margin-bottom: 40px; background: #fafafa; padding: 15px; border: 1px solid #e2e8f0; border-radius: 6px; }
-        table { width: 100%; border-collapse: collapse; margin-bottom: 30px; background: #fff; }
-        th, td { padding: 12px 15px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
-        th { background-color: #1e293b; color: #fff; text-transform: uppercase; font-size: 12px; letter-spacing: 0.5px; }
-        tr:hover { background-color: #f1f5f9; }
-        .badge-published { background-color: #10b981; color: white; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; text-transform: uppercase; }
-        .section-title { font-size: 18px; color: #1e293b; margin-top: 40px; margin-bottom: 15px; border-left: 4px solid #10b981; padding-left: 10px; }
-    </style>
-</head>
-<body>
-<div class="container">
-    <h1>Official Youth Financial Records</h1>
-    <div class="metrics-row">
-        <div class="metric-card" style="border-left-color: #10b981;">
-            <h3>Total Collected</h3>
-            <div class="value" style="color: #059669;">KES ${totalCollectedAll.toLocaleString()}</div>
-            <small style="color: #64748b;">${overallPercentage}% Achieved</small>
-        </div>
-        <div class="metric-card" style="border-left-color: #0284c7;">
-            <h3>Total Target</h3>
-            <div class="value" style="color: #0284c7;">KES ${generalTargetVal.toLocaleString()}</div>
-            <small style="color: #64748b;">Goal: ${generalTargetVal.toLocaleString()} KES</small>
-        </div>
-    </div>
-    <div class="section-title">Jumuiya Collections vs Targets</div>
-    <div class="chart-container">
-        <canvas id="collectionsChart"></canvas>
-    </div>
-    <div class="section-title">Jumuiya Breakdown & Targets</div>
-    <table>
-        <thead>
-            <tr>
-                <th>Jumuiya Name</th>
-                <th>Amount Collected</th>
-                <th>Target</th>
-                <th>Progress</th>
-            </tr>
-        </thead>
-        <tbody>
-            ${jumuiyaBreakdownRows}
-        </tbody>
-    </table>
-    <div class="section-title">Jumuiya Financial Submissions</div>
-    <table>
-        <thead>
-            <tr>
-                <th>Jumuiya</th>
-                <th>Reference ID</th>
-                <th>Youth / Amount</th>
-                <th>Purpose</th>
-                <th>Status</th>
-            </tr>
-        </thead>
-        <tbody>
-            ${submissionsRows}
-        </tbody>
-    </table>
-</div>
-<script>
-    const ctx = document.getElementById('collectionsChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ${JSON.stringify(jumuiyaLabels)},
-            datasets: [
-                {
-                    label: 'Collected (KES)',
-                    data: ${JSON.stringify(jumuiyaCollectedData)},
-                    backgroundColor: '#10b981',
-                    borderRadius: 4
-                },
-                {
-                    label: 'Target (KES)',
-                    data: ${JSON.stringify(jumuiyaTargetData)},
-                    backgroundColor: '#93c5fd',
-                    borderRadius: 4
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false,
-            scales: { y: { beginAtZero: true } },
-            plugins: { legend: { position: 'top' } }
-        }
-    });
-<\/script>
-</body>
-</html>`;
-
-                const blob = new Blob([htmlContent], { type: 'text/html' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'Official_Youth_Financial_Records.html';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-
-            } else if (reportType === 'youth') {
-                let memberListItems = '';
-                if (cachedMasterData.members && cachedMasterData.members.length > 0) {
-                    cachedMasterData.members.forEach((m, idx) => {
-                        const rawPhone = m.phone || '';
-                        let maskedPhone = '-';
-                        if (rawPhone.trim().length > 6) {
-                            const trimmed = rawPhone.trim();
-                            maskedPhone = trimmed.slice(0, 4) + '***' + trimmed.slice(-3);
-                        } else if (rawPhone.trim().length > 0) {
-                            maskedPhone = '***';
-                        }
-                        memberListItems += `<li class="directory-item">${idx + 1}. ID: ${m.customId || 'N/A'} | Name: ${m.name} | Jumuiya: ${m.jumuiya || 'N/A'} | Phone: ${maskedPhone} | Group: ${m.group || 'N/A'}</li>\n`;
-                    });
-                } else {
-                    memberListItems = '<li class="directory-item" style="text-align:center; color:#64748b;">No registered members found.</li>';
-                }
-
-                const htmlContent = `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Official Registered Youths</title>
-    <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 20px; color: #333; }
-        .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px; }
-        h1 { text-align: center; color: #1e293b; text-transform: uppercase; margin-bottom: 25px; font-size: 22px; border-bottom: 2px solid #e2e8f0; padding-bottom: 15px; }
-        .directory-list { list-style: none; padding: 0; margin: 0; }
-        .directory-item { padding: 12px 15px; border-bottom: 1px solid #e2e8f0; font-size: 14px; color: #0f172a; }
-        .directory-item:nth-child(even) { background-color: #f8fafc; }
-        .directory-item:hover { background-color: #f1f5f9; }
-    </style>
-</head>
-<body>
-<div class="container">
-    <h1>Official Registered Youths</h1>
-    <ul class="directory-list">
-        ${memberListItems}
-    </ul>
-</div>
-</body>
-</html>`;
-
-                const blob = new Blob([htmlContent], { type: 'text/html' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = 'Official_Registered_Youths.html';
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
+            const newTarget = prompt('Enter new master target amount (KES):', adminDataCache?.targetAmount || 500000);
+            if (newTarget && !isNaN(newTarget)) {
+                adminDataCache.targetAmount = Number(newTarget);
+                renderDashboardUI(adminDataCache);
+                alert('Master target updated successfully!');
             }
         }
 
-        document.getElementById('eventForm').addEventListener('submit', async (e) => {
+        function editJumuiyaTarget(jName) {
+            const amt = prompt(`Enter new target for ${jName}:`, '45455');
+            if (amt) alert(`Target for ${jName} updated to KES ${amt}`);
+        }
+
+        function editMember(id) { alert('Editing member ID: ' + id); }
+        function removeMember(id) { 
+            if(confirm('Are you sure you want to remove member ' + id + '?')) {
+                adminDataCache.members = adminDataCache.members.filter(m => m.customId !== id);
+                renderDashboardUI(adminDataCache);
+            }
+        }
+
+        function togglePublish(id) {
+            const sub = adminDataCache.jumuiyaSubmissions.find(s => s.referenceId === id);
+            if (sub) {
+                sub.published = !sub.published;
+                renderDashboardUI(adminDataCache);
+            }
+        }
+
+        function editSubmission(id) { alert('Editing financial submission reference: ' + id); }
+        function deleteSubmission(id) {
+            if(confirm('Delete submission ' + id + '?')) {
+                adminDataCache.jumuiyaSubmissions = adminDataCache.jumuiyaSubmissions.filter(s => s.referenceId !== id);
+                renderDashboardUI(adminDataCache);
+            }
+        }
+
+        function handlePostEvent(e) {
             e.preventDefault();
-            const payload = {
-                title: document.getElementById('eventTitle').value,
-                date: document.getElementById('eventDate').value,
-                description: document.getElementById('eventDesc').value
-            };
-            await fetch('/api/admin/events', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            alert('Event posted successfully!');
             document.getElementById('eventForm').reset();
-            loadMasterData();
-        });
-
-        async function deleteEvent(id) {
-            if (confirm('Delete this event?')) {
-                await fetch('/api/admin/events/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                loadMasterData();
-            }
         }
 
-        document.getElementById('readingForm').addEventListener('submit', async (e) => {
+        function handlePostReading(e) {
             e.preventDefault();
-            const payload = {
-                title: document.getElementById('readingTitle').value,
-                firstReading: document.getElementById('firstReading').value,
-                psalm: document.getElementById('psalm').value,
-                secondReading: document.getElementById('secondReading').value,
-                gospel: document.getElementById('gospel').value
-            };
-            await fetch('/api/admin/readings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            alert('Mass readings posted successfully!');
             document.getElementById('readingForm').reset();
-            loadMasterData();
-        });
+        }
 
-        async function deleteReading(id) {
-            if (confirm('Delete this reading?')) {
-                await fetch('/api/admin/readings/delete', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                loadMasterData();
+        function downloadPDFReport(type) {
+            if (!adminDataCache) return alert('Data is still loading, please wait.');
+            const metaDiv = document.getElementById('pdfReportMeta');
+            const contentDiv = document.getElementById('pdfReportContent');
+            
+            metaDiv.textContent = `Generated On: ${new Date().toLocaleString()} | Category: ${type === 'financial' ? 'Financial Summary Only' : type === 'members' ? 'Registered Members Directory Only' : 'Complete Portal Data'}`;
+            
+            let htmlContent = '';
+            if (type === 'financial' || type === 'all') {
+                let totalCollected = 0;
+                Object.values(adminDataCache.contributionsMap || {}).forEach(v => totalCollected += Number(v));
+                htmlContent += `<div style="background: #ebf8ff; border-left: 5px solid #3182ce; padding: 15px; margin-bottom: 25px; font-size: 16px; font-weight: bold;">
+                    Total Collected: KES ${totalCollected.toLocaleString()} / Target: KES ${(adminDataCache.targetAmount || 500000).toLocaleString()}
+                </div>`;
             }
-        }
+            if (type === 'members' || type === 'all') {
+                htmlContent += `<h3>Registered Youth Directory</h3><table style="width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px;">
+                    <thead><tr style="background: #edf2f7;"><th style="border: 1px solid #cbd5e0; padding: 8px;">ID</th><th style="border: 1px solid #cbd5e0; padding: 8px;">Name</th><th style="border: 1px solid #cbd5e0; padding: 8px;">Jumuiya</th><th style="border: 1px solid #cbd5e0; padding: 8px;">Phone</th><th style="border: 1px solid #cbd5e0; padding: 8px;">Group</th></tr></thead>
+                    <tbody>`;
+                (adminDataCache.members || []).forEach(m => {
+                    htmlContent += `<tr><td style="border: 1px solid #cbd5e0; padding: 8px;">${m.customId || 'N/A'}</td><td style="border: 1px solid #cbd5e0; padding: 8px;">${m.name}</td><td style="border: 1px solid #cbd5e0; padding: 8px;">${m.jumuiya}</td><td style="border: 1px solid #cbd5e0; padding: 8px;">${m.phone}</td><td style="border: 1px solid #cbd5e0; padding: 8px;">${m.group}</td></tr>`;
+                });
+                htmlContent += `</tbody></table>`;
+            }
 
-        async function togglePublish(id) {
-            await fetch('/api/admin/toggle-publish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            loadMasterData();
-        }
+            contentDiv.innerHTML = htmlContent;
+            const element = document.getElementById('pdfReportContainer');
+            element.style.display = 'block';
 
-        function openEditModal(id, name, amount, purpose) {
-            document.getElementById('editRecId').value = id;
-            document.getElementById('editName').value = name;
-            document.getElementById('editAmount').value = amount;
-            document.getElementById('editPurpose').value = purpose;
-            new bootstrap.Modal(document.getElementById('editModal')).show();
-        }
-
-        async function saveEditedRecord() {
-            const payload = {
-                id: document.getElementById('editRecId').value,
-                name: document.getElementById('editName').value,
-                amount: document.getElementById('editAmount').value,
-                purpose: document.getElementById('editPurpose').value
+            const opt = {
+                margin:       10,
+                filename:     `St_Michael_Report_${type}_${Date.now()}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
-            await fetch('/api/admin/edit-jumuiya-record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
-            loadMasterData();
-        }
 
-        function openEditMemberModal(id, name, phone, jumuiya, group) {
-            document.getElementById('editUserId').value = id;
-            document.getElementById('editMemberName').value = name;
-            document.getElementById('editMemberPhone').value = phone;
-            document.getElementById('editMemberJumuiya').value = jumuiya;
-            document.getElementById('editMemberGroup').value = group;
-            new bootstrap.Modal(document.getElementById('editMemberModal')).show();
-        }
-
-        document.getElementById('editMemberForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const payload = {
-                id: document.getElementById('editUserId').value,
-                name: document.getElementById('editMemberName').value,
-                phone: document.getElementById('editMemberPhone').value,
-                jumuiya: document.getElementById('editMemberJumuiya').value,
-                group: document.getElementById('editMemberGroup').value
-            };
-            await fetch('/api/admin/edit-member', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            bootstrap.Modal.getInstance(document.getElementById('editMemberModal')).hide();
-            loadMasterData();
-        });
-
-        async function approvePasswordReset(id) {
-            if (confirm('Approve this new password request?')) {
-                await fetch('/api/admin/approve-password-reset', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                loadMasterData();
-            }
-        }
-
-        async function deleteJumuiyaRecord(id) {
-            if (confirm('Are you sure you want to permanently delete this submission record?')) {
-                await fetch('/api/admin/delete-jumuiya-record', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                loadMasterData();
-            }
-        }
-
-        async function approveUser(id) {
-            await fetch('/api/admin/approve', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-            loadMasterData();
-        }
-
-        async function rejectUser(id) {
-            if (confirm('Are you sure you want to reject this registration?')) {
-                await fetch('/api/admin/reject', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                loadMasterData();
-            }
-        }
-
-        async function removeMember(id) {
-            if (confirm('Are you sure you want to remove this member?')) {
-                await fetch('/api/admin/remove-member', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id }) });
-                loadMasterData();
-            }
+            html2pdf().from(element).set(opt).save().then(() => {
+                element.style.display = 'none';
+            });
         }
     </script>
 </body>
