@@ -292,10 +292,14 @@ app.get('/api/admin/data', async (req, res) => {
             if (matched) contributionsMap[matched.name] += Number(r.amount || 0);
         }
     });
+    // Never send plaintext passwords to the browser, even to the admin.
+    const safePending = (data.pending || []).map(({ pass, ...rest }) => rest);
+    const safeMembers = (data.members || []).map(({ pass, ...rest }) => rest);
+
     res.json({ 
         success: true, 
-        pending: data.pending || [], 
-        members: data.members || [], 
+        pending: safePending, 
+        members: safeMembers, 
         jumuiyaSubmissions: data.jumuiyaSubmissions || [],
         polls: data.polls || [],
         archives: data.archives || [],
@@ -382,6 +386,126 @@ app.post('/api/admin/toggle-publish', async (req, res) => {
         res.json({ success: true, jumuiyaSubmissions: submissions });
     } catch (e) {
         res.status(500).json({ success: false, message: 'Error updating publish status' });
+    }
+});
+
+// --- Previously missing endpoints ---
+// The admin dashboard's Delete/Edit buttons for jumuiya submissions and
+// members, and the Delete buttons for events/readings, had no matching
+// route on the server at all. Any request to them fell through to
+// Express's default 404 handler, which is why the browser showed
+// "Failed to delete the record." instead of anything happening.
+
+app.post('/api/admin/delete-jumuiya-record', async (req, res) => {
+    try {
+        const { id } = req.body;
+        if (!id) return res.status(400).json({ success: false, message: 'Missing record id.' });
+        const data = await readData();
+        const before = (data.jumuiyaSubmissions || []).length;
+        const jumuiyaSubmissions = (data.jumuiyaSubmissions || []).filter(s => s.id !== id);
+        if (jumuiyaSubmissions.length === before) {
+            return res.status(404).json({ success: false, message: 'Record not found.' });
+        }
+        await writeData({ jumuiyaSubmissions });
+        res.json({ success: true, jumuiyaSubmissions });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error deleting record.' });
+    }
+});
+
+app.post('/api/admin/edit-jumuiya-record', async (req, res) => {
+    try {
+        const { id, name, amount, purpose } = req.body;
+        if (!id) return res.status(400).json({ success: false, message: 'Missing record id.' });
+        const data = await readData();
+        let found = false;
+        const jumuiyaSubmissions = (data.jumuiyaSubmissions || []).map(s => {
+            if (s.id === id) {
+                found = true;
+                return {
+                    ...s,
+                    name: name !== undefined ? name : s.name,
+                    amount: amount !== undefined ? (parseFloat(amount) || 0) : s.amount,
+                    purpose: purpose !== undefined ? purpose : s.purpose
+                };
+            }
+            return s;
+        });
+        if (!found) return res.status(404).json({ success: false, message: 'Record not found.' });
+        await writeData({ jumuiyaSubmissions });
+        res.json({ success: true, jumuiyaSubmissions });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error editing record.' });
+    }
+});
+
+app.post('/api/admin/edit-member', async (req, res) => {
+    try {
+        const { id, name, phone, jumuiya, group } = req.body;
+        if (!id) return res.status(400).json({ success: false, message: 'Missing member id.' });
+        const data = await readData();
+        let found = false;
+        const members = (data.members || []).map(m => {
+            if (m.id === id) {
+                found = true;
+                return {
+                    ...m,
+                    name: name !== undefined ? name : m.name,
+                    phone: phone !== undefined ? phone : m.phone,
+                    jumuiya: jumuiya !== undefined ? jumuiya : m.jumuiya,
+                    group: group !== undefined ? group : m.group
+                };
+            }
+            return m;
+        });
+        if (!found) return res.status(404).json({ success: false, message: 'Member not found.' });
+        await writeData({ members });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error editing member.' });
+    }
+});
+
+app.post('/api/admin/remove-member', async (req, res) => {
+    try {
+        const { id } = req.body;
+        if (!id) return res.status(400).json({ success: false, message: 'Missing member id.' });
+        const data = await readData();
+        const before = (data.members || []).length;
+        const members = (data.members || []).filter(m => m.id !== id);
+        if (members.length === before) {
+            return res.status(404).json({ success: false, message: 'Member not found.' });
+        }
+        await writeData({ members });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error removing member.' });
+    }
+});
+
+app.post('/api/admin/events/delete', async (req, res) => {
+    try {
+        const { id } = req.body;
+        if (!id) return res.status(400).json({ success: false, message: 'Missing event id.' });
+        const data = await readData();
+        const events = (data.events || []).filter(ev => ev.id !== id);
+        await writeData({ events });
+        res.json({ success: true, events });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error deleting event.' });
+    }
+});
+
+app.post('/api/admin/readings/delete', async (req, res) => {
+    try {
+        const { id } = req.body;
+        if (!id) return res.status(400).json({ success: false, message: 'Missing reading id.' });
+        const data = await readData();
+        const readings = (data.readings || []).filter(r => r.id !== id);
+        await writeData({ readings });
+        res.json({ success: true, readings });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error deleting reading.' });
     }
 });
 
