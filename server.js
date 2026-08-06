@@ -1,15 +1,12 @@
-// Complete and corrected server.js with clean syntax and graph-embedded reports
+// Complete and corrected server.js supporting individual Jumuiya targets, reflections fallback, and admin APIs
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
-const fs = require('fs');
 const { MongoClient } = require('mongodb');
-const cron = require('node-cron');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Explicit CORS Middleware
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -56,6 +53,7 @@ let fallbackData = {
     polls: [],
     archives: [],
     targetAmount: 50000,
+    jumuiyaTargets: {},
     events: [{ id: '1', title: 'Sunday Holy Mass & Youth Fellowship', date: 'Next Sunday at 10:00 AM', description: 'Main service at St. Michael Kasaini Church.', type: 'upcoming' }],
     messages: [],
     readings: [{ id: '1', title: "Sunday Holy Mass Readings", firstReading: "1 Kings 3:5...", psalm: "Psalm 119...", secondReading: "Romans 8...", gospel: "Matthew 13..." }]
@@ -76,6 +74,7 @@ async function readData() {
             polls: doc.polls || fallbackData.polls,
             archives: doc.archives || fallbackData.archives,
             targetAmount: doc.targetAmount !== undefined ? doc.targetAmount : fallbackData.targetAmount,
+            jumuiyaTargets: doc.jumuiyaTargets || fallbackData.jumuiyaTargets,
             events: doc.events || fallbackData.events,
             messages: doc.messages || fallbackData.messages,
             readings: doc.readings || fallbackData.readings
@@ -102,19 +101,18 @@ async function writeData(newData) {
 
 async function getSpiritualContent() {
     let reflection = null;
-    let patronSaint = null;
+    let patronSaint = { name: "St. Aloysius Gonzaga", feastDay: "June 21", message: "Model of purity, youth, and selfless charity." };
     if (db) {
         try {
             reflection = await db.collection('settings').findOne({ type: 'reflection' });
-            patronSaint = await db.collection('settings').findOne({ type: 'patronSaint' });
+            const ps = await db.collection('settings').findOne({ type: 'patronSaint' });
+            if (ps) patronSaint = ps;
         } catch (err) {}
     }
     if (!reflection) {
         const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0)) / (1000 * 60 * 60 * 24));
-        reflection = automatedReflections[dayOfYear % automatedReflections.length];
-    }
-    if (!patronSaint) {
-        patronSaint = { name: "St. Aloysius Gonzaga", feastDay: "June 21", message: "Model of purity, youth, and selfless charity." };
+        const auto = automatedReflections[dayOfYear % automatedReflections.length];
+        reflection = { title: auto.title, reference: auto.reference, content: auto.content };
     }
     return { reflection, patronSaint };
 }
@@ -148,8 +146,12 @@ app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard
 app.get('/secret-admin-portal-kasaini-2026', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
 app.get('/jumuiya-portal', (req, res) => res.sendFile(path.join(__dirname, 'jumuiya-portal.html')));
 
-// Unified Spiritual Endpoint for Homepage & Portals
+// Spiritual Content Endpoints (Supporting both path conventions used in index.html & dashboard.html)
 app.get('/api/spiritual/content', async (req, res) => {
+    const content = await getSpiritualContent();
+    res.json({ success: true, ...content });
+});
+app.get('/api/admin/spiritual', async (req, res) => {
     const content = await getSpiritualContent();
     res.json({ success: true, ...content });
 });
@@ -219,7 +221,7 @@ app.post('/api/jumuiya/submit-record', async (req, res) => {
     res.json({ success: true, message: 'Submitted successfully!' });
 });
 
-// Jumuiya Report PDF Download API with Embedded Chart & Visual Graph Representation
+// Jumuiya Report Download API
 app.get('/api/jumuiya/download-data', async (req, res) => {
     try {
         const { jumuiyaName } = req.query;
@@ -311,6 +313,7 @@ app.get('/api/youth/directory', async (req, res) => {
         members: (data.members || []).map(m => ({ ...m, phone: m.phone ? `${m.phone.slice(0, 3)}****${m.phone.slice(-3)}` : '' })), 
         masterContributions: (data.jumuiyaSubmissions || []).filter(s => s.published), 
         contributionsMap,
+        jumuiyaTargets: data.jumuiyaTargets || {},
         events: data.events || [], 
         readings: data.readings || [], 
         messages: data.messages || [],
@@ -369,6 +372,7 @@ app.get('/api/admin/data', async (req, res) => {
         polls: data.polls || [],
         archives: data.archives || [],
         targetAmount: data.targetAmount !== undefined ? data.targetAmount : 50000,
+        jumuiyaTargets: data.jumuiyaTargets || {},
         contributionsMap,
         readings: data.readings || [], 
         events: data.events || [], 
@@ -379,18 +383,25 @@ app.get('/api/admin/data', async (req, res) => {
     });
 });
 
-// Master Admin Target Update Route
+// Master Admin Target Update Route (Supports both Global Goal and Individual Jumuiya Targets)
 app.post('/api/admin/set-target', async (req, res) => {
     try {
-        const { targetAmount } = req.body;
-        const newTarget = parseFloat(targetAmount);
-        if (isNaN(newTarget)) {
-            return res.json({ success: false, message: 'Invalid target amount value.' });
+        const { targetAmount, jumuiyaTargets } = req.body;
+        let updatePayload = {};
+        
+        if (targetAmount !== undefined) {
+            const newTarget = parseFloat(targetAmount);
+            if (!isNaN(newTarget)) updatePayload.targetAmount = newTarget;
         }
-        await writeData({ targetAmount: newTarget });
-        res.json({ success: true, targetAmount: newTarget });
+        
+        if (jumuiyaTargets && typeof jumuiyaTargets === 'object') {
+            updatePayload.jumuiyaTargets = jumuiyaTargets;
+        }
+
+        await writeData(updatePayload);
+        res.json({ success: true, targetAmount: fallbackData.targetAmount, jumuiyaTargets: fallbackData.jumuiyaTargets });
     } catch (err) {
-        res.status(500).json({ success: false, message: 'Server error updating target amount.' });
+        res.status(500).json({ success: false, message: 'Server error updating target amounts.' });
     }
 });
 
@@ -407,7 +418,7 @@ app.post('/api/admin/close-cycle', async (req, res) => {
     res.json({ success: true, message: 'Cycle closed successfully!' });
 });
 
-// Master Admin Report Download API with Embedded Graphical Bar Chart
+// Master Admin Report Download API
 app.get('/api/admin/download-data', async (req, res) => {
     try {
         const { type } = req.query;
