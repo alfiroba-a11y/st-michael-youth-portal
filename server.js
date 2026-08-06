@@ -56,7 +56,8 @@ let fallbackData = {
     jumuiyaTargets: {},
     events: [{ id: '1', title: 'Sunday Holy Mass & Youth Fellowship', date: 'Next Sunday at 10:00 AM', description: 'Main service at St. Michael Kasaini Church.', type: 'upcoming' }],
     messages: [],
-    readings: [{ id: '1', title: "Sunday Holy Mass Readings", firstReading: "1 Kings 3:5...", psalm: "Psalm 119...", secondReading: "Romans 8...", gospel: "Matthew 13..." }]
+    readings: [{ id: '1', title: "Sunday Holy Mass Readings", firstReading: "1 Kings 3:5...", psalm: "Psalm 119...", secondReading: "Romans 8...", gospel: "Matthew 13..." }],
+    passwordRequests: []
 };
 
 async function readData() {
@@ -77,7 +78,8 @@ async function readData() {
             jumuiyaTargets: doc.jumuiyaTargets || fallbackData.jumuiyaTargets,
             events: doc.events || fallbackData.events,
             messages: doc.messages || fallbackData.messages,
-            readings: doc.readings || fallbackData.readings
+            readings: doc.readings || fallbackData.readings,
+            passwordRequests: doc.passwordRequests || fallbackData.passwordRequests
         };
     } catch (e) {
         return fallbackData;
@@ -288,6 +290,7 @@ app.get('/api/admin/data', async (req, res) => {
         readings: data.readings || [], 
         events: data.events || [], 
         messages: data.messages || [],
+        passwordRequests: data.passwordRequests || [],
         reflection,
         patronSaint,
         validPurposes: VALID_PURPOSES
@@ -312,6 +315,87 @@ app.post('/api/admin/set-target', async (req, res) => {
         res.json({ success: true, targetAmount: fallbackData.targetAmount, jumuiyaTargets: fallbackData.jumuiyaTargets });
     } catch (err) {
         res.status(500).json({ success: false, message: 'Server error updating target amounts.' });
+    }
+});
+
+// Admin Event Management Endpoint
+app.post('/api/admin/save-event', async (req, res) => {
+    try {
+        const { id, title, date, description } = req.body;
+        const data = await readData();
+        let events = data.events || [];
+        
+        if (id) {
+            events = events.map(ev => ev.id === id ? { ...ev, title, date, description } : ev);
+        } else {
+            events.push({ id: Date.now().toString(), title, date, description, type: 'upcoming' });
+        }
+        
+        await writeData({ events });
+        res.json({ success: true, events });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error saving event' });
+    }
+});
+
+// Admin Readings Management Endpoint
+app.post('/api/admin/save-reading', async (req, res) => {
+    try {
+        const { id, title, firstReading, psalm, secondReading, gospel } = req.body;
+        const data = await readData();
+        let readings = data.readings || [];
+        
+        if (id) {
+            readings = readings.map(r => r.id === id ? { ...r, title, firstReading, psalm, secondReading, gospel } : r);
+        } else {
+            readings.push({ id: Date.now().toString(), title, firstReading, psalm, secondReading, gospel });
+        }
+        
+        await writeData({ readings });
+        res.json({ success: true, readings });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error saving reading' });
+    }
+});
+
+// Admin Toggle Publish for Submissions Endpoint
+app.post('/api/admin/toggle-publish', async (req, res) => {
+    try {
+        const { id } = req.body;
+        const data = await readData();
+        let submissions = data.jumuiyaSubmissions || [];
+        
+        submissions = submissions.map(sub => {
+            if (sub.id === id) {
+                return { ...sub, published: !sub.published };
+            }
+            return sub;
+        });
+        
+        await writeData({ jumuiyaSubmissions: submissions });
+        res.json({ success: true, jumuiyaSubmissions: submissions });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error updating publish status' });
+    }
+});
+
+// Admin Password Reset Approval Endpoint
+app.post('/api/admin/approve-password', async (req, res) => {
+    try {
+        const { id } = req.body;
+        const data = await readData();
+        let requests = data.passwordRequests || [];
+        let members = data.members || [];
+        
+        const reqIndex = requests.findIndex(r => r.id === id);
+        if (reqIndex !== -1) {
+            const approved = requests.splice(reqIndex, 1)[0];
+            members = members.map(m => m.name.toLowerCase() === approved.name.toLowerCase() ? { ...m, pass: approved.newPass } : m);
+            await writeData({ passwordRequests: requests, members });
+        }
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error approving password' });
     }
 });
 
