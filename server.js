@@ -1,4 +1,4 @@
-// Complete and corrected server.js with Homepage Reflections, Target Persistence, and Graph-Embedded Reports
+// Complete and corrected server.js with clean syntax and graph-embedded reports
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
@@ -240,7 +240,6 @@ app.get('/api/jumuiya/download-data', async (req, res) => {
             }
         });
 
-        // Generate visual bar representations for the report
         const maxVal = Math.max(...Object.values(purposeTotals), 1);
 
         let html = `<!DOCTYPE html><html><head><title>${jumuiyaName || 'Jumuiya'} - Performance Report</title>
@@ -268,7 +267,7 @@ app.get('/api/jumuiya/download-data', async (req, res) => {
         <div class="chart-container">
             <h3>Contribution Purpose Analytics Breakdown</h3>`;
         
-        for (const [pur, amt]T of Object.entries(purposeTotals)) {
+        for (const [pur, amt] of Object.entries(purposeTotals)) {
             const pct = Math.round((amt / maxVal) * 100);
             html += `<div class="chart-bar-row">
                 <div class="chart-label">${pur}</div>
@@ -380,7 +379,7 @@ app.get('/api/admin/data', async (req, res) => {
     });
 });
 
-// Master Admin Target Update Route (Fixed Persistence)
+// Master Admin Target Update Route
 app.post('/api/admin/set-target', async (req, res) => {
     try {
         const { targetAmount } = req.body;
