@@ -75,7 +75,7 @@
         </div>
     </div>
 </div>
-        // List of all 11 Jumuiyas matching your backend structure
+      // List of all 11 Jumuiyas matching your backend structure
 const JUMUIYAS_DIRECTORY = [
     { id: 'st_catherine', name: 'St. Catherine' },
     { id: 'st_ann', name: 'St. Ann' },
@@ -90,11 +90,9 @@ const JUMUIYAS_DIRECTORY = [
     { id: 'st_charles_lwanga', name: 'St. Charles Lwanga' }
 ];
 
-// Global holder for fetched settings data
 let currentPortalData = {};
 
 async function openTargetModal() {
-    // Fetch latest admin data to get active targets
     try {
         const res = await fetch('/api/admin/data');
         const data = await res.json();
@@ -105,13 +103,11 @@ async function openTargetModal() {
         console.error('Error fetching portal data for targets:', e);
     }
 
-    // Set global target input value
     const globalInput = document.getElementById('globalTargetInput');
     if (globalInput) {
         globalInput.value = currentPortalData.targetAmount || 500000;
     }
 
-    // Render individual Jumuiya inputs dynamically
     const container = document.getElementById('jumuiyaInputsContainer');
     if (container) {
         container.innerHTML = '';
@@ -128,6 +124,46 @@ async function openTargetModal() {
         });
     }
 
+    const modalEl = document.getElementById('targetModal');
+    if (modalEl) {
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+}
+
+async function saveAllTargets(event) {
+    event.preventDefault();
+
+    const targetAmount = parseFloat(document.getElementById('globalTargetInput').value) || 0;
+    const jumuiyaTargets = {};
+
+    document.querySelectorAll('.jumuiya-target-input').forEach(input => {
+        const id = input.getAttribute('data-jumuiya-id');
+        jumuiyaTargets[id] = parseFloat(input.value) || 0;
+    });
+
+    try {
+        const response = await fetch('/api/admin/set-target', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ targetAmount, jumuiyaTargets })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            alert('Targets updated successfully!');
+            const modalEl = document.getElementById('targetModal');
+            const modal = bootstrap.Modal.getInstance(modalEl);
+            if (modal) modal.hide();
+            location.reload();
+        } else {
+            alert('Failed to save targets.');
+        }
+    } catch (err) {
+        console.error('Error saving targets:', err);
+        alert('An error occurred while saving targets.');
+    }
+}
     // Show bootstrap modal safely
     const modalEl = document.getElementById('targetModal');
     const modal = new bootstrap.Modal(modalEl);
