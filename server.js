@@ -57,7 +57,8 @@ let fallbackData = {
     events: [{ id: '1', title: 'Sunday Holy Mass & Youth Fellowship', date: 'Next Sunday at 10:00 AM', description: 'Main service at St. Michael Kasaini Church.', type: 'upcoming' }],
     messages: [],
     readings: [{ id: '1', title: "Sunday Holy Mass Readings", firstReading: "1 Kings 3:5...", psalm: "Psalm 119...", secondReading: "Romans 8...", gospel: "Matthew 13..." }],
-    passwordRequests: []
+    passwordRequests: [],
+    hymns: []
 };
 
 async function readData() {
@@ -79,7 +80,8 @@ async function readData() {
             events: doc.events || fallbackData.events,
             messages: doc.messages || fallbackData.messages,
             readings: doc.readings || fallbackData.readings,
-            passwordRequests: doc.passwordRequests || fallbackData.passwordRequests
+            passwordRequests: doc.passwordRequests || fallbackData.passwordRequests,
+            hymns: doc.hymns || fallbackData.hymns
         };
     } catch (e) {
         return fallbackData;
@@ -297,6 +299,7 @@ app.get('/api/youth/directory', async (req, res) => {
         events: data.events || [], 
         readings: data.readings || [], 
         messages: data.messages || [],
+        hymns: data.hymns || [],
         reflection,
         patronSaint,
         validPurposes: VALID_PURPOSES
@@ -362,6 +365,7 @@ app.get('/api/admin/data', async (req, res) => {
         readings: data.readings || [], 
         events: data.events || [], 
         messages: data.messages || [],
+        hymns: data.hymns || [],
         passwordRequests: data.passwordRequests || [],
         reflection,
         patronSaint,
@@ -421,6 +425,47 @@ app.post('/api/admin/save-reading', async (req, res) => {
         res.json({ success: true, readings });
     } catch (e) {
         res.status(500).json({ success: false, message: 'Error saving reading' });
+    }
+});
+
+// Hymnal manager — lets the parish transcribe their own songs/prayers
+// (e.g. from a hymnal they own the rights to use) so the homepage can
+// list them as a table of contents and show the full text on request.
+app.post('/api/admin/save-hymn', async (req, res) => {
+    try {
+        const { id, title, number, category, lyrics } = req.body;
+        if (!title) return res.status(400).json({ success: false, message: 'Title is required.' });
+        const data = await readData();
+        let hymns = data.hymns || [];
+        if (id) {
+            let found = false;
+            hymns = hymns.map(h => {
+                if (h.id === id) { found = true; return { ...h, title, number, category, lyrics }; }
+                return h;
+            });
+            if (!found) return res.status(404).json({ success: false, message: 'Hymn not found.' });
+        } else {
+            hymns.push({ id: Date.now().toString(), title, number: number || '', category: category || '', lyrics: lyrics || '' });
+        }
+        await writeData({ hymns });
+        res.json({ success: true, hymns });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error saving hymn.' });
+    }
+});
+
+app.post('/api/admin/delete-hymn', async (req, res) => {
+    try {
+        const { id } = req.body;
+        if (!id) return res.status(400).json({ success: false, message: 'Missing hymn id.' });
+        const data = await readData();
+        const before = (data.hymns || []).length;
+        const hymns = (data.hymns || []).filter(h => h.id !== id);
+        if (hymns.length === before) return res.status(404).json({ success: false, message: 'Hymn not found.' });
+        await writeData({ hymns });
+        res.json({ success: true, hymns });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error deleting hymn.' });
     }
 });
 
