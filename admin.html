@@ -285,6 +285,45 @@
                 </div>
             </div>
 
+            <!-- Hymnal Manager: add songs/prayers you have the rights to publish (e.g.
+                 your own parish hymnal) so they appear on the homepage table of contents. -->
+            <div class="card p-4 mb-4" id="hymnal">
+                <h4 class="mb-3"><i class="fas fa-music me-2"></i> Manage Hymnal (Songs &amp; Prayers)</h4>
+                <p class="text-muted small mb-3">Add each song's title and full text here. Only add content your parish has the rights to publish. Songs saved here appear on the homepage as a table of contents — tapping a title shows the full song.</p>
+                <div class="row">
+                    <div class="col-md-5 mb-3">
+                        <form id="hymnForm">
+                            <input type="hidden" id="hymnId">
+                            <div class="mb-2">
+                                <label class="form-label small">Song / Prayer Title</label>
+                                <input type="text" id="hymnTitle" class="form-control form-control-sm" required>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small">Number (optional)</label>
+                                <input type="text" id="hymnNumber" class="form-control form-control-sm" placeholder="e.g. 12">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small">Category (optional)</label>
+                                <input type="text" id="hymnCategory" class="form-control form-control-sm" placeholder="e.g. Opening Hymn, Offertory">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small">Full Text</label>
+                                <textarea id="hymnLyrics" class="form-control form-control-sm" rows="6" required></textarea>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary btn-sm flex-grow-1">Save Song</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="hymnFormResetBtn">Clear / New</button>
+                            </div>
+                            <div id="hymnFormErrorAlert" class="alert alert-danger d-none py-2 mt-2 mb-0" role="alert"></div>
+                        </form>
+                    </div>
+                    <div class="col-md-7 mb-3">
+                        <label class="form-label small fw-bold">Saved Songs &amp; Prayers</label>
+                        <div id="hymnsListAdmin" class="list-group" style="max-height: 420px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+            </div>
+
         </main>
     </div>
 
@@ -449,7 +488,8 @@
                 members: [],
                 events: [],
                 readings: [],
-                passwordRequests: []
+                passwordRequests: [],
+                hymns: []
             };
         }
 
@@ -663,6 +703,30 @@
                 rHtml += '<li class="list-group-item text-muted">No active readings posted.</li>';
             }
             document.getElementById('readingsListAdmin').innerHTML = rHtml + '</ul>';
+
+            // Hymnal Admin List
+            let hyHtml = '';
+            if (data.hymns && data.hymns.length > 0) {
+                data.hymns.forEach(h => {
+                    const id = recordId(h);
+                    hyHtml += `<div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start gap-2">
+                            <div>
+                                <strong>${esc(h.title)}</strong>
+                                ${h.number ? `<span class="badge bg-secondary ms-1">#${esc(h.number)}</span>` : ''}
+                                ${h.category ? `<div class="small text-muted">${esc(h.category)}</div>` : ''}
+                            </div>
+                            <div class="action-btns">
+                                <button class="btn btn-outline-primary btn-sm" data-action="edit-hymn" data-id="${id}">Edit</button>
+                                <button class="btn btn-outline-danger btn-sm" data-action="delete-hymn" data-id="${id}">Delete</button>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+            } else {
+                hyHtml = '<div class="list-group-item text-muted">No songs or prayers added yet.</div>';
+            }
+            document.getElementById('hymnsListAdmin').innerHTML = hyHtml;
 
             // Password Reset Requests Table
             let prHtml = '<table class="table table-bordered align-middle"><thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead><tbody>';
@@ -957,6 +1021,37 @@
         });
 
         /* =========================================================
+           HYMNAL FORM (songs / prayers the parish has rights to publish)
+        ========================================================= */
+        function resetHymnForm() {
+            document.getElementById('hymnId').value = '';
+            document.getElementById('hymnForm').reset();
+            document.getElementById('hymnFormErrorAlert').classList.add('d-none');
+        }
+        document.getElementById('hymnFormResetBtn').addEventListener('click', resetHymnForm);
+
+        document.getElementById('hymnForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errorAlert = document.getElementById('hymnFormErrorAlert');
+            const payload = {
+                id: document.getElementById('hymnId').value || undefined,
+                title: document.getElementById('hymnTitle').value,
+                number: document.getElementById('hymnNumber').value,
+                category: document.getElementById('hymnCategory').value,
+                lyrics: document.getElementById('hymnLyrics').value
+            };
+            try {
+                await apiCall('/api/admin/save-hymn', { method: 'POST', body: JSON.stringify(payload) });
+                resetHymnForm();
+                await loadMasterData();
+                showGlobalStatus('Song saved.', 'success');
+            } catch (err) {
+                errorAlert.textContent = 'Failed to save song: ' + err.message;
+                errorAlert.classList.remove('d-none');
+            }
+        });
+
+        /* =========================================================
            EDIT JUMUIYA RECORD MODAL
         ========================================================= */
         function openEditModal(id, name, amount, purpose) {
@@ -1050,6 +1145,25 @@
                     case 'delete-reading': {
                         if (!confirm('Delete this reading?')) return;
                         await apiCall('/api/admin/readings/delete', { method: 'POST', body: JSON.stringify({ id }) });
+                        await loadMasterData();
+                        break;
+                    }
+                    case 'edit-hymn': {
+                        const h = (cachedMasterData.hymns || []).find(x => recordId(x) === id);
+                        if (h) {
+                            document.getElementById('hymnId').value = id;
+                            document.getElementById('hymnTitle').value = h.title || '';
+                            document.getElementById('hymnNumber').value = h.number || '';
+                            document.getElementById('hymnCategory').value = h.category || '';
+                            document.getElementById('hymnLyrics').value = h.lyrics || '';
+                            document.getElementById('hymnFormErrorAlert').classList.add('d-none');
+                            document.getElementById('hymnTitle').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                        break;
+                    }
+                    case 'delete-hymn': {
+                        if (!confirm('Delete this song/prayer?')) return;
+                        await apiCall('/api/admin/delete-hymn', { method: 'POST', body: JSON.stringify({ id }) });
                         await loadMasterData();
                         break;
                     }
