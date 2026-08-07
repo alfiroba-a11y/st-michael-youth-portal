@@ -21,6 +21,160 @@
             z-index: 2;
         }
         .hymn-lyrics { white-space: pre-line; }
+
+        /* =========================================================
+           VIRTUAL PRAYER SANCTUARY — original CSS/SVG/canvas animations
+        ========================================================= */
+        .sanctuary-section {
+            position: relative;
+            overflow: hidden;
+            border-radius: 0.75rem;
+            isolation: isolate;
+            color: #fff;
+            min-height: 380px;
+        }
+        /* 6. Heavenly gradient atmospheric shift */
+        .sanctuary-atmosphere {
+            position: absolute; inset: 0; z-index: 0;
+            background: linear-gradient(135deg, #0b0f2b 0%, #1b1442 30%, #2a1b52 55%, #120a2e 100%);
+            background-size: 300% 300%;
+            animation: sanctuaryAtmosphereShift 22s ease-in-out infinite;
+        }
+        /* Tints the atmosphere toward the current liturgical season color
+           (set by the server on every page — see server.js) so the
+           sanctuary reflects Advent/Lent purple, Easter/Christmas gold,
+           Ordinary Time green, etc. */
+        .sanctuary-atmosphere::after {
+            content: "";
+            position: absolute; inset: 0;
+            background: radial-gradient(ellipse at 50% 30%, var(--liturgical-color-soft, rgba(202,162,58,0.35)) 0%, rgba(0,0,0,0) 70%);
+            mix-blend-mode: screen;
+        }
+        @keyframes sanctuaryAtmosphereShift {
+            0%   { background-position: 0% 50%; }
+            50%  { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* 2. Swaying divine light beams */
+        .sanctuary-beams { position: absolute; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
+        .sanctuary-beam {
+            position: absolute; top: -20%; width: 140px; height: 160%;
+            background: linear-gradient(to bottom, rgba(255,244,200,0.22), rgba(255,244,200,0) 70%);
+            transform: rotate(18deg);
+            filter: blur(2px);
+            animation: sanctuaryBeamSweep 14s ease-in-out infinite;
+        }
+        .sanctuary-beam.b1 { left: 8%;  animation-delay: 0s; }
+        .sanctuary-beam.b2 { left: 40%; animation-delay: -5s; width: 100px; }
+        .sanctuary-beam.b3 { left: 72%; animation-delay: -9s; width: 160px; }
+        @keyframes sanctuaryBeamSweep {
+            0%, 100% { transform: rotate(14deg) translateX(0); opacity: 0.5; }
+            50%      { transform: rotate(22deg) translateX(40px); opacity: 0.9; }
+        }
+
+        /* 3. Celestial gold dust particle canvas */
+        #goldDustCanvas { position: absolute; inset: 0; z-index: 2; width: 100%; height: 100%; pointer-events: none; }
+
+        /* 1. Floating guardian angels */
+        .sanctuary-angels { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+        .angel {
+            position: absolute;
+            filter: drop-shadow(0 0 10px rgba(255, 215, 130, 0.65));
+            opacity: 0.85;
+            animation: angelFloat 12s ease-in-out infinite;
+        }
+        .angel-1 { top: 12%; left: 6%;  width: 46px; animation-duration: 13s; animation-delay: 0s; }
+        .angel-2 { top: 55%; left: 82%; width: 34px; animation-duration: 16s; animation-delay: -4s; }
+        .angel-3 { top: 68%; left: 18%; width: 30px; animation-duration: 11s; animation-delay: -8s; }
+        @keyframes angelFloat {
+            0%   { transform: translate(0, 0) rotate(-2deg); }
+            25%  { transform: translate(10px, -14px) rotate(2deg); }
+            50%  { transform: translate(-6px, -24px) rotate(-1deg); }
+            75%  { transform: translate(-14px, -10px) rotate(2deg); }
+            100% { transform: translate(0, 0) rotate(-2deg); }
+        }
+
+        /* 7. Card glassmorphism fade-in */
+        .sanctuary-content {
+            position: relative; z-index: 3;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            animation: sanctuaryFadeIn 0.9s ease-out both;
+        }
+        @keyframes sanctuaryFadeIn {
+            from { opacity: 0; transform: translateY(14px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 9. Badge pulse animation */
+        .live-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 0.72rem; letter-spacing: 0.04em;
+            background: rgba(46, 204, 113, 0.18);
+            border: 1px solid rgba(46, 204, 113, 0.5);
+            color: #a9f5c4;
+            padding: 3px 10px; border-radius: 999px;
+        }
+        .live-badge-dot {
+            width: 7px; height: 7px; border-radius: 50%;
+            background: #4ee08a;
+            box-shadow: 0 0 0 rgba(78, 224, 138, 0.6);
+            animation: badgePulse 1.8s ease-out infinite;
+        }
+        @keyframes badgePulse {
+            0%   { box-shadow: 0 0 0 0 rgba(78, 224, 138, 0.6); }
+            70%  { box-shadow: 0 0 0 8px rgba(78, 224, 138, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(78, 224, 138, 0); }
+        }
+
+        /* Candles: 4/5/8 — flame, glow bloom, hover scale */
+        .candle-btn {
+            background: transparent; border: none; padding: 10px 6px 4px;
+            display: flex; flex-direction: column; align-items: center;
+            width: 74px;
+            transition: transform 0.2s ease;
+            cursor: pointer;
+        }
+        .candle-btn:hover, .candle-btn:focus-visible { transform: scale(1.12) translateY(-3px); }
+        .candle-svg-wrap { position: relative; width: 34px; height: 70px; }
+        /* 5. Glow bloom, synced to flame flicker */
+        .candle-glow {
+            position: absolute; left: 50%; top: -6px; transform: translateX(-50%);
+            width: 60px; height: 60px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,206,110,0.55) 0%, rgba(255,206,110,0) 70%);
+            opacity: 0; pointer-events: none;
+            animation: candleGlowPulse 2.4s ease-in-out infinite;
+        }
+        .candle-btn.lit .candle-glow { opacity: 1; }
+        @keyframes candleGlowPulse {
+            0%, 100% { transform: translateX(-50%) scale(1); opacity: 0.55; }
+            50%      { transform: translateX(-50%) scale(1.15); opacity: 0.85; }
+        }
+        .candle-flame { transform-origin: 50% 100%; opacity: 0; }
+        .candle-btn.lit .candle-flame {
+            opacity: 1;
+            animation: candleFlicker 1.6s ease-in-out infinite;
+        }
+        @keyframes candleFlicker {
+            0%   { transform: scaleY(1) scaleX(1) rotate(0deg); }
+            20%  { transform: scaleY(1.06) scaleX(0.95) rotate(-2deg); }
+            40%  { transform: scaleY(0.94) scaleX(1.04) rotate(2deg); }
+            60%  { transform: scaleY(1.08) scaleX(0.96) rotate(-1deg); }
+            80%  { transform: scaleY(0.96) scaleX(1.02) rotate(1deg); }
+            100% { transform: scaleY(1) scaleX(1) rotate(0deg); }
+        }
+        .candle-label { font-size: 0.68rem; color: rgba(255,255,255,0.75); margin-top: 4px; text-align: center; }
+
+        /* Respect users who prefer reduced motion */
+        @media (prefers-reduced-motion: reduce) {
+            .sanctuary-atmosphere, .sanctuary-beam, .angel, .live-badge-dot,
+            .candle-glow, .candle-flame, .sanctuary-content { animation: none !important; }
+        }
     </style>
 </head><body class="bg-light">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
@@ -52,7 +206,52 @@
     </div>
 
     <div class="container my-5">
-        
+
+        <!-- Virtual Prayer Sanctuary: live heavenly/liturgical animation engine -->
+        <div class="sanctuary-section shadow-sm p-4 mb-4">
+            <div class="sanctuary-atmosphere"></div>
+            <div class="sanctuary-beams">
+                <div class="sanctuary-beam b1"></div>
+                <div class="sanctuary-beam b2"></div>
+                <div class="sanctuary-beam b3"></div>
+            </div>
+            <canvas id="goldDustCanvas"></canvas>
+            <div class="sanctuary-angels">
+                <svg class="angel angel-1" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="30" cy="14" rx="9" ry="3" fill="none" stroke="#ffe9b0" stroke-width="1.4" opacity="0.85"/>
+                    <circle cx="30" cy="18" r="6" fill="#fff6e0"/>
+                    <path d="M30 24 C18 30, 10 42, 14 54 C22 50, 26 46, 30 46 C34 46, 38 50, 46 54 C50 42, 42 30, 30 24 Z" fill="#fff1cf"/>
+                    <path d="M14 30 C4 28, -2 36, 2 46 C8 44, 14 40, 16 34 Z" fill="#ffe6a8" opacity="0.9"/>
+                    <path d="M46 30 C56 28, 62 36, 58 46 C52 44, 46 40, 44 34 Z" fill="#ffe6a8" opacity="0.9"/>
+                </svg>
+                <svg class="angel angel-2" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="30" cy="14" rx="9" ry="3" fill="none" stroke="#ffe9b0" stroke-width="1.4" opacity="0.85"/>
+                    <circle cx="30" cy="18" r="6" fill="#fff6e0"/>
+                    <path d="M30 24 C18 30, 10 42, 14 54 C22 50, 26 46, 30 46 C34 46, 38 50, 46 54 C50 42, 42 30, 30 24 Z" fill="#fff1cf"/>
+                    <path d="M14 30 C4 28, -2 36, 2 46 C8 44, 14 40, 16 34 Z" fill="#ffe6a8" opacity="0.9"/>
+                    <path d="M46 30 C56 28, 62 36, 58 46 C52 44, 46 40, 44 34 Z" fill="#ffe6a8" opacity="0.9"/>
+                </svg>
+                <svg class="angel angel-3" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="30" cy="14" rx="9" ry="3" fill="none" stroke="#ffe9b0" stroke-width="1.4" opacity="0.85"/>
+                    <circle cx="30" cy="18" r="6" fill="#fff6e0"/>
+                    <path d="M30 24 C18 30, 10 42, 14 54 C22 50, 26 46, 30 46 C34 46, 38 50, 46 54 C50 42, 42 30, 30 24 Z" fill="#fff1cf"/>
+                    <path d="M14 30 C4 28, -2 36, 2 46 C8 44, 14 40, 16 34 Z" fill="#ffe6a8" opacity="0.9"/>
+                    <path d="M46 30 C56 28, 62 36, 58 46 C52 44, 46 40, 44 34 Z" fill="#ffe6a8" opacity="0.9"/>
+                </svg>
+            </div>
+
+            <div class="sanctuary-content">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
+                    <h3 class="mb-0">🕯️ Virtual Prayer Sanctuary</h3>
+                    <span class="live-badge"><span class="live-badge-dot"></span> Live</span>
+                </div>
+                <p class="small mb-3" style="color: rgba(255,255,255,0.75);">Tap a candle to light it for a prayer intention, or tap again to let it rest.</p>
+                <div class="d-flex flex-wrap justify-content-center gap-2" id="candleRow">
+                    <!-- candles injected by JS -->
+                </div>
+            </div>
+        </div>
+
         <!-- Sunday Holy Mass Readings -->
         <div class="card shadow-sm p-4 mb-4">
             <h3 id="readingTitle" class="text-primary mb-3">Sunday Holy Mass Readings & Updates</h3>
@@ -316,6 +515,156 @@
             return String(v === undefined || v === null ? '' : v)
                 .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
         }
+
+        /* =========================================================
+           VIRTUAL PRAYER SANCTUARY — candles + gold dust particles
+        ========================================================= */
+        (function initSanctuary() {
+            const candleRow = document.getElementById('candleRow');
+
+            function candleSVG() {
+                return `
+                    <div class="candle-svg-wrap">
+                        <div class="candle-glow"></div>
+                        <svg class="candle-flame" width="34" height="70" viewBox="0 0 34 70" xmlns="http://www.w3.org/2000/svg" style="position:absolute; left:0; top:0;">
+                            <path d="M17 6 C22 14, 24 20, 19 26 C17 28, 14 26, 14 22 C11 26, 12 32, 17 34 C23 32, 25 24, 21 16 C20 12, 18 8, 17 6 Z" fill="#ffcf6e"/>
+                            <path d="M17 14 C19 18, 20 21, 17 24 C15 25, 14 23, 15 21 C13 23, 14 27, 17 28 C20 27, 21 22, 19 18 C18 16, 17.5 15, 17 14 Z" fill="#fff3c4"/>
+                        </svg>
+                        <svg width="34" height="70" viewBox="0 0 34 70" xmlns="http://www.w3.org/2000/svg" style="position:relative;">
+                            <rect x="15.5" y="24" width="3" height="10" fill="#5b3a20"/>
+                            <rect x="6" y="34" width="22" height="34" rx="2" fill="#fdf6e3"/>
+                            <rect x="6" y="34" width="22" height="6" fill="#f3e6c4"/>
+                        </svg>
+                    </div>
+                `;
+            }
+
+            function renderCandle(candle) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'candle-btn' + (candle.lit ? ' lit' : '');
+                btn.setAttribute('aria-pressed', candle.lit ? 'true' : 'false');
+                btn.dataset.id = candle.id;
+                btn.innerHTML = candleSVG() + `<div class="candle-label">${esc(candle.label)}</div>`;
+                btn.addEventListener('click', async () => {
+                    // Optimistic toggle so it feels instant, then sync with the
+                    // server so every visitor sees the same shared candle board.
+                    const nowLit = btn.classList.toggle('lit');
+                    btn.setAttribute('aria-pressed', nowLit ? 'true' : 'false');
+                    btn.disabled = true;
+                    try {
+                        const res = await fetch('/api/candles/toggle', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ id: candle.id })
+                        });
+                        const data = await res.json();
+                        if (!data.success) throw new Error(data.message || 'Failed to save');
+                    } catch (e) {
+                        // Revert on failure
+                        const revertLit = btn.classList.toggle('lit');
+                        btn.setAttribute('aria-pressed', revertLit ? 'true' : 'false');
+                    } finally {
+                        btn.disabled = false;
+                    }
+                });
+                return btn;
+            }
+
+            async function loadCandles() {
+                if (!candleRow) return;
+                try {
+                    const res = await fetch('/api/youth/directory');
+                    const data = await res.json();
+                    const candles = (data.success && Array.isArray(data.candles) && data.candles.length)
+                        ? data.candles
+                        : [
+                            { id: 'family', label: 'For my family', lit: true },
+                            { id: 'healing', label: 'For healing', lit: false },
+                            { id: 'guidance', label: 'For guidance', lit: true },
+                            { id: 'departed', label: 'For the departed', lit: false },
+                            { id: 'peace', label: 'For peace', lit: true },
+                            { id: 'vocations', label: 'For vocations', lit: false }
+                        ];
+                    candleRow.innerHTML = '';
+                    candles.forEach(c => candleRow.appendChild(renderCandle(c)));
+                } catch (e) {
+                    candleRow.innerHTML = '<p class="text-white-50 small mb-0">Could not load the candle board right now.</p>';
+                }
+            }
+
+            loadCandles();
+
+            // Gold dust particle canvas (drifts upward and fades, like incense/embers)
+            const canvas = document.getElementById('goldDustCanvas');
+            if (!canvas || !canvas.getContext) return;
+            const ctx = canvas.getContext('2d');
+            const prefersReducedMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+            let particles = [];
+            let width = 0, height = 0;
+
+            function makeParticle(randomY) {
+                return {
+                    x: Math.random() * width,
+                    y: randomY ? Math.random() * height : height + Math.random() * 40,
+                    r: 0.8 + Math.random() * 1.8,
+                    speed: 0.25 + Math.random() * 0.55,
+                    drift: (Math.random() - 0.5) * 0.4,
+                    baseAlpha: 0.35 + Math.random() * 0.5,
+                    phase: Math.random() * Math.PI * 2
+                };
+            }
+
+            function particleCount() {
+                // Fewer particles on small screens for performance.
+                return Math.round(Math.max(20, Math.min(60, (width * height) / 9000)));
+            }
+
+            // 10. Responsive resize particle re-mapping
+            function resizeCanvas() {
+                const rect = canvas.parentElement.getBoundingClientRect();
+                const dpr = window.devicePixelRatio || 1;
+                width = rect.width;
+                height = rect.height;
+                canvas.width = width * dpr;
+                canvas.height = height * dpr;
+                canvas.style.width = width + 'px';
+                canvas.style.height = height + 'px';
+                ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                const target = particleCount();
+                particles = Array.from({ length: target }, () => makeParticle(true));
+            }
+
+            function drawParticles() {
+                ctx.clearRect(0, 0, width, height);
+                particles.forEach(p => {
+                    p.y -= p.speed;
+                    p.x += p.drift;
+                    p.phase += 0.02;
+                    if (p.y < -10) {
+                        Object.assign(p, makeParticle(false));
+                    }
+                    const flicker = 0.75 + Math.sin(p.phase) * 0.25;
+                    const fadeNearTop = Math.min(1, p.y / 40);
+                    const alpha = p.baseAlpha * flicker * fadeNearTop;
+                    ctx.beginPath();
+                    ctx.fillStyle = `rgba(255, 214, 120, ${alpha.toFixed(3)})`;
+                    ctx.shadowColor = 'rgba(255, 214, 120, 0.8)';
+                    ctx.shadowBlur = 4;
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                if (!prefersReducedMotion) requestAnimationFrame(drawParticles);
+            }
+
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+            if (!prefersReducedMotion) {
+                requestAnimationFrame(drawParticles);
+            } else {
+                drawParticles(); // draw one static frame only
+            }
+        })();
 
         let hymnsData = [];
         function renderHymnTOC() {
