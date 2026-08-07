@@ -1,0 +1,74 @@
+/* =============================================================
+   Shared "app shell" layout — served once from the server and
+   auto-injected into every HTML page (see server.js).
+
+   Goal: the site should always be a fixed shape, not a fluid page
+   that stretches to whatever width the browser window happens to
+   be. Two fixed shapes are defined:
+     - Phone / narrow window  -> a fixed "portrait" frame (480px)
+     - Tablet / laptop window -> a fixed "landscape" frame (1000px)
+   Neither one grows or shrinks continuously as you resize the
+   window past its own breakpoint — it just switches between the
+   two fixed shapes at 768px.
+============================================================= */
+
+:root {
+    --app-max-width: 480px; /* phone / portrait shape (default) */
+}
+
+@media (min-width: 768px) {
+    :root {
+        --app-max-width: 1000px; /* laptop / landscape shape */
+    }
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+    background-color: #d7dce1;
+    margin: 0;
+}
+
+.app-shell {
+    max-width: var(--app-max-width);
+    margin: 0 auto;
+    min-height: 100vh;
+    background-color: #f8f9fa;
+    box-shadow: 0 0 32px rgba(0, 0, 0, 0.18);
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* On an actual phone-width screen the frame already fills the
+   viewport, so the drop shadow / grey backdrop would just look like
+   a stray border - remove it there. */
+@media (max-width: 480px) {
+    .app-shell { box-shadow: none; }
+}
+
+/* Guard rails so nothing inside a page can force the shell wider
+   than its fixed shape (a wide table, a full-bleed image, an old
+   Bootstrap .container-fluid, etc.) and make it "movable" again. */
+.app-shell img,
+.app-shell video,
+.app-shell iframe {
+    max-width: 100%;
+    height: auto;
+}
+.app-shell table { max-width: 100%; }
+.app-shell .container,
+.app-shell .container-fluid {
+    max-width: 100% !important;
+}
+.app-shell .table-responsive {
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Bootstrap modals are positioned relative to the viewport, not the
+   shell, so cap their width to match the shell's current fixed
+   shape instead of letting modal-lg/modal-xl stretch past it. */
+.modal-dialog {
+    max-width: min(calc(var(--app-max-width) - 1rem), 94vw);
+    margin-left: auto;
+    margin-right: auto;
+}
