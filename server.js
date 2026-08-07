@@ -58,7 +58,15 @@ let fallbackData = {
     messages: [],
     readings: [{ id: '1', title: "Sunday Holy Mass Readings", firstReading: "1 Kings 3:5...", psalm: "Psalm 119...", secondReading: "Romans 8...", gospel: "Matthew 13..." }],
     passwordRequests: [],
-    hymns: []
+    hymns: [],
+    candles: [
+        { id: 'family',    label: 'For my family',     lit: true },
+        { id: 'healing',   label: 'For healing',        lit: false },
+        { id: 'guidance',  label: 'For guidance',       lit: true },
+        { id: 'departed',  label: 'For the departed',   lit: false },
+        { id: 'peace',     label: 'For peace',          lit: true },
+        { id: 'vocations', label: 'For vocations',      lit: false }
+    ]
 };
 
 async function readData() {
@@ -81,7 +89,8 @@ async function readData() {
             messages: doc.messages || fallbackData.messages,
             readings: doc.readings || fallbackData.readings,
             passwordRequests: doc.passwordRequests || fallbackData.passwordRequests,
-            hymns: doc.hymns || fallbackData.hymns
+            hymns: doc.hymns || fallbackData.hymns,
+            candles: doc.candles || fallbackData.candles
         };
     } catch (e) {
         return fallbackData;
@@ -164,13 +173,131 @@ const HTML_ROUTE_MAP = {
     '/jumuiya-portal': 'jumuiya-portal.html'
 };
 
+// =============================================================
+// LITURGICAL SEASON ENGINE
+// Computes the current Catholic liturgical season/color from the date
+// alone — this is calendar math (like Easter's date), not copyrighted
+// text, so it's safe to compute directly. Boundaries are a reasonable
+// approximation for UI theming (exact pastoral dates can shift by a
+// day or two around Baptism of the Lord / local calendars) — good
+// enough to drive a color theme, not meant as a canonical ordo.
+// =============================================================
+function addDays(date, days) {
+    const d = new Date(date.getTime());
+    d.setUTCDate(d.getUTCDate() + days);
+    return d;
+}
+
+// Anonymous Gregorian algorithm (Meeus/Jones/Butcher) for Easter Sunday.
+function computeEaster(year) {
+    const a = year % 19;
+    const b = Math.floor(year / 100);
+    const c = year % 100;
+    const d = Math.floor(b / 4);
+    const e = b % 4;
+    const f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3);
+    const h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4);
+    const k = c % 4;
+    const l = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * l) / 451);
+    const month = Math.floor((h + l - 7 * m + 114) / 31); // 3 = March, 4 = April
+    const day = ((h + l - 7 * m + 114) % 31) + 1;
+    return new Date(Date.UTC(year, month - 1, day));
+}
+
+function adventStartForYear(year) {
+    const dec25 = new Date(Date.UTC(year, 11, 25));
+    const dow = dec25.getUTCDay(); // 0 = Sunday
+    const fourthAdventSunday = addDays(dec25, -dow);
+    return addDays(fourthAdventSunday, -21);
+}
+
+const LITURGICAL_COLORS = {
+    advent:   { name: 'Purple', hex: '#5b2d8e', soft: 'rgba(91,45,142,0.35)',  note: 'A season of watchful hope, preparing the way for the Lord.' },
+    christmas:{ name: 'White & Gold', hex: '#caa23a', soft: 'rgba(202,162,58,0.35)', note: 'Rejoicing in the birth of Christ, Light of the World.' },
+    lent:     { name: 'Purple', hex: '#5b2d8e', soft: 'rgba(91,45,142,0.35)',  note: 'A season of prayer, fasting, and turning back to God.' },
+    triduum:  { name: 'Red', hex: '#8e1f1f', soft: 'rgba(142,31,31,0.35)',     note: 'The heart of the Church\u2019s year: the Passion of the Lord.' },
+    easter:   { name: 'White & Gold', hex: '#caa23a', soft: 'rgba(202,162,58,0.35)', note: 'He is risen! A season of Easter joy and new life.' },
+    pentecost:{ name: 'Red', hex: '#8e1f1f', soft: 'rgba(142,31,31,0.35)',     note: 'The Holy Spirit poured out upon the Church.' },
+    ordinary: { name: 'Green', hex: '#2f6f4e', soft: 'rgba(47,111,78,0.35)',   note: 'Ordinary Time — growing in faith day by day.' }
+};
+
+function getLiturgicalInfo(date) {
+    date = date || new Date();
+    const year = date.getUTCFullYear();
+    const easterThisYear = computeEaster(year);
+    const easterPrevYear = computeEaster(year - 1);
+
+    const ashWednesday = addDays(easterThisYear, -46);
+    const holyThursday = addDays(easterThisYear, -3);
+    const easterSunday = easterThisYear;
+    const pentecost = addDays(easterThisYear, 49);
+
+    const christmasThisYear = new Date(Date.UTC(year, 11, 25));
+    const christmasPrevYear = new Date(Date.UTC(year - 1, 11, 25));
+    const baptismOfLordEnd = new Date(Date.UTC(year, 0, 12)); // approx. end of Christmas season
+    const adventStartThisYear = adventStartForYear(year);
+
+    let seasonKey;
+    let extraLabel = null;
+
+    if (date >= christmasPrevYear && date <= baptismOfLordEnd) {
+        seasonKey = 'christmas';
+    } else if (date >= holyThursday && date < easterSunday) {
+        seasonKey = 'triduum';
+    } else if (date >= ashWednesday && date < holyThursday) {
+        seasonKey = 'lent';
+    } else if (date >= easterSunday && date < pentecost) {
+        seasonKey = 'easter';
+    } else if (date.getUTCFullYear() === pentecost.getUTCFullYear() &&
+               date.getUTCMonth() === pentecost.getUTCMonth() &&
+               date.getUTCDate() === pentecost.getUTCDate()) {
+        seasonKey = 'pentecost';
+        extraLabel = 'Pentecost Sunday';
+    } else if (date >= adventStartThisYear && date < christmasThisYear) {
+        seasonKey = 'advent';
+    } else if (date >= christmasThisYear) {
+        seasonKey = 'christmas';
+    } else {
+        seasonKey = 'ordinary';
+    }
+
+    const info = LITURGICAL_COLORS[seasonKey];
+    return {
+        seasonKey,
+        seasonName: extraLabel || (seasonKey.charAt(0).toUpperCase() + seasonKey.slice(1)),
+        colorName: info.name,
+        hex: info.hex,
+        soft: info.soft,
+        note: info.note
+    };
+}
+
+app.get('/api/liturgical/season', (req, res) => {
+    res.json({ success: true, ...getLiturgicalInfo(new Date()) });
+});
+
 function injectAppShell(html) {
     const linkTag = '<link rel="stylesheet" href="/app-shell.css">';
+    const liturgical = getLiturgicalInfo(new Date());
+    const themeStyle = `<style>
+        :root {
+            --liturgical-color: ${liturgical.hex};
+            --liturgical-color-soft: ${liturgical.soft};
+        }
+    </style>`;
+    const bannerHtml = `<div class="liturgical-banner" style="background:${liturgical.hex};">
+        <span class="liturgical-banner-dot"></span>
+        <span>${liturgical.seasonName} &middot; ${liturgical.colorName}</span>
+    </div>`;
+
     let out = html;
     out = /<\/head>/i.test(out)
-        ? out.replace(/<\/head>/i, `    ${linkTag}\n</head>`)
-        : linkTag + out;
-    out = out.replace(/(<body[^>]*>)/i, `$1\n<div class="app-shell">`);
+        ? out.replace(/<\/head>/i, `    ${linkTag}\n    ${themeStyle}\n</head>`)
+        : linkTag + themeStyle + out;
+    out = out.replace(/(<body[^>]*>)/i, `$1\n<div class="app-shell">\n${bannerHtml}`);
     out = out.replace(/(<\/body>)/i, `</div><!-- /.app-shell -->\n$1`);
     return out;
 }
@@ -279,6 +406,26 @@ app.post('/api/jumuiya/submit-record', async (req, res) => {
     res.json({ success: true, message: 'Submitted successfully!' });
 });
 
+// Virtual prayer candles — a shared, persistent board every visitor sees
+// and can light/extinguish (like a real vigil candle rack).
+app.post('/api/candles/toggle', async (req, res) => {
+    try {
+        const { id } = req.body;
+        if (!id) return res.status(400).json({ success: false, message: 'Missing candle id.' });
+        const data = await readData();
+        let found = false;
+        const candles = (data.candles || []).map(c => {
+            if (c.id === id) { found = true; return { ...c, lit: !c.lit }; }
+            return c;
+        });
+        if (!found) return res.status(404).json({ success: false, message: 'Candle not found.' });
+        await writeData({ candles });
+        res.json({ success: true, candles });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error toggling candle.' });
+    }
+});
+
 app.get('/api/youth/directory', async (req, res) => {
     const data = await readData();
     const { reflection, patronSaint } = await getSpiritualContent();
@@ -300,6 +447,7 @@ app.get('/api/youth/directory', async (req, res) => {
         readings: data.readings || [], 
         messages: data.messages || [],
         hymns: data.hymns || [],
+        candles: data.candles || [],
         reflection,
         patronSaint,
         validPurposes: VALID_PURPOSES
@@ -366,6 +514,7 @@ app.get('/api/admin/data', async (req, res) => {
         events: data.events || [], 
         messages: data.messages || [],
         hymns: data.hymns || [],
+        candles: data.candles || [],
         passwordRequests: data.passwordRequests || [],
         reflection,
         patronSaint,
