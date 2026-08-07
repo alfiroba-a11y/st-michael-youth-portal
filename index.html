@@ -20,6 +20,7 @@
             background: rgba(0, 0, 0, 0.6);
             z-index: 2;
         }
+        .hymn-lyrics { white-space: pre-line; }
     </style>
 </head><body class="bg-light">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
@@ -91,6 +92,15 @@
                 <h6 id="reflectionTitle" class="fw-bold text-dark">Loading daily reflection...</h6>
                 <p id="reflectionRef" class="small text-muted mb-1"><strong>Ref:</strong> Loading...</p>
                 <p id="reflectionContent" class="small mb-0 text-secondary">Loading...</p>
+            </div>
+        </div>
+
+        <!-- Parish Hymnal: Tumshangilie Bwana -->
+        <div class="card shadow-sm p-4 mb-4">
+            <h3 class="text-primary mb-3">🎵 Tumshangilie Bwana — Parish Hymnal</h3>
+            <p class="text-muted small">Tap a title below to open the full song or prayer.</p>
+            <div id="hymnTOC" class="list-group mb-3">
+                <div class="list-group-item text-muted">Loading hymnal...</div>
             </div>
         </div>
 
@@ -272,6 +282,22 @@
         </div>
     </div>
 
+    <!-- Hymn Detail Modal -->
+    <div class="modal fade" id="hymnModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="hymnModalTitle">Song Title</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p id="hymnModalMeta" class="text-muted small mb-3"></p>
+                    <p id="hymnModalLyrics" class="hymn-lyrics mb-0"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         function togglePrayer(id) {
@@ -284,6 +310,35 @@
                 document.getElementById(p).classList.remove('show');
             });
             document.getElementById(type + 'Content').classList.add('show');
+        }
+
+        function esc(v) {
+            return String(v === undefined || v === null ? '' : v)
+                .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+        }
+
+        let hymnsData = [];
+        function renderHymnTOC() {
+            const el = document.getElementById('hymnTOC');
+            if (!hymnsData.length) {
+                el.innerHTML = '<div class="list-group-item text-muted">No songs added yet — check back soon.</div>';
+                return;
+            }
+            el.innerHTML = hymnsData.map(h => `
+                <button type="button" class="list-group-item list-group-item-action" onclick="openHymn('${h.id}')">
+                    ${h.number ? `<span class="badge bg-secondary me-2">#${esc(h.number)}</span>` : ''}
+                    <strong>${esc(h.title)}</strong>
+                    ${h.category ? `<span class="text-muted small ms-2">${esc(h.category)}</span>` : ''}
+                </button>
+            `).join('');
+        }
+        function openHymn(id) {
+            const h = hymnsData.find(x => String(x.id) === String(id));
+            if (!h) return;
+            document.getElementById('hymnModalTitle').textContent = h.title || 'Song';
+            document.getElementById('hymnModalMeta').textContent = [h.number ? ('#' + h.number) : null, h.category || null].filter(Boolean).join(' • ');
+            document.getElementById('hymnModalLyrics').textContent = h.lyrics || '';
+            new bootstrap.Modal(document.getElementById('hymnModal')).show();
         }
 
         async function loadReadings() {
@@ -312,22 +367,30 @@
                     }
                 }
 
-                if (data.success && data.textReflection) {
-                    const tr = data.textReflection;
+                // NOTE: the server sends this field as `reflection` (see
+                // getSpiritualContent() in server.js) — this used to read
+                // `data.textReflection`, which the server never sends, so
+                // the reflection card was stuck on "Loading...".
+                if (data.success && data.reflection) {
+                    const tr = data.reflection;
                     document.getElementById('reflectionTitle').textContent = tr.title || 'Daily Word';
-                    document.getElementById('reflectionRef').innerHTML = `<strong>Ref:</strong> ${tr.reference || ''}`;
+                    document.getElementById('reflectionRef').innerHTML = `<strong>Ref:</strong> ${esc(tr.reference || '')}`;
                     document.getElementById('reflectionContent').textContent = tr.content || '';
                 } else {
                     document.getElementById('reflectionTitle').textContent = 'Daily Spiritual Reflection';
                     document.getElementById('reflectionRef').innerHTML = '<strong>Ref:</strong> -';
                     document.getElementById('reflectionContent').textContent = 'No daily reflection posted yet.';
                 }
+
+                hymnsData = (data.success && Array.isArray(data.hymns)) ? data.hymns : [];
+                renderHymnTOC();
             } catch(e) {
                 console.error('Failed to load readings:', e);
                 document.getElementById('announcementBanner').textContent = 'Unable to load updates at this time.';
                 document.getElementById('reflectionTitle').textContent = 'Daily Spiritual Reflection';
                 document.getElementById('reflectionRef').innerHTML = '<strong>Ref:</strong> -';
                 document.getElementById('reflectionContent').textContent = 'Unable to load reflection at this time.';
+                document.getElementById('hymnTOC').innerHTML = '<div class="list-group-item text-muted">Could not load the hymnal right now.</div>';
             }
         }
         
