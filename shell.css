@@ -72,3 +72,27 @@ html, body {
     margin-left: auto;
     margin-right: auto;
 }
+
+/* Liturgical season banner — injected once by the server (server.js)
+   at the top of every page's app-shell, so the whole site shows one
+   consistent seasonal color/label without each page managing it. */
+.liturgical-banner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    color: #fff;
+    font-size: 0.72rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    padding: 6px 10px;
+    text-align: center;
+}
+.liturgical-banner-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #fff;
+    opacity: 0.85;
+    flex-shrink: 0;
+}
