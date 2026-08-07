@@ -2,6 +2,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const path = require('path');
+const fs = require('fs');
 const { MongoClient } = require('mongodb');
 
 const app = express();
@@ -17,7 +18,6 @@ app.use((req, res, next) => {
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-app.use(express.static(path.join(__dirname)));
 
 const MONGO_URI = process.env.MONGO_URI;
 let db = null;
@@ -142,12 +142,65 @@ initDB();
 const normalize = (str) => (str || '').toLowerCase().replace(/[\.\s]/g, '');
 const maskPhone = (phone) => (!phone || phone.length < 6) ? '****' : phone.slice(0, 3) + '****' + phone.slice(-3);
 
-// Page Route Endpoints
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
-app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'login.html')));
-app.get('/dashboard', (req, res) => res.sendFile(path.join(__dirname, 'dashboard.html')));
-app.get('/secret-admin-portal-kasaini-2026', (req, res) => res.sendFile(path.join(__dirname, 'admin.html')));
-app.get('/jumuiya-portal', (req, res) => res.sendFile(path.join(__dirname, 'jumuiya-portal.html')));
+// =============================================================
+// GLOBAL "APP SHELL" LAYOUT
+// Every HTML page on this site (index, login, dashboard, admin,
+// jumuiya-portal, and any other .html file) is served through this
+// middleware, which injects one shared stylesheet and wraps the page
+// body in a fixed-width frame. This is what keeps every page a fixed
+// shape instead of stretching/shifting on wide laptop screens — and
+// because it happens here on the server, individual pages never need
+// their own copy of this CSS, and adding a new page automatically
+// gets the same treatment.
+// =============================================================
+const HTML_ROUTE_MAP = {
+    '/': 'index.html',
+    '/index': 'index.html',
+    '/login': 'login.html',
+    '/dashboard': 'dashboard.html',
+    '/secret-admin-portal-kasaini-2026': 'admin.html',
+    '/jumuiya-portal': 'jumuiya-portal.html'
+};
+
+function injectAppShell(html) {
+    const linkTag = '<link rel="stylesheet" href="/app-shell.css">';
+    let out = html;
+    out = /<\/head>/i.test(out)
+        ? out.replace(/<\/head>/i, `    ${linkTag}\n</head>`)
+        : linkTag + out;
+    out = out.replace(/(<body[^>]*>)/i, `$1\n<div class="app-shell">`);
+    out = out.replace(/(<\/body>)/i, `</div><!-- /.app-shell -->\n$1`);
+    return out;
+}
+
+function sendShelledPage(res, filename) {
+    const filePath = path.join(__dirname, filename);
+    fs.readFile(filePath, 'utf8', (err, html) => {
+        if (err) return res.status(404).send('Page not found.');
+        res.set('Content-Type', 'text/html; charset=utf-8');
+        res.send(injectAppShell(html));
+    });
+}
+
+app.use((req, res, next) => {
+    if (req.method !== 'GET') return next();
+    const urlPath = req.path;
+
+    if (HTML_ROUTE_MAP[urlPath]) {
+        return sendShelledPage(res, HTML_ROUTE_MAP[urlPath]);
+    }
+    if (urlPath.toLowerCase().endsWith('.html')) {
+        // path.basename strips any directory traversal attempt (../, etc.)
+        return sendShelledPage(res, path.basename(urlPath));
+    }
+    next();
+});
+
+// Serves everything else — CSS, JS, images, app-shell.css itself, etc.
+// (Deliberately placed after the shell middleware above so .html
+// requests are always intercepted for shell injection first.)
+app.use(express.static(path.join(__dirname)));
+
 
 // Spiritual & Content API Endpoints
 app.get('/api/spiritual/content', async (req, res) => {
