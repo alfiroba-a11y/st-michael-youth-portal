@@ -30,6 +30,36 @@ const automatedReflections = [
     { title: "Renewed Hope", reference: "Isaiah 40:31", content: "Those who hope in the Lord will renew their strength. They will soar on wings like eagles; they will run and not grow weary." }
 ];
 
+// "Saint of the Day" rotation — factual name/feast-day info plus a short
+// ORIGINAL one-line description written for this app (not quoted from any
+// missal, breviary, or biography). Rotates by day-of-year so it's the same
+// for every visitor on a given day. `seed` just drives the fallback portrait's
+// color/style deterministically when no AI image is configured.
+const SAINTS_OF_THE_DAY = [
+    { name: "St. Michael the Archangel", feastDay: "September 29", seed: "michael", blurb: "Warrior-protector of the Church, invoked for courage and defense against evil." },
+    { name: "St. Charles Lwanga", feastDay: "June 3", seed: "lwanga", blurb: "Ugandan martyr who held firm in his faith even at the cost of his life." },
+    { name: "St. Kizito", feastDay: "June 3", seed: "kizito", blurb: "The youngest of the Uganda Martyrs, a witness that holiness has no minimum age." },
+    { name: "St. Aloysius Gonzaga", feastDay: "June 21", seed: "aloysius", blurb: "Patron of Christian youth, known for humility and single-hearted devotion." },
+    { name: "St. Thérèse of Lisieux", feastDay: "October 1", seed: "therese", blurb: "Taught that small, everyday acts done with love are their own path to holiness." },
+    { name: "St. Francis of Assisi", feastDay: "October 4", seed: "francis", blurb: "Left wealth behind to live simply, caring for the poor and all creation." },
+    { name: "St. Joseph", feastDay: "March 19", seed: "joseph", blurb: "Foster father of Jesus, a quiet model of faithfulness and steady provision." },
+    { name: "St. Anthony of Padua", feastDay: "June 13", seed: "anthony", blurb: "Known for his preaching and his closeness to the poor and the lost." },
+    { name: "St. Teresa of Calcutta", feastDay: "September 5", seed: "teresa", blurb: "Served the poorest of the poor, seeing the face of Christ in every person." },
+    { name: "St. Monica", feastDay: "August 27", seed: "monica", blurb: "Prayed for years for her son's conversion — a patron of persistent hope." },
+    { name: "St. Augustine", feastDay: "August 28", seed: "augustine", blurb: "A restless seeker whose story shows it's never too late to turn back to God." },
+    { name: "St. Catherine of Siena", feastDay: "April 29", seed: "catherine", blurb: "A young laywoman whose courage and counsel shaped the Church of her time." },
+    { name: "St. Raphael the Archangel", feastDay: "September 29", seed: "raphael", blurb: "Called \"God heals\" — patron of travelers, healing, and safe journeys." },
+    { name: "St. Jude Thaddeus", feastDay: "October 28", seed: "jude", blurb: "Apostle invoked in difficult and seemingly hopeless situations." }
+];
+
+function getSaintOfDay(date) {
+    date = date || new Date();
+    const start = new Date(Date.UTC(date.getUTCFullYear(), 0, 0));
+    const dayOfYear = Math.floor((date - start) / (1000 * 60 * 60 * 24));
+    const saint = SAINTS_OF_THE_DAY[dayOfYear % SAINTS_OF_THE_DAY.length];
+    return { ...saint, dayOfYear };
+}
+
 const VALID_PURPOSES = ['Christmas collection', 'Easter collection', 'Diocesan collection', 'Youth harambee', 'PMC contribution', 'Other'];
 
 const JUMUIYAS_LIST = [
@@ -66,7 +96,9 @@ let fallbackData = {
         { id: 'departed',  label: 'For the departed',   lit: false },
         { id: 'peace',     label: 'For peace',          lit: true },
         { id: 'vocations', label: 'For vocations',      lit: false }
-    ]
+    ],
+    memorialNames: [],
+    prayerPoints: []
 };
 
 async function readData() {
@@ -90,7 +122,9 @@ async function readData() {
             readings: doc.readings || fallbackData.readings,
             passwordRequests: doc.passwordRequests || fallbackData.passwordRequests,
             hymns: doc.hymns || fallbackData.hymns,
-            candles: doc.candles || fallbackData.candles
+            candles: doc.candles || fallbackData.candles,
+            memorialNames: doc.memorialNames || fallbackData.memorialNames,
+            prayerPoints: doc.prayerPoints || fallbackData.prayerPoints
         };
     } catch (e) {
         return fallbackData;
@@ -337,6 +371,73 @@ app.get('/api/spiritual/content', async (req, res) => {
     res.json({ success: true, ...content });
 });
 
+// "Saint of the Day" — factual name/feast-day rotation, see SAINTS_OF_THE_DAY above.
+app.get('/api/saint-of-day', (req, res) => {
+    res.json({ success: true, saint: getSaintOfDay(new Date()) });
+});
+
+// Optional AI-generated portrait. Only runs if the server has an
+// OPENAI_API_KEY configured (Render → Environment). Without one, this
+// simply reports { available: false } and the front-end falls back to a
+// generated-look CSS/canvas portrait instead — the feature still works,
+// it just isn't a real AI image until a key + budget are set up.
+// The image is generated once per saint per day and cached in memory.
+let cachedPortrait = { dayOfYear: null, dataUrl: null };
+app.get('/api/saint-of-day/portrait', async (req, res) => {
+    const saint = getSaintOfDay(new Date());
+    if (!process.env.OPENAI_API_KEY) {
+        return res.json({ success: true, available: false, reason: 'No OPENAI_API_KEY configured on the server.' });
+    }
+    if (cachedPortrait.dayOfYear === saint.dayOfYear && cachedPortrait.dataUrl) {
+        return res.json({ success: true, available: true, image: cachedPortrait.dataUrl });
+    }
+    try {
+        const prompt = `A reverent, painterly portrait of the Catholic saint ${saint.name}, warm golden light, dignified and peaceful expression, traditional devotional art style, no text or watermark.`;
+        const apiRes = await fetch('https://api.openai.com/v1/images/generations', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+            },
+            body: JSON.stringify({ model: 'gpt-image-1', prompt, size: '1024x1024', n: 1 })
+        });
+        const json = await apiRes.json();
+        const b64 = json && json.data && json.data[0] && json.data[0].b64_json;
+        if (!b64) throw new Error('No image returned from provider.');
+        const dataUrl = `data:image/png;base64,${b64}`;
+        cachedPortrait = { dayOfYear: saint.dayOfYear, dataUrl };
+        res.json({ success: true, available: true, image: dataUrl });
+    } catch (e) {
+        res.json({ success: true, available: false, reason: 'Image generation failed: ' + e.message });
+    }
+});
+
+// Real-time-ish Global Prayer Globe: visitors submit an approximate
+// location (from their browser, with permission) when they light a
+// prayer intention; everyone polling sees the shared point set.
+app.post('/api/prayer-globe/submit', async (req, res) => {
+    try {
+        const { lat, lng } = req.body;
+        const latNum = Number(lat), lngNum = Number(lng);
+        if (!isFinite(latNum) || !isFinite(lngNum) || latNum < -90 || latNum > 90 || lngNum < -180 || lngNum > 180) {
+            return res.status(400).json({ success: false, message: 'Invalid coordinates.' });
+        }
+        const data = await readData();
+        const points = [...(data.prayerPoints || []), { id: Date.now().toString(), lat: latNum, lng: lngNum, ts: Date.now() }];
+        // Keep only the most recent 300 points so this never grows unbounded.
+        const trimmed = points.slice(-300);
+        await writeData({ prayerPoints: trimmed });
+        res.json({ success: true, points: trimmed });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error submitting prayer point.' });
+    }
+});
+
+app.get('/api/prayer-globe/points', async (req, res) => {
+    const data = await readData();
+    res.json({ success: true, points: data.prayerPoints || [] });
+});
+
 app.get('/api/analytics/jumuiya-graph', async (req, res) => {
     const data = await readData();
     const labels = JUMUIYAS_LIST.map(j => j.name);
@@ -448,6 +549,7 @@ app.get('/api/youth/directory', async (req, res) => {
         messages: data.messages || [],
         hymns: data.hymns || [],
         candles: data.candles || [],
+        memorialNames: data.memorialNames || [],
         reflection,
         patronSaint,
         validPurposes: VALID_PURPOSES
@@ -515,6 +617,7 @@ app.get('/api/admin/data', async (req, res) => {
         messages: data.messages || [],
         hymns: data.hymns || [],
         candles: data.candles || [],
+        memorialNames: data.memorialNames || [],
         passwordRequests: data.passwordRequests || [],
         reflection,
         patronSaint,
@@ -615,6 +718,45 @@ app.post('/api/admin/delete-hymn', async (req, res) => {
         res.json({ success: true, hymns });
     } catch (e) {
         res.status(500).json({ success: false, message: 'Error deleting hymn.' });
+    }
+});
+
+// Memorial Wall — names for the virtual chapel's glowing memorial garden.
+app.post('/api/admin/save-memorial-name', async (req, res) => {
+    try {
+        const { id, name, years } = req.body;
+        if (!name) return res.status(400).json({ success: false, message: 'Name is required.' });
+        const data = await readData();
+        let memorialNames = data.memorialNames || [];
+        if (id) {
+            let found = false;
+            memorialNames = memorialNames.map(m => {
+                if (m.id === id) { found = true; return { ...m, name, years }; }
+                return m;
+            });
+            if (!found) return res.status(404).json({ success: false, message: 'Entry not found.' });
+        } else {
+            memorialNames.push({ id: Date.now().toString(), name, years: years || '' });
+        }
+        await writeData({ memorialNames });
+        res.json({ success: true, memorialNames });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error saving memorial name.' });
+    }
+});
+
+app.post('/api/admin/delete-memorial-name', async (req, res) => {
+    try {
+        const { id } = req.body;
+        if (!id) return res.status(400).json({ success: false, message: 'Missing id.' });
+        const data = await readData();
+        const before = (data.memorialNames || []).length;
+        const memorialNames = (data.memorialNames || []).filter(m => m.id !== id);
+        if (memorialNames.length === before) return res.status(404).json({ success: false, message: 'Entry not found.' });
+        await writeData({ memorialNames });
+        res.json({ success: true, memorialNames });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error deleting memorial name.' });
     }
 });
 
