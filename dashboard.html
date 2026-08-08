@@ -7,6 +7,56 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Chart.js for graphs -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Three.js for the Prayer Globe and Virtual Chapel (WebXR) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r160/three.min.js"></script>
+    <style>
+        /* Saint of the Day: reveal-shader style portrait */
+        .saint-portrait-wrap {
+            position: relative;
+            width: 140px; height: 140px;
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+            box-shadow: 0 0 0 4px rgba(255,255,255,0.6), 0 4px 18px rgba(0,0,0,0.25);
+        }
+        .saint-portrait-canvas { width: 100%; height: 100%; display: block; }
+        .saint-portrait-wrap.revealing::after {
+            content: "";
+            position: absolute; inset: 0;
+            background: linear-gradient(120deg, rgba(255,255,255,0) 40%, rgba(255,255,255,0.55) 50%, rgba(255,255,255,0) 60%);
+            background-size: 250% 250%;
+            animation: saintPaintSheen 2.2s ease-in-out 1;
+        }
+        @keyframes saintPaintSheen {
+            0%   { background-position: 120% 0%; opacity: 1; }
+            100% { background-position: -20% 0%; opacity: 0; }
+        }
+
+        /* Prayer Globe */
+        .globe-card { background: #0b0f2b; color: #fff; border-radius: 0.75rem; overflow: hidden; }
+        #prayerGlobeCanvas { width: 100%; height: 320px; display: block; cursor: grab; }
+        #prayerGlobeCanvas:active { cursor: grabbing; }
+        .globe-count-badge { font-size: 0.75rem; color: rgba(255,255,255,0.7); }
+
+        /* Virtual Chapel overlay */
+        #chapelOverlay {
+            position: fixed; inset: 0; z-index: 2000;
+            background: #000;
+            display: none;
+        }
+        #chapelOverlay.open { display: block; }
+        #chapelCanvas { width: 100%; height: 100%; display: block; cursor: grab; }
+        #chapelCanvas:active { cursor: grabbing; }
+        #chapelCloseBtn, #chapelVrBtn {
+            position: absolute; top: 14px; z-index: 2001;
+        }
+        #chapelCloseBtn { right: 14px; }
+        #chapelVrBtn { left: 14px; }
+        #chapelHint {
+            position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
+            color: rgba(255,255,255,0.7); font-size: 0.78rem; z-index: 2001; text-align: center;
+        }
+    </style>
 </head>
 <body class="bg-light d-flex flex-column min-vh-100">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
@@ -78,6 +128,42 @@
             </div>
         </div>
 
+        <!-- Saint of the Day -->
+        <div class="card shadow-sm p-4 mb-4 border-info-subtle">
+            <h4 class="text-primary mb-3">🖼️ Saint of the Day</h4>
+            <div class="d-flex flex-wrap align-items-center gap-3">
+                <div class="saint-portrait-wrap" id="saintPortraitWrap">
+                    <canvas class="saint-portrait-canvas" id="saintPortraitCanvas" width="280" height="280"></canvas>
+                </div>
+                <div>
+                    <h5 class="mb-1" id="saintName">Loading...</h5>
+                    <p class="small text-muted mb-1" id="saintFeast"></p>
+                    <p class="small mb-0" id="saintBlurb"></p>
+                    <p class="small text-muted fst-italic mb-0" id="saintPortraitNote" style="display:none;"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Real-Time Global Prayer Globe -->
+        <div class="card shadow-sm p-0 mb-4 globe-card">
+            <div class="p-3 pb-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h4 class="mb-0">🌍 Global Prayer Globe</h4>
+                <span class="globe-count-badge" id="globeCount">0 intentions lit</span>
+            </div>
+            <canvas id="prayerGlobeCanvas"></canvas>
+            <div class="p-3 pt-2 d-flex flex-wrap gap-2 align-items-center">
+                <button class="btn btn-sm btn-warning" id="lightGlobeIntentionBtn">✨ Light a prayer intention from here</button>
+                <span class="small text-white-50" id="globeStatusText"></span>
+            </div>
+        </div>
+
+        <!-- Virtual Basilica (WebXR chapel + memorial wall) -->
+        <div class="card shadow-sm p-4 mb-4">
+            <h4 class="text-primary mb-2">🕯️ Virtual Prayer Chapel <span class="badge bg-secondary">Beta</span></h4>
+            <p class="small text-muted mb-3">A starting 3D prayer space with a glowing memorial wall — enter from your browser, or with a VR headset if you have one. This is a foundation, not yet a full model of our actual church building.</p>
+            <button class="btn btn-primary" id="enterChapelBtn">Enter Virtual Chapel</button>
+        </div>
+
         <!-- Daily Spiritual Reflection & Verse -->
         <div class="card shadow-sm p-4 mb-4 bg-white border-primary">
             <h4 class="text-primary mb-2">📖 Daily Spiritual Reflection</h4>
@@ -126,6 +212,14 @@
                 </div>
             </form>
         </div>
+    </div>
+
+    <!-- Virtual Chapel fullscreen overlay -->
+    <div id="chapelOverlay">
+        <canvas id="chapelCanvas"></canvas>
+        <button id="chapelVrBtn" class="btn btn-sm btn-warning" style="display:none;">Enter VR</button>
+        <button id="chapelCloseBtn" class="btn btn-sm btn-light">✕ Close</button>
+        <div id="chapelHint">Drag to look around · glowing plaques are the memorial wall</div>
     </div>
 
     <footer class="text-center py-3 mt-auto text-muted small border-top bg-white">
@@ -352,6 +446,439 @@
 
         loadDashboardData();
         setInterval(loadDashboardData, 5000);
+
+        /* =========================================================
+           SAINT OF THE DAY — reveal-animated portrait
+        ========================================================= */
+        (function initSaintOfDay() {
+            const canvas = document.getElementById('saintPortraitCanvas');
+            const wrap = document.getElementById('saintPortraitWrap');
+            const ctx = canvas ? canvas.getContext('2d') : null;
+
+            // Deterministic color from a text seed, so each saint gets a
+            // consistent (not random-every-load) fallback portrait style.
+            function seedColor(seed) {
+                let hash = 0;
+                for (let i = 0; i < seed.length; i++) hash = (hash * 31 + seed.charCodeAt(i)) >>> 0;
+                const hue = hash % 360;
+                return `hsl(${hue}, 45%, 42%)`;
+            }
+
+            function drawFallbackPortrait(seed) {
+                if (!ctx) return;
+                const w = canvas.width, h = canvas.height;
+                const base = seedColor(seed || 'saint');
+                const grad = ctx.createRadialGradient(w / 2, h / 2.4, 20, w / 2, h / 2, w / 1.3);
+                grad.addColorStop(0, '#fff6df');
+                grad.addColorStop(0.55, base);
+                grad.addColorStop(1, '#1a1030');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, w, h);
+                // Simple halo + robe silhouette so it reads as a devotional portrait,
+                // not just an abstract gradient, without depicting a specific likeness.
+                ctx.strokeStyle = 'rgba(255,230,160,0.9)';
+                ctx.lineWidth = 6;
+                ctx.beginPath();
+                ctx.ellipse(w / 2, h * 0.32, w * 0.22, h * 0.06, 0, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.fillStyle = 'rgba(255,246,224,0.95)';
+                ctx.beginPath();
+                ctx.arc(w / 2, h * 0.42, w * 0.14, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.fillStyle = 'rgba(20,14,40,0.85)';
+                ctx.beginPath();
+                ctx.moveTo(w * 0.28, h);
+                ctx.quadraticCurveTo(w / 2, h * 0.55, w * 0.72, h);
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            function drawAiPortrait(dataUrl) {
+                if (!ctx) return;
+                const img = new Image();
+                img.onload = () => {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                };
+                img.src = dataUrl;
+            }
+
+            async function loadSaint() {
+                try {
+                    const res = await fetch('/api/saint-of-day');
+                    const data = await res.json();
+                    if (!data.success) return;
+                    const s = data.saint;
+                    document.getElementById('saintName').textContent = s.name;
+                    document.getElementById('saintFeast').textContent = 'Feast Day: ' + s.feastDay;
+                    document.getElementById('saintBlurb').textContent = s.blurb;
+
+                    drawFallbackPortrait(s.seed);
+                    if (wrap) {
+                        wrap.classList.remove('revealing');
+                        void wrap.offsetWidth; // restart the reveal animation
+                        wrap.classList.add('revealing');
+                    }
+
+                    // Try the optional AI portrait; silently keep the fallback if unavailable.
+                    try {
+                        const pRes = await fetch('/api/saint-of-day/portrait');
+                        const pData = await pRes.json();
+                        const noteEl = document.getElementById('saintPortraitNote');
+                        if (pData.success && pData.available && pData.image) {
+                            drawAiPortrait(pData.image);
+                            if (noteEl) noteEl.style.display = 'none';
+                        } else if (noteEl) {
+                            noteEl.textContent = 'AI portrait not configured yet — showing a generated placeholder.';
+                            noteEl.style.display = 'block';
+                        }
+                    } catch (e) { /* fallback portrait already drawn */ }
+                } catch (e) {
+                    console.error('Failed to load saint of the day:', e);
+                }
+            }
+            loadSaint();
+        })();
+
+        /* =========================================================
+           GLOBAL PRAYER GLOBE — stylized wireframe globe (Three.js),
+           real geolocated points, soft ping sound, drag-to-rotate.
+        ========================================================= */
+        (function initPrayerGlobe() {
+            const canvas = document.getElementById('prayerGlobeCanvas');
+            if (!canvas || typeof THREE === 'undefined') return;
+
+            const statusText = document.getElementById('globeStatusText');
+            const countBadge = document.getElementById('globeCount');
+            let knownPointIds = new Set();
+            let audioCtx = null;
+
+            function playPing() {
+                try {
+                    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.35);
+                    gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.15, audioCtx.currentTime + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 0.4);
+                    osc.connect(gain).connect(audioCtx.destination);
+                    osc.start();
+                    osc.stop(audioCtx.currentTime + 0.4);
+                } catch (e) { /* audio not available; ignore */ }
+            }
+
+            function latLngToVector3(lat, lng, radius) {
+                const phi = (90 - lat) * (Math.PI / 180);
+                const theta = (lng + 180) * (Math.PI / 180);
+                return new THREE.Vector3(
+                    -radius * Math.sin(phi) * Math.cos(theta),
+                    radius * Math.cos(phi),
+                    radius * Math.sin(phi) * Math.sin(theta)
+                );
+            }
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 100);
+            camera.position.set(0, 0.5, 6);
+
+            const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+            function resizeRenderer() {
+                const rect = canvas.parentElement.getBoundingClientRect();
+                const h = 320;
+                renderer.setSize(rect.width, h, false);
+                camera.aspect = rect.width / h;
+                camera.updateProjectionMatrix();
+            }
+            resizeRenderer();
+            window.addEventListener('resize', resizeRenderer);
+
+            const globeGroup = new THREE.Group();
+            scene.add(globeGroup);
+
+            // Stylized globe: soft glowing sphere + wireframe grid (no external
+            // Earth texture needed, keeps this self-contained and license-free).
+            const glow = new THREE.Mesh(
+                new THREE.SphereGeometry(2, 32, 32),
+                new THREE.MeshBasicMaterial({ color: 0x2a1b52, transparent: true, opacity: 0.55 })
+            );
+            globeGroup.add(glow);
+
+            const wireframe = new THREE.Mesh(
+                new THREE.SphereGeometry(2.01, 24, 18),
+                new THREE.MeshBasicMaterial({ color: 0xffd680, wireframe: true, transparent: true, opacity: 0.35 })
+            );
+            globeGroup.add(wireframe);
+
+            const pointsGroup = new THREE.Group();
+            globeGroup.add(pointsGroup);
+
+            function addPointDot(lat, lng) {
+                const pos = latLngToVector3(lat, lng, 2.05);
+                const dot = new THREE.Mesh(
+                    new THREE.SphereGeometry(0.045, 8, 8),
+                    new THREE.MeshBasicMaterial({ color: 0xffd24a })
+                );
+                dot.position.copy(pos);
+                pointsGroup.add(dot);
+            }
+
+            // Drag-to-rotate (no external OrbitControls dependency needed).
+            let isDragging = false, lastX = 0, lastY = 0;
+            canvas.addEventListener('pointerdown', (e) => { isDragging = true; lastX = e.clientX; lastY = e.clientY; });
+            window.addEventListener('pointerup', () => { isDragging = false; });
+            window.addEventListener('pointermove', (e) => {
+                if (!isDragging) return;
+                const dx = e.clientX - lastX, dy = e.clientY - lastY;
+                globeGroup.rotation.y += dx * 0.005;
+                globeGroup.rotation.x += dy * 0.005;
+                lastX = e.clientX; lastY = e.clientY;
+            });
+
+            function animate() {
+                if (!isDragging) globeGroup.rotation.y += 0.0025;
+                renderer.render(scene, camera);
+                requestAnimationFrame(animate);
+            }
+            animate();
+
+            async function pollPoints(isFirstLoad) {
+                try {
+                    const res = await fetch('/api/prayer-globe/points');
+                    const data = await res.json();
+                    if (!data.success) return;
+                    const points = data.points || [];
+                    countBadge.textContent = `${points.length} intention${points.length === 1 ? '' : 's'} lit`;
+                    let hasNew = false;
+                    points.forEach(p => {
+                        if (!knownPointIds.has(p.id)) {
+                            knownPointIds.add(p.id);
+                            addPointDot(p.lat, p.lng);
+                            if (!isFirstLoad) hasNew = true;
+                        }
+                    });
+                    if (hasNew) playPing();
+                } catch (e) { /* keep last known state on a failed poll */ }
+            }
+            pollPoints(true);
+            setInterval(() => pollPoints(false), 4000);
+
+            document.getElementById('lightGlobeIntentionBtn').addEventListener('click', () => {
+                if (!navigator.geolocation) {
+                    statusText.textContent = 'Location isn\u2019t available in this browser.';
+                    return;
+                }
+                statusText.textContent = 'Requesting your location...';
+                navigator.geolocation.getCurrentPosition(
+                    async (pos) => {
+                        try {
+                            statusText.textContent = 'Lighting your intention...';
+                            const res = await fetch('/api/prayer-globe/submit', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude })
+                            });
+                            const data = await res.json();
+                            if (data.success) {
+                                statusText.textContent = 'Your intention is lit on the globe. 🙏';
+                                pollPoints(false);
+                            } else {
+                                statusText.textContent = data.message || 'Could not light your intention.';
+                            }
+                        } catch (e) {
+                            statusText.textContent = 'Something went wrong — please try again.';
+                        }
+                    },
+                    () => { statusText.textContent = 'Location permission denied — intention not placed.'; },
+                    { timeout: 8000 }
+                );
+            });
+        })();
+
+        /* =========================================================
+           VIRTUAL PRAYER CHAPEL — WebXR-capable starter scene with a
+           glowing memorial wall. Enterable via mouse/touch on desktop,
+           or a VR headset where WebXR is supported.
+        ========================================================= */
+        (function initVirtualChapel() {
+            const enterBtn = document.getElementById('enterChapelBtn');
+            const overlay = document.getElementById('chapelOverlay');
+            const closeBtn = document.getElementById('chapelCloseBtn');
+            const vrBtn = document.getElementById('chapelVrBtn');
+            const canvas = document.getElementById('chapelCanvas');
+            if (!enterBtn || typeof THREE === 'undefined') return;
+
+            let started = false;
+            let renderer, scene, camera, xrSession = null;
+            let yaw = 0, pitch = 0;
+
+            function makeNameplateTexture(text) {
+                const c = document.createElement('canvas');
+                c.width = 512; c.height = 128;
+                const tctx = c.getContext('2d');
+                tctx.fillStyle = 'rgba(0,0,0,0)';
+                tctx.fillRect(0, 0, c.width, c.height);
+                tctx.font = 'bold 48px Georgia, serif';
+                tctx.fillStyle = '#ffe6a8';
+                tctx.textAlign = 'center';
+                tctx.textBaseline = 'middle';
+                tctx.shadowColor = '#ffd680';
+                tctx.shadowBlur = 18;
+                tctx.fillText(text, c.width / 2, c.height / 2);
+                return new THREE.CanvasTexture(c);
+            }
+
+            async function buildScene() {
+                scene = new THREE.Scene();
+                scene.background = new THREE.Color(0x05040c);
+                scene.fog = new THREE.Fog(0x05040c, 4, 20);
+
+                camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
+                camera.position.set(0, 1.6, 6);
+
+                renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.xr.enabled = true;
+
+                const ambient = new THREE.AmbientLight(0x6a5a9c, 0.6);
+                scene.add(ambient);
+                const candleLight = new THREE.PointLight(0xffcf6e, 1.4, 12);
+                candleLight.position.set(0, 1.2, 1.5);
+                scene.add(candleLight);
+
+                // Floor
+                const floor = new THREE.Mesh(
+                    new THREE.CircleGeometry(9, 48),
+                    new THREE.MeshStandardMaterial({ color: 0x14101f, roughness: 0.9 })
+                );
+                floor.rotation.x = -Math.PI / 2;
+                scene.add(floor);
+
+                // Simple altar
+                const altar = new THREE.Mesh(
+                    new THREE.BoxGeometry(1.6, 0.9, 0.7),
+                    new THREE.MeshStandardMaterial({ color: 0x3a2c55, roughness: 0.6 })
+                );
+                altar.position.set(0, 0.45, 1.5);
+                scene.add(altar);
+
+                // Altar candle glow
+                const candleGeo = new THREE.SphereGeometry(0.06, 8, 8);
+                const candleMat = new THREE.MeshBasicMaterial({ color: 0xffcf6e });
+                for (let i = -1; i <= 1; i++) {
+                    const c = new THREE.Mesh(candleGeo, candleMat);
+                    c.position.set(i * 0.4, 1.0, 1.3);
+                    scene.add(c);
+                }
+
+                // Memorial wall: fetch names and arrange as glowing plaques in an arc
+                let names = [];
+                try {
+                    const res = await fetch('/api/youth/directory');
+                    const data = await res.json();
+                    if (data.success && Array.isArray(data.memorialNames)) names = data.memorialNames;
+                } catch (e) { /* proceed with an empty wall */ }
+
+                if (names.length === 0) {
+                    names = [{ name: 'Add names in the Admin Memorial Wall', years: '' }];
+                }
+
+                const radius = 5;
+                names.slice(0, 24).forEach((entry, i) => {
+                    const angle = (i / names.length) * Math.PI * 1.4 - 0.7;
+                    const label = entry.years ? `${entry.name} (${entry.years})` : entry.name;
+                    const tex = makeNameplateTexture(label);
+                    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+                    const sprite = new THREE.Sprite(mat);
+                    sprite.scale.set(2.4, 0.6, 1);
+                    sprite.position.set(Math.sin(angle) * radius, 1.4 + Math.sin(i) * 0.3, -Math.cos(angle) * radius + 3);
+                    scene.add(sprite);
+                });
+
+                // Star field for a celestial garden feel
+                const starGeo = new THREE.BufferGeometry();
+                const starCount = 250;
+                const starPos = new Float32Array(starCount * 3);
+                for (let i = 0; i < starCount; i++) {
+                    starPos[i * 3] = (Math.random() - 0.5) * 40;
+                    starPos[i * 3 + 1] = Math.random() * 12 + 1;
+                    starPos[i * 3 + 2] = (Math.random() - 0.5) * 40;
+                }
+                starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+                const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xfff3d6, size: 0.05 }));
+                scene.add(stars);
+            }
+
+            function updateCameraFromLook() {
+                camera.rotation.set(pitch, yaw, 0, 'YXZ');
+            }
+
+            let dragging = false, lastX = 0, lastY = 0;
+            function bindLookControls() {
+                canvas.addEventListener('pointerdown', (e) => { dragging = true; lastX = e.clientX; lastY = e.clientY; });
+                window.addEventListener('pointerup', () => { dragging = false; });
+                window.addEventListener('pointermove', (e) => {
+                    if (!dragging || renderer.xr.isPresenting) return;
+                    const dx = e.clientX - lastX, dy = e.clientY - lastY;
+                    yaw -= dx * 0.004;
+                    pitch -= dy * 0.004;
+                    pitch = Math.max(-1.2, Math.min(1.2, pitch));
+                    lastX = e.clientX; lastY = e.clientY;
+                    updateCameraFromLook();
+                });
+            }
+
+            function animate() {
+                renderer.setAnimationLoop(() => {
+                    renderer.render(scene, camera);
+                });
+            }
+
+            async function openChapel() {
+                overlay.classList.add('open');
+                if (!started) {
+                    started = true;
+                    await buildScene();
+                    bindLookControls();
+                    animate();
+                    window.addEventListener('resize', () => {
+                        if (!overlay.classList.contains('open')) return;
+                        renderer.setSize(window.innerWidth, window.innerHeight);
+                        camera.aspect = window.innerWidth / window.innerHeight;
+                        camera.updateProjectionMatrix();
+                    });
+                }
+                // Offer WebXR "Enter VR" only if the browser/headset supports it.
+                if (navigator.xr && navigator.xr.isSessionSupported) {
+                    try {
+                        const supported = await navigator.xr.isSessionSupported('immersive-vr');
+                        vrBtn.style.display = supported ? 'inline-block' : 'none';
+                    } catch (e) { vrBtn.style.display = 'none'; }
+                } else {
+                    vrBtn.style.display = 'none';
+                }
+            }
+
+            function closeChapel() {
+                overlay.classList.remove('open');
+                if (xrSession) { xrSession.end().catch(() => {}); }
+            }
+
+            vrBtn.addEventListener('click', async () => {
+                try {
+                    xrSession = await navigator.xr.requestSession('immersive-vr');
+                    await renderer.xr.setSession(xrSession);
+                    xrSession.addEventListener('end', () => { xrSession = null; });
+                } catch (e) {
+                    alert('Could not start the VR session on this device.');
+                }
+            });
+
+            enterBtn.addEventListener('click', openChapel);
+            closeBtn.addEventListener('click', closeChapel);
+        })();
     </script>
 </body>
 </html>
