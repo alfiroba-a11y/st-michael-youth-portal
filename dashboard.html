@@ -173,7 +173,7 @@
         <!-- Virtual Basilica (WebXR chapel + memorial wall) -->
         <div class="card shadow-sm p-4 mb-4">
             <h4 class="text-primary mb-2">🕯️ Virtual Basilica Chapel <span class="badge bg-secondary">Beta</span></h4>
-            <p class="small text-muted mb-3">A 3D basilica-style prayer space — colonnades, a glowing dome, and a memorial wall — enter from your browser, or with a VR headset if you have one. This is a starting foundation, not yet a model of our actual church building.</p>
+            <p class="small text-muted mb-3">A sunlit 3D basilica prayer space — colonnades, a glowing dome, drifting spirits of light, and a memorial wall, with a soft ambient choir. Enter from your browser, or with a VR headset if you have one. This is a starting foundation, not yet a model of our actual church building.</p>
             <button class="btn btn-primary" id="enterChapelBtn">Enter Virtual Chapel</button>
         </div>
 
@@ -234,7 +234,7 @@
         <button id="chapelMuteBtn" class="btn btn-sm btn-outline-light" style="display:none;">🔊 Music</button>
         <button id="chapelVrBtn" class="btn btn-sm btn-warning" style="display:none;">Enter VR</button>
         <button id="chapelCloseBtn" class="btn btn-sm btn-light">✕ Close</button>
-        <div id="chapelHint">Drag to look around · glowing plaques are the memorial wall</div>
+        <div id="chapelHint">Drag to look around · glowing plaques are the memorial wall · watch for drifting spirits of light</div>
     </div>
 
     <footer class="text-center py-3 mt-auto text-muted small border-top bg-white">
@@ -752,7 +752,7 @@
             let started = false;
             let renderer, scene, camera, xrSession = null;
             let yaw = 0, pitch = 0;
-            let candleLight, stars, clockStart = 0;
+            let candleLight, stars, spiritsGroup, clockStart = 0;
 
             function makeNameplateTexture(text) {
                 const c = document.createElement('canvas');
@@ -774,8 +774,8 @@
 
             async function buildScene() {
                 scene = new THREE.Scene();
-                scene.background = new THREE.Color(0x05040c);
-                scene.fog = new THREE.Fog(0x05040c, 6, 26);
+                scene.background = new THREE.Color(0xdcebf7);
+                scene.fog = new THREE.Fog(0xdcebf7, 10, 34);
 
                 camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
                 camera.position.set(0, 1.6, 8);
@@ -784,26 +784,30 @@
                 renderer.setSize(window.innerWidth, window.innerHeight);
                 renderer.xr.enabled = true;
 
-                const ambient = new THREE.AmbientLight(0x6a5a9c, 0.55);
-                scene.add(ambient);
-                candleLight = new THREE.PointLight(0xffcf6e, 1.6, 14);
+                // Bright, airy daylight lighting instead of a dark night scene.
+                const hemi = new THREE.HemisphereLight(0xfff6df, 0xcfd8e6, 0.9);
+                scene.add(hemi);
+                const sun = new THREE.DirectionalLight(0xfff2d0, 0.8);
+                sun.position.set(-6, 12, 4);
+                scene.add(sun);
+                candleLight = new THREE.PointLight(0xffcf6e, 1.1, 12);
                 candleLight.position.set(0, 1.2, 2);
                 scene.add(candleLight);
-                const domeLight = new THREE.PointLight(0xd9c2ff, 0.9, 30);
+                const domeLight = new THREE.PointLight(0xfff0cf, 0.7, 30);
                 domeLight.position.set(0, 10, 0);
                 scene.add(domeLight);
 
-                // Basilica floor (wide, to feel like a real nave)
+                // Basilica floor — light stone instead of dark marble
                 const floor = new THREE.Mesh(
                     new THREE.CircleGeometry(13, 56),
-                    new THREE.MeshStandardMaterial({ color: 0x14101f, roughness: 0.9 })
+                    new THREE.MeshStandardMaterial({ color: 0xe9e2d0, roughness: 0.85 })
                 );
                 floor.rotation.x = -Math.PI / 2;
                 scene.add(floor);
 
-                // Colonnade: two rows of columns lining the nave, basilica-style
+                // Colonnade: two rows of pale stone columns lining the nave
                 const columnGeo = new THREE.CylinderGeometry(0.28, 0.34, 6, 16);
-                const columnMat = new THREE.MeshStandardMaterial({ color: 0x2c2440, roughness: 0.7 });
+                const columnMat = new THREE.MeshStandardMaterial({ color: 0xf1ead9, roughness: 0.6 });
                 const columnCapGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.25, 16);
                 for (let side = -1; side <= 1; side += 2) {
                     for (let i = 0; i < 6; i++) {
@@ -817,30 +821,43 @@
                     }
                 }
 
-                // Dome suggestion above the altar — a large translucent glowing shell
+                // Dome above the altar — soft glowing daylight gold, not a dark night shell
                 const dome = new THREE.Mesh(
                     new THREE.SphereGeometry(6, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2),
-                    new THREE.MeshBasicMaterial({ color: 0x2a1b52, transparent: true, opacity: 0.25, side: THREE.BackSide })
+                    new THREE.MeshBasicMaterial({ color: 0xfff0cf, transparent: true, opacity: 0.35, side: THREE.BackSide })
                 );
                 dome.position.set(0, 8, 1.5);
                 scene.add(dome);
 
+                // Stained-glass-style colored light shafts falling from the dome
+                const beamColors = [0xffd6a0, 0xc9e6ff, 0xffc9dd, 0xd7ffd0];
+                beamColors.forEach((color, i) => {
+                    const beam = new THREE.Mesh(
+                        new THREE.ConeGeometry(0.9, 9, 12, 1, true),
+                        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.10, side: THREE.DoubleSide })
+                    );
+                    const angle = (i / beamColors.length) * Math.PI * 2;
+                    beam.position.set(Math.cos(angle) * 3, 5.5, 1.5 + Math.sin(angle) * 3);
+                    beam.rotation.x = Math.PI;
+                    scene.add(beam);
+                });
+
                 // Altar
                 const altar = new THREE.Mesh(
                     new THREE.BoxGeometry(1.8, 0.9, 0.8),
-                    new THREE.MeshStandardMaterial({ color: 0x3a2c55, roughness: 0.6 })
+                    new THREE.MeshStandardMaterial({ color: 0xe6dcc4, roughness: 0.6 })
                 );
                 altar.position.set(0, 0.45, 1.5);
                 scene.add(altar);
 
-                // Altar candle glow
+                // Exactly two altar candles, as requested
                 const candleGeo = new THREE.SphereGeometry(0.06, 8, 8);
                 const candleMat = new THREE.MeshBasicMaterial({ color: 0xffcf6e });
-                for (let i = -1; i <= 1; i++) {
+                [-0.5, 0.5].forEach((x) => {
                     const c = new THREE.Mesh(candleGeo, candleMat);
-                    c.position.set(i * 0.45, 1.0, 1.3);
+                    c.position.set(x, 1.0, 1.3);
                     scene.add(c);
-                }
+                });
 
                 // Memorial wall lives in its own group so it can be refreshed
                 // independently every time the chapel is opened (see
@@ -849,18 +866,54 @@
                 scene.add(memorialGroup);
                 await refreshMemorialWall();
 
-                // Star field for a celestial garden feel
-                const starGeo = new THREE.BufferGeometry();
-                const starCount = 300;
-                const starPos = new Float32Array(starCount * 3);
-                for (let i = 0; i < starCount; i++) {
-                    starPos[i * 3] = (Math.random() - 0.5) * 46;
-                    starPos[i * 3 + 1] = Math.random() * 14 + 1;
-                    starPos[i * 3 + 2] = (Math.random() - 0.5) * 46;
+                // Flying spirits — soft glowing wisps that drift slowly through
+                // the nave, purely original abstract shapes (a glow core with a
+                // faint trailing wing shimmer), not depicting any specific figure.
+                spiritsGroup = new THREE.Group();
+                scene.add(spiritsGroup);
+                const spiritTex = makeSpiritTexture();
+                for (let i = 0; i < 6; i++) {
+                    const mat = new THREE.SpriteMaterial({ map: spiritTex, transparent: true, opacity: 0.8, depthWrite: false });
+                    const sprite = new THREE.Sprite(mat);
+                    sprite.scale.set(1.1, 1.1, 1);
+                    sprite.userData = {
+                        radius: 3 + Math.random() * 4,
+                        height: 2 + Math.random() * 3,
+                        speed: 0.15 + Math.random() * 0.15,
+                        offset: Math.random() * Math.PI * 2,
+                        bob: 0.3 + Math.random() * 0.4
+                    };
+                    spiritsGroup.add(sprite);
                 }
-                starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-                stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xfff3d6, size: 0.05, transparent: true, opacity: 0.85 }));
+
+                // Sunbeam dust motes drifting gently in the light shafts —
+                // replaces a night starfield with something that fits daylight.
+                const motesGeo = new THREE.BufferGeometry();
+                const moteCount = 260;
+                const motePos = new Float32Array(moteCount * 3);
+                for (let i = 0; i < moteCount; i++) {
+                    motePos[i * 3] = (Math.random() - 0.5) * 20;
+                    motePos[i * 3 + 1] = Math.random() * 9 + 0.5;
+                    motePos[i * 3 + 2] = (Math.random() - 0.5) * 20 + 1;
+                }
+                motesGeo.setAttribute('position', new THREE.BufferAttribute(motePos, 3));
+                stars = new THREE.Points(motesGeo, new THREE.PointsMaterial({ color: 0xfff6df, size: 0.035, transparent: true, opacity: 0.75 }));
                 scene.add(stars);
+            }
+
+            // Soft radial-glow sprite texture used for the flying spirits —
+            // an abstract luminous wisp, not any specific character or figure.
+            function makeSpiritTexture() {
+                const c = document.createElement('canvas');
+                c.width = 128; c.height = 128;
+                const tctx = c.getContext('2d');
+                const grad = tctx.createRadialGradient(64, 64, 4, 64, 64, 60);
+                grad.addColorStop(0, 'rgba(255,250,235,0.95)');
+                grad.addColorStop(0.35, 'rgba(255,232,180,0.55)');
+                grad.addColorStop(1, 'rgba(255,232,180,0)');
+                tctx.fillStyle = grad;
+                tctx.fillRect(0, 0, 128, 128);
+                return new THREE.CanvasTexture(c);
             }
 
             // Fetches the latest memorial names and rebuilds the plaques —
@@ -923,11 +976,30 @@
                     const t = time * 0.001;
                     if (candleLight) {
                         // Flicker: a slow base wave plus faster jitter, like real candlelight.
-                        candleLight.intensity = 1.5 + Math.sin(t * 2.2) * 0.25 + Math.sin(t * 9.7) * 0.12;
+                        candleLight.intensity = 1.1 + Math.sin(t * 2.2) * 0.18 + Math.sin(t * 9.7) * 0.08;
                     }
                     if (stars) {
-                        stars.material.opacity = 0.7 + Math.sin(t * 0.6) * 0.2;
-                        stars.rotation.y = t * 0.01;
+                        // Dust motes drift slowly upward through the light shafts, looping.
+                        const pos = stars.geometry.attributes.position;
+                        for (let i = 0; i < pos.count; i++) {
+                            let y = pos.getY(i) + 0.006;
+                            if (y > 10) y = 0.3;
+                            pos.setY(i, y);
+                        }
+                        pos.needsUpdate = true;
+                        stars.material.opacity = 0.6 + Math.sin(t * 0.6) * 0.15;
+                    }
+                    if (spiritsGroup) {
+                        spiritsGroup.children.forEach((sprite) => {
+                            const d = sprite.userData;
+                            const angle = t * d.speed + d.offset;
+                            sprite.position.set(
+                                Math.sin(angle) * d.radius,
+                                d.height + Math.sin(t * 0.7 + d.offset) * d.bob,
+                                1.5 + Math.cos(angle) * d.radius * 0.6
+                            );
+                            sprite.material.opacity = 0.55 + Math.sin(t * 1.3 + d.offset) * 0.25;
+                        });
                     }
                     renderer.render(scene, camera);
                 });
@@ -954,6 +1026,33 @@
                     filter.type = 'lowpass';
                     filter.frequency.value = 900;
                     filter.connect(masterGain);
+
+                    // "Choir" layer: detuned tones through a narrow bandpass
+                    // filter to suggest a distant humming choir — wordless,
+                    // fully synthesized (no vocal recordings or lyrics).
+                    const choirFilter = audioCtx.createBiquadFilter();
+                    choirFilter.type = 'bandpass';
+                    choirFilter.frequency.value = 700;
+                    choirFilter.Q.value = 3.2;
+                    const choirGain = audioCtx.createGain();
+                    choirGain.gain.value = 0.09;
+                    choirFilter.connect(choirGain).connect(masterGain);
+                    const choirFreqs = [261.63, 329.63, 392.0]; // C4, E4, G4 — soft octave-up voicing
+                    choirFreqs.forEach((freq, i) => {
+                        const osc = audioCtx.createOscillator();
+                        osc.type = 'sawtooth';
+                        osc.frequency.value = freq;
+                        osc.detune.value = (i - 1) * 6;
+                        const vibrato = audioCtx.createOscillator();
+                        vibrato.frequency.value = 4.5 + i * 0.3;
+                        const vibratoGain = audioCtx.createGain();
+                        vibratoGain.gain.value = 3;
+                        vibrato.connect(vibratoGain).connect(osc.detune);
+                        vibrato.start();
+                        osc.connect(choirFilter);
+                        osc.start();
+                        padNodes.push(osc, vibrato);
+                    });
 
                     // Soft evolving pad: a few detuned oscillators with slow LFOs.
                     const padFreqs = [130.81, 164.81, 196.0]; // C3, E3, G3 — a calm major triad
