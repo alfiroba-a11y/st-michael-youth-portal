@@ -8,7 +8,7 @@
     <!-- Chart.js for graphs -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <!-- Three.js for the Prayer Globe and Virtual Chapel (WebXR) -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r160/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
     <style>
         /* Saint of the Day: reveal-shader style portrait */
         .saint-portrait-wrap {
@@ -47,11 +47,24 @@
         #chapelOverlay.open { display: block; }
         #chapelCanvas { width: 100%; height: 100%; display: block; cursor: grab; }
         #chapelCanvas:active { cursor: grabbing; }
-        #chapelCloseBtn, #chapelVrBtn {
+        #chapelCloseBtn, #chapelVrBtn, #chapelMuteBtn {
             position: absolute; top: 14px; z-index: 2001;
         }
         #chapelCloseBtn { right: 14px; }
         #chapelVrBtn { left: 14px; }
+        #chapelMuteBtn { left: 130px; }
+        #chapelLoading {
+            position: absolute; inset: 0; z-index: 1999;
+            display: flex; align-items: center; justify-content: center;
+            color: rgba(255,230,180,0.85);
+            font-size: 0.95rem; letter-spacing: 0.04em;
+            background: radial-gradient(ellipse at center, #150e2a 0%, #05040c 75%);
+            animation: chapelLoadingPulse 1.6s ease-in-out infinite;
+        }
+        @keyframes chapelLoadingPulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
         #chapelHint {
             position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
             color: rgba(255,255,255,0.7); font-size: 0.78rem; z-index: 2001; text-align: center;
@@ -217,6 +230,8 @@
     <!-- Virtual Chapel fullscreen overlay -->
     <div id="chapelOverlay">
         <canvas id="chapelCanvas"></canvas>
+        <div id="chapelLoading" style="display:none;">Entering the chapel...</div>
+        <button id="chapelMuteBtn" class="btn btn-sm btn-outline-light" style="display:none;">🔊 Music</button>
         <button id="chapelVrBtn" class="btn btn-sm btn-warning" style="display:none;">Enter VR</button>
         <button id="chapelCloseBtn" class="btn btn-sm btn-light">✕ Close</button>
         <div id="chapelHint">Drag to look around · glowing plaques are the memorial wall</div>
@@ -729,12 +744,15 @@
             const overlay = document.getElementById('chapelOverlay');
             const closeBtn = document.getElementById('chapelCloseBtn');
             const vrBtn = document.getElementById('chapelVrBtn');
+            const muteBtn = document.getElementById('chapelMuteBtn');
+            const loadingEl = document.getElementById('chapelLoading');
             const canvas = document.getElementById('chapelCanvas');
             if (!enterBtn || typeof THREE === 'undefined') return;
 
             let started = false;
             let renderer, scene, camera, xrSession = null;
             let yaw = 0, pitch = 0;
+            let candleLight, stars, clockStart = 0;
 
             function makeNameplateTexture(text) {
                 const c = document.createElement('canvas');
@@ -768,7 +786,7 @@
 
                 const ambient = new THREE.AmbientLight(0x6a5a9c, 0.55);
                 scene.add(ambient);
-                const candleLight = new THREE.PointLight(0xffcf6e, 1.6, 14);
+                candleLight = new THREE.PointLight(0xffcf6e, 1.6, 14);
                 candleLight.position.set(0, 1.2, 2);
                 scene.add(candleLight);
                 const domeLight = new THREE.PointLight(0xd9c2ff, 0.9, 30);
@@ -841,7 +859,7 @@
                     starPos[i * 3 + 2] = (Math.random() - 0.5) * 46;
                 }
                 starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
-                const stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xfff3d6, size: 0.05 }));
+                stars = new THREE.Points(starGeo, new THREE.PointsMaterial({ color: 0xfff3d6, size: 0.05, transparent: true, opacity: 0.85 }));
                 scene.add(stars);
             }
 
@@ -900,18 +918,115 @@
             }
 
             function animate() {
-                renderer.setAnimationLoop(() => {
+                clockStart = clockStart || performance.now();
+                renderer.setAnimationLoop((time) => {
+                    const t = time * 0.001;
+                    if (candleLight) {
+                        // Flicker: a slow base wave plus faster jitter, like real candlelight.
+                        candleLight.intensity = 1.5 + Math.sin(t * 2.2) * 0.25 + Math.sin(t * 9.7) * 0.12;
+                    }
+                    if (stars) {
+                        stars.material.opacity = 0.7 + Math.sin(t * 0.6) * 0.2;
+                        stars.rotation.y = t * 0.01;
+                    }
                     renderer.render(scene, camera);
                 });
             }
 
+            /* =====================================================
+               Original ambient soundscape — synthesized entirely with
+               the Web Audio API (soft detuned pad + occasional random
+               bell tones on a pentatonic scale). No audio files, no
+               existing recordings — just generated tones, so there's
+               no copyright question here.
+            ===================================================== */
+            let audioCtx = null, masterGain = null, padNodes = [], chimeTimer = null, muted = false;
+
+            function startAmbience() {
+                if (audioCtx) return; // already running
+                try {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    masterGain = audioCtx.createGain();
+                    masterGain.gain.value = muted ? 0 : 0.16;
+                    masterGain.connect(audioCtx.destination);
+
+                    const filter = audioCtx.createBiquadFilter();
+                    filter.type = 'lowpass';
+                    filter.frequency.value = 900;
+                    filter.connect(masterGain);
+
+                    // Soft evolving pad: a few detuned oscillators with slow LFOs.
+                    const padFreqs = [130.81, 164.81, 196.0]; // C3, E3, G3 — a calm major triad
+                    padFreqs.forEach((freq, i) => {
+                        const osc = audioCtx.createOscillator();
+                        osc.type = 'sine';
+                        osc.frequency.value = freq;
+                        const gain = audioCtx.createGain();
+                        gain.gain.value = 0.0;
+                        osc.connect(gain).connect(filter);
+                        osc.start();
+
+                        // Slow fade-in, then a gentle breathing volume.
+                        const now = audioCtx.currentTime;
+                        gain.gain.linearRampToValueAtTime(0.22, now + 3 + i * 0.5);
+                        const lfo = audioCtx.createOscillator();
+                        lfo.frequency.value = 0.05 + i * 0.02;
+                        const lfoGain = audioCtx.createGain();
+                        lfoGain.gain.value = 0.05;
+                        lfo.connect(lfoGain).connect(gain.gain);
+                        lfo.start();
+
+                        padNodes.push(osc, lfo);
+                    });
+
+                    // Occasional soft bell tones, pentatonic, at random intervals —
+                    // gives the space a "lively", not static, feel.
+                    const bellScale = [523.25, 587.33, 659.25, 783.99, 880.0]; // C5 pentatonic-ish
+                    function playBell() {
+                        if (!audioCtx) return;
+                        const freq = bellScale[Math.floor(Math.random() * bellScale.length)];
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.value = freq;
+                        gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.09, audioCtx.currentTime + 0.05);
+                        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 3.5);
+                        osc.connect(gain).connect(filter);
+                        osc.start();
+                        osc.stop(audioCtx.currentTime + 4);
+                        chimeTimer = setTimeout(playBell, 4000 + Math.random() * 5000);
+                    }
+                    chimeTimer = setTimeout(playBell, 2500);
+                } catch (e) { /* Web Audio unavailable; chapel still works silently */ }
+            }
+
+            function stopAmbience() {
+                if (chimeTimer) { clearTimeout(chimeTimer); chimeTimer = null; }
+                padNodes.forEach(n => { try { n.stop(); } catch (e) {} });
+                padNodes = [];
+                if (audioCtx) { audioCtx.close().catch(() => {}); audioCtx = null; masterGain = null; }
+            }
+
+            muteBtn.addEventListener('click', () => {
+                muted = !muted;
+                if (masterGain) masterGain.gain.linearRampToValueAtTime(muted ? 0 : 0.16, audioCtx.currentTime + 0.3);
+                muteBtn.textContent = muted ? '🔇 Music' : '🔊 Music';
+            });
+
             async function openChapel() {
+                // Open instantly — the overlay (and a loading cue if the scene
+                // is still being built) shows right away, before any await.
                 overlay.classList.add('open');
+                startAmbience();
+                muteBtn.style.display = 'inline-block';
                 if (!started) {
+                    loadingEl.style.display = 'flex';
                     started = true;
                     await buildScene();
                     bindLookControls();
                     animate();
+                    loadingEl.style.display = 'none';
                     window.addEventListener('resize', () => {
                         if (!overlay.classList.contains('open')) return;
                         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -936,6 +1051,7 @@
 
             function closeChapel() {
                 overlay.classList.remove('open');
+                stopAmbience();
                 if (xrSession) { xrSession.end().catch(() => {}); }
             }
 
