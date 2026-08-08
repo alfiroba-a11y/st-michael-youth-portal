@@ -19,6 +19,14 @@ app.use((req, res, next) => {
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
+// All API data is live/dynamic — never let a browser, proxy, or CDN cache
+// these responses. (This is the likely cause of "I updated a name and it
+// never showed up": a cached GET response quietly served stale data.)
+app.use('/api', (req, res, next) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate');
+    next();
+});
+
 const MONGO_URI = process.env.MONGO_URI;
 let db = null;
 
@@ -425,6 +433,40 @@ app.post('/api/prayer-globe/submit', async (req, res) => {
         const data = await readData();
         const points = [...(data.prayerPoints || []), { id: Date.now().toString(), lat: latNum, lng: lngNum, ts: Date.now() }];
         // Keep only the most recent 300 points so this never grows unbounded.
+        const trimmed = points.slice(-300);
+        await writeData({ prayerPoints: trimmed });
+        res.json({ success: true, points: trimmed });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error submitting prayer point.' });
+    }
+});
+
+// Fallback for when a visitor's browser denies or lacks geolocation — this
+// is what actually makes "light an intention" reliable for most people,
+// since many will decline the browser location prompt. Uses the request's
+// IP address for an approximate location; if that lookup fails too, falls
+// back to a point near the parish itself so the action always succeeds.
+app.post('/api/prayer-globe/submit-auto', async (req, res) => {
+    try {
+        const forwarded = (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+        const ip = forwarded || (req.socket && req.socket.remoteAddress) || '';
+        let latNum, lngNum;
+        try {
+            const geoRes = await fetch(`http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,lat,lon`);
+            const geoJson = await geoRes.json();
+            if (geoJson && geoJson.status === 'success' && isFinite(geoJson.lat) && isFinite(geoJson.lon)) {
+                latNum = geoJson.lat;
+                lngNum = geoJson.lon;
+            }
+        } catch (e) { /* fall through to default below */ }
+        if (latNum === undefined || lngNum === undefined) {
+            // Approximate Nairobi-area default with a little jitter, so the
+            // globe still gets a point rather than the action failing outright.
+            latNum = -1.28 + (Math.random() - 0.5) * 0.6;
+            lngNum = 36.82 + (Math.random() - 0.5) * 0.6;
+        }
+        const data = await readData();
+        const points = [...(data.prayerPoints || []), { id: Date.now().toString(), lat: latNum, lng: lngNum, ts: Date.now() }];
         const trimmed = points.slice(-300);
         await writeData({ prayerPoints: trimmed });
         res.json({ success: true, points: trimmed });
