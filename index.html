@@ -574,7 +574,7 @@
             async function loadCandles() {
                 if (!candleRow) return;
                 try {
-                    const res = await fetch('/api/youth/directory');
+                    const res = await fetch('/api/youth/directory', { cache: 'no-store' });
                     const data = await res.json();
                     const candles = (data.success && Array.isArray(data.candles) && data.candles.length)
                         ? data.candles
@@ -692,7 +692,7 @@
 
         async function loadReadings() {
             try {
-                const res = await fetch('/api/youth/directory');
+                const res = await fetch('/api/youth/directory', { cache: 'no-store' });
                 const data = await res.json();
                 
                 if (data.success && data.readings) {
