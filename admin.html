@@ -535,6 +535,7 @@
         async function apiCall(url, options) {
             options = options || {};
             options.headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+            options.cache = options.cache || 'no-store';
             let res;
             try {
                 res = await fetch(url, options);
