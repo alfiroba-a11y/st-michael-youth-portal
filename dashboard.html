@@ -613,19 +613,74 @@
             const globeGroup = new THREE.Group();
             scene.add(globeGroup);
 
-            // Stylized globe: soft glowing sphere + wireframe grid (no external
-            // Earth texture needed, keeps this self-contained and license-free).
-            const glow = new THREE.Mesh(
-                new THREE.SphereGeometry(2, 32, 32),
-                new THREE.MeshBasicMaterial({ color: 0x2a1b52, transparent: true, opacity: 0.55 })
-            );
-            globeGroup.add(glow);
+            // Lighting so the textured Earth material actually shows shading
+            // (the old abstract globe used unlit materials and didn't need this).
+            scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+            const sunLight = new THREE.DirectionalLight(0xfff6df, 1.1);
+            sunLight.position.set(5, 3, 5);
+            scene.add(sunLight);
 
-            const wireframe = new THREE.Mesh(
-                new THREE.SphereGeometry(2.01, 24, 18),
-                new THREE.MeshBasicMaterial({ color: 0xffd680, wireframe: true, transparent: true, opacity: 0.35 })
+            // An original, procedurally-drawn world map (approximate continent
+            // shapes on an ocean base) — not a photo or any existing map asset,
+            // just simple shapes placed at roughly the right latitude/longitude
+            // so the globe reads as an actual Earth rather than an abstract orb.
+            function makeEarthTexture() {
+                const w = 1024, h = 512;
+                const c = document.createElement('canvas');
+                c.width = w; c.height = h;
+                const ctx = c.getContext('2d');
+
+                const ocean = ctx.createLinearGradient(0, 0, 0, h);
+                ocean.addColorStop(0, '#1b4f7c');
+                ocean.addColorStop(0.5, '#1f6698');
+                ocean.addColorStop(1, '#153f63');
+                ctx.fillStyle = ocean;
+                ctx.fillRect(0, 0, w, h);
+
+                function land(cxN, cyN, rxN, ryN, rot) {
+                    ctx.save();
+                    ctx.translate(cxN * w, cyN * h);
+                    ctx.rotate(rot || 0);
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, rxN * w, ryN * h, 0, 0, Math.PI * 2);
+                    ctx.fillStyle = '#4f8a44';
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                // Rough continent placements (normalized across an equirectangular map).
+                land(0.18, 0.28, 0.075, 0.11, -0.15);   // North America
+                land(0.155, 0.40, 0.028, 0.05);          // Central America
+                land(0.235, 0.62, 0.045, 0.14, 0.08);    // South America
+                land(0.475, 0.26, 0.045, 0.065);         // Europe
+                land(0.49, 0.47, 0.058, 0.16);           // Africa
+                land(0.62, 0.28, 0.10, 0.095, 0.05);     // Asia (main)
+                land(0.73, 0.20, 0.055, 0.06);           // Siberia / far east
+                land(0.70, 0.44, 0.04, 0.045);           // South Asia
+                land(0.78, 0.54, 0.035, 0.03);           // Maritime SE Asia
+                land(0.835, 0.68, 0.045, 0.035);         // Australia
+                land(0.5, 0.94, 0.5, 0.045);             // Antarctica strip
+
+                // Subtle terrain speckle so it doesn't look flat.
+                for (let i = 0; i < 900; i++) {
+                    ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.05})`;
+                    ctx.fillRect(Math.random() * w, Math.random() * h, 2, 2);
+                }
+                return new THREE.CanvasTexture(c);
+            }
+
+            const earth = new THREE.Mesh(
+                new THREE.SphereGeometry(2, 48, 32),
+                new THREE.MeshStandardMaterial({ map: makeEarthTexture(), roughness: 0.9 })
             );
-            globeGroup.add(wireframe);
+            globeGroup.add(earth);
+
+            // Soft blue atmospheric glow around the sphere.
+            const atmosphere = new THREE.Mesh(
+                new THREE.SphereGeometry(2.07, 32, 32),
+                new THREE.MeshBasicMaterial({ color: 0x7fb8ff, transparent: true, opacity: 0.16, side: THREE.BackSide })
+            );
+            globeGroup.add(atmosphere);
 
             const pointsGroup = new THREE.Group();
             globeGroup.add(pointsGroup);
@@ -797,10 +852,40 @@
                 domeLight.position.set(0, 10, 0);
                 scene.add(domeLight);
 
-                // Basilica floor — light stone instead of dark marble
+                // Simple procedural wood-grain texture (canvas-drawn stripes +
+                // grain noise) — original, no external texture assets needed.
+                function makeWoodTexture(base, stripe, repeatX, repeatY) {
+                    const c = document.createElement('canvas');
+                    c.width = 256; c.height = 256;
+                    const ctx = c.getContext('2d');
+                    ctx.fillStyle = base;
+                    ctx.fillRect(0, 0, 256, 256);
+                    ctx.strokeStyle = stripe;
+                    ctx.lineWidth = 2;
+                    for (let i = 0; i < 14; i++) {
+                        const x = (i / 14) * 256 + (Math.random() - 0.5) * 6;
+                        ctx.beginPath();
+                        ctx.moveTo(x, 0);
+                        ctx.lineTo(x + (Math.random() - 0.5) * 10, 256);
+                        ctx.stroke();
+                    }
+                    for (let i = 0; i < 500; i++) {
+                        ctx.fillStyle = `rgba(0,0,0,${Math.random() * 0.05})`;
+                        ctx.fillRect(Math.random() * 256, Math.random() * 256, 1, Math.random() * 24);
+                    }
+                    const tex = new THREE.CanvasTexture(c);
+                    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
+                    tex.repeat.set(repeatX || 1, repeatY || 1);
+                    return tex;
+                }
+                const floorWoodTex = makeWoodTexture('#8a5a34', '#6b4023', 10, 10);
+                const wallWoodTex = makeWoodTexture('#c8996a', '#a97a4d', 6, 3);
+                const pedestalWoodTex = makeWoodTexture('#7a4c2a', '#5c391c', 1, 1);
+
+                // Sanctuary floor — warm wood instead of pale stone
                 const floor = new THREE.Mesh(
                     new THREE.CircleGeometry(13, 56),
-                    new THREE.MeshStandardMaterial({ color: 0xe9e2d0, roughness: 0.85 })
+                    new THREE.MeshStandardMaterial({ map: floorWoodTex, roughness: 0.7 })
                 );
                 floor.rotation.x = -Math.PI / 2;
                 scene.add(floor);
@@ -842,7 +927,96 @@
                     scene.add(beam);
                 });
 
-                // Altar
+                // --- Sanctuary wall behind the altar ---
+                const backWall = new THREE.Mesh(
+                    new THREE.PlaneGeometry(11, 8.5),
+                    new THREE.MeshStandardMaterial({ map: wallWoodTex, roughness: 0.75 })
+                );
+                backWall.position.set(0, 4.2, -3.6);
+                scene.add(backWall);
+
+                // --- Arched niche recessed into the wall ---
+                function makeArchShape(width, baseY, wallHeight, archHeight) {
+                    const w2 = width / 2;
+                    const shape = new THREE.Shape();
+                    shape.moveTo(-w2, baseY);
+                    shape.lineTo(-w2, baseY + wallHeight);
+                    shape.quadraticCurveTo(-w2, baseY + wallHeight + archHeight, 0, baseY + wallHeight + archHeight);
+                    shape.quadraticCurveTo(w2, baseY + wallHeight + archHeight, w2, baseY + wallHeight);
+                    shape.lineTo(w2, baseY);
+                    shape.lineTo(-w2, baseY);
+                    return shape;
+                }
+                const niche = new THREE.Mesh(
+                    new THREE.ShapeGeometry(makeArchShape(2.4, 0.9, 2.6, 1.3)),
+                    new THREE.MeshStandardMaterial({ color: 0x2c3f78, roughness: 0.45 })
+                );
+                niche.position.set(0, 0, -3.45);
+                scene.add(niche);
+
+                // --- Crucifix mounted in the niche ---
+                const crossMat = new THREE.MeshStandardMaterial({ color: 0x6b3a1f, roughness: 0.6 });
+                const crossVertical = new THREE.Mesh(new THREE.BoxGeometry(0.16, 2.6, 0.12), crossMat);
+                crossVertical.position.set(0, 3.4, -3.35);
+                scene.add(crossVertical);
+                const crossHorizontal = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.16, 0.12), crossMat);
+                crossHorizontal.position.set(0, 3.95, -3.35);
+                scene.add(crossHorizontal);
+                // Simple, abstract corpus — not a detailed figure, just enough
+                // to read as a figure on the cross.
+                const corpusMat = new THREE.MeshStandardMaterial({ color: 0xf1e6d3, roughness: 0.5 });
+                const corpusBody = new THREE.Mesh(new THREE.CapsuleGeometry(0.13, 0.85, 4, 8), corpusMat);
+                corpusBody.position.set(0, 3.55, -3.28);
+                scene.add(corpusBody);
+                const corpusHead = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 12), corpusMat);
+                corpusHead.position.set(0, 4.05, -3.28);
+                scene.add(corpusHead);
+                const corpusArmL = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.55, 4, 8), corpusMat);
+                corpusArmL.position.set(-0.42, 3.92, -3.3);
+                corpusArmL.rotation.z = Math.PI / 2.5;
+                scene.add(corpusArmL);
+                const corpusArmR = corpusArmL.clone();
+                corpusArmR.position.x = 0.42;
+                corpusArmR.rotation.z = -Math.PI / 2.5;
+                scene.add(corpusArmR);
+
+                // --- Tabernacle on the altar, gold with a small domed cap ---
+                const goldMat = new THREE.MeshStandardMaterial({ color: 0xcda43a, metalness: 0.6, roughness: 0.35 });
+                const tabernacle = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.55, 0.45), goldMat);
+                tabernacle.position.set(0, 1.18, 1.25);
+                scene.add(tabernacle);
+                const tabernacleCap = new THREE.Mesh(new THREE.ConeGeometry(0.22, 0.28, 12), goldMat);
+                tabernacleCap.position.set(0, 1.6, 1.25);
+                scene.add(tabernacleCap);
+                const tabernacleDoorFrame = new THREE.Mesh(
+                    new THREE.RingGeometry(0.1, 0.15, 16),
+                    new THREE.MeshStandardMaterial({ color: 0xf5d67a, metalness: 0.7, roughness: 0.3, side: THREE.DoubleSide })
+                );
+                tabernacleDoorFrame.position.set(0, 1.2, 1.48);
+                scene.add(tabernacleDoorFrame);
+
+                // --- Two flanking pedestal statues (simplified, abstract robed
+                // figures — generic silhouettes, not depicting a specific
+                // identifiable figure or artwork) ---
+                function makeStatue(x) {
+                    const pedestal = new THREE.Mesh(
+                        new THREE.BoxGeometry(0.6, 1.0, 0.6),
+                        new THREE.MeshStandardMaterial({ map: pedestalWoodTex, roughness: 0.7 })
+                    );
+                    pedestal.position.set(x, 0.5, -2.1);
+                    scene.add(pedestal);
+
+                    const robe = new THREE.Mesh(new THREE.ConeGeometry(0.32, 1.3, 16), goldMat);
+                    robe.position.set(x, 1.65, -2.1);
+                    scene.add(robe);
+                    const head = new THREE.Mesh(new THREE.SphereGeometry(0.16, 14, 14), goldMat);
+                    head.position.set(x, 2.42, -2.1);
+                    scene.add(head);
+                }
+                makeStatue(-1.7);
+                makeStatue(1.7);
+
+                // --- Altar table with a simple frontal (antependium) ---
                 const altar = new THREE.Mesh(
                     new THREE.BoxGeometry(1.8, 0.9, 0.8),
                     new THREE.MeshStandardMaterial({ color: 0xe6dcc4, roughness: 0.6 })
@@ -850,14 +1024,66 @@
                 altar.position.set(0, 0.45, 1.5);
                 scene.add(altar);
 
-                // Exactly two altar candles, as requested
+                // Simple original front-panel design: white field, green side
+                // bands, and a plain Chi-Rho-style monogram (a centuries-old,
+                // universally used Christian symbol) drawn as basic line art.
+                function makeAltarFrontalTexture() {
+                    const c = document.createElement('canvas');
+                    c.width = 512; c.height = 256;
+                    const ctx = c.getContext('2d');
+                    ctx.fillStyle = '#f6f1e6';
+                    ctx.fillRect(0, 0, 512, 256);
+                    ctx.fillStyle = '#2f6f4e';
+                    ctx.fillRect(0, 0, 86, 256);
+                    ctx.fillRect(426, 0, 86, 256);
+                    ctx.strokeStyle = '#c9a227';
+                    ctx.lineWidth = 5;
+                    ctx.strokeRect(3, 3, 506, 250);
+                    ctx.strokeStyle = '#3a2c1a';
+                    ctx.lineWidth = 7;
+                    ctx.lineCap = 'round';
+                    const cx = 256, cy = 128;
+                    ctx.beginPath(); ctx.moveTo(cx - 42, cy - 42); ctx.lineTo(cx + 42, cy + 42); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(cx + 42, cy - 42); ctx.lineTo(cx - 42, cy + 42); ctx.stroke();
+                    ctx.beginPath(); ctx.moveTo(cx, cy - 58); ctx.lineTo(cx, cy + 58); ctx.stroke();
+                    ctx.beginPath(); ctx.arc(cx + 15, cy - 32, 21, Math.PI * 1.1, Math.PI * 2.3); ctx.stroke();
+                    return new THREE.CanvasTexture(c);
+                }
+                const frontal = new THREE.Mesh(
+                    new THREE.PlaneGeometry(1.78, 0.82),
+                    new THREE.MeshStandardMaterial({ map: makeAltarFrontalTexture(), roughness: 0.8 })
+                );
+                frontal.position.set(0, 0.45, 1.91);
+                scene.add(frontal);
+
+                // --- A small ambo (lectern) with a red cloth, off to the side ---
+                const ambo = new THREE.Mesh(
+                    new THREE.BoxGeometry(0.45, 1.05, 0.35),
+                    new THREE.MeshStandardMaterial({ map: pedestalWoodTex, roughness: 0.7 })
+                );
+                ambo.position.set(-3.4, 0.52, 1.0);
+                scene.add(ambo);
+                const amboCloth = new THREE.Mesh(
+                    new THREE.PlaneGeometry(0.4, 0.95),
+                    new THREE.MeshStandardMaterial({ color: 0xa8202a, roughness: 0.7 })
+                );
+                amboCloth.position.set(-3.4, 0.55, 1.18);
+                scene.add(amboCloth);
+
+                // Two altar candles, positioned close to the tabernacle
                 const candleGeo = new THREE.SphereGeometry(0.06, 8, 8);
                 const candleMat = new THREE.MeshBasicMaterial({ color: 0xffcf6e });
-                [-0.5, 0.5].forEach((x) => {
+                [-0.42, 0.42].forEach((x) => {
                     const c = new THREE.Mesh(candleGeo, candleMat);
-                    c.position.set(x, 1.0, 1.3);
+                    c.position.set(x, 1.0, 1.35);
                     scene.add(c);
                 });
+
+                // Focused light on the crucifix/niche for a sanctuary-lit feel
+                const altarSpot = new THREE.SpotLight(0xfff6df, 1.1, 22, Math.PI / 6, 0.5);
+                altarSpot.position.set(0, 7, 5);
+                altarSpot.target.position.set(0, 3, -3.4);
+                scene.add(altarSpot, altarSpot.target);
 
                 // Memorial wall lives in its own group so it can be refreshed
                 // independently every time the chapel is opened (see
