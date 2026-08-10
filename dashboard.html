@@ -74,6 +74,36 @@
             position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
             color: rgba(255,255,255,0.7); font-size: 0.78rem; z-index: 2001; text-align: center;
         }
+
+        /* St. Michael Companion widget */
+        .companion-fab {
+            position: fixed; right: 18px; bottom: 18px; z-index: 1500;
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, #6a4cff, #2f6f4e);
+            color: #fff; border: none; font-size: 1.3rem;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        .companion-panel {
+            position: fixed; right: 18px; bottom: 86px; z-index: 1500;
+            width: min(340px, 90vw); max-height: 70vh;
+            display: flex; flex-direction: column;
+            border-radius: 16px; overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+        }
+        .companion-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 12px; background: rgba(20, 16, 40, 0.85); color: #fff;
+        }
+        .companion-messages {
+            flex: 1; overflow-y: auto; padding: 10px; background: rgba(255,255,255,0.7);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        }
+        .companion-msg { padding: 8px 10px; border-radius: 10px; margin-bottom: 8px; font-size: 0.88rem; max-width: 88%; }
+        .companion-msg-bot { background: rgba(255,255,255,0.9); border: 1px solid rgba(0,0,0,0.08); }
+        .companion-msg-user { background: #2f6f4e; color: #fff; margin-left: auto; }
+        .companion-msg-escalate { background: #fff3cd; border: 1px solid #ffe08a; }
+        .companion-input-row { display: flex; gap: 6px; padding: 8px; background: rgba(255,255,255,0.85); }
+        .companion-input-row .form-control { flex: 1; }
     </style>
 </head>
 <body class="bg-light d-flex flex-column min-vh-100">
@@ -230,6 +260,27 @@
                 </div>
             </form>
         </div>
+    </div>
+
+    <!-- St. Michael Companion — floating assistant widget -->
+    <button id="companionToggleBtn" class="companion-fab" aria-label="Open St. Michael Companion">
+        <i class="fas fa-comment-dots"></i>
+    </button>
+    <div id="companionPanel" class="companion-panel d-none">
+        <div class="companion-header">
+            <div>
+                <strong>St. Michael Companion</strong>
+                <div class="small text-white-50">Ask about events, readings, mentors, contacts...</div>
+            </div>
+            <button id="companionCloseBtn" class="btn btn-sm btn-outline-light">✕</button>
+        </div>
+        <div id="companionMessages" class="companion-messages">
+            <div class="companion-msg companion-msg-bot">Peace be with you! I'm the St. Michael Companion. Ask me things like "when is the next event?" or "who is my mentor?" — and if I can't help, I'll connect you straight to an admin.</div>
+        </div>
+        <form id="companionForm" class="companion-input-row">
+            <input type="text" id="companionInput" class="form-control form-control-sm" placeholder="Type your question..." autocomplete="off" required>
+            <button type="submit" class="btn btn-primary btn-sm">Send</button>
+        </form>
     </div>
 
     <!-- Virtual Chapel fullscreen overlay -->
@@ -462,6 +513,92 @@
             document.getElementById('messageInput').value = '';
             loadDashboardData();
         });
+
+        /* =========================================================
+           ST. MICHAEL COMPANION — assistant widget
+        ========================================================= */
+        (function initCompanion() {
+            const fab = document.getElementById('companionToggleBtn');
+            const panel = document.getElementById('companionPanel');
+            const closeBtn = document.getElementById('companionCloseBtn');
+            const messagesEl = document.getElementById('companionMessages');
+            const form = document.getElementById('companionForm');
+            const input = document.getElementById('companionInput');
+            if (!fab) return;
+
+            function addMessage(text, cls) {
+                const div = document.createElement('div');
+                div.className = 'companion-msg ' + cls;
+                div.textContent = text;
+                messagesEl.appendChild(div);
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+            }
+
+            function addEscalateOption(originalQuestion) {
+                const wrap = document.createElement('div');
+                wrap.className = 'companion-msg companion-msg-escalate';
+                wrap.innerHTML = `<div class="mb-2">Want me to send this straight to an admin?</div>`;
+                const btn = document.createElement('button');
+                btn.className = 'btn btn-sm btn-warning';
+                btn.textContent = 'Connect me to an admin';
+                btn.addEventListener('click', async () => {
+                    btn.disabled = true;
+                    btn.textContent = 'Sending...';
+                    try {
+                        await fetch('/api/youth/message', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                sender: `[Assistant] ${currentUser || 'A member'}`,
+                                text: originalQuestion
+                            })
+                        });
+                        btn.textContent = 'Sent to admin ✓';
+                        loadDashboardData();
+                    } catch (e) {
+                        btn.disabled = false;
+                        btn.textContent = 'Failed — try again';
+                    }
+                });
+                wrap.appendChild(btn);
+                messagesEl.appendChild(wrap);
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+            }
+
+            fab.addEventListener('click', () => {
+                panel.classList.toggle('d-none');
+                if (!panel.classList.contains('d-none')) input.focus();
+            });
+            closeBtn.addEventListener('click', () => panel.classList.add('d-none'));
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const question = input.value.trim();
+                if (!question) return;
+                addMessage(question, 'companion-msg-user');
+                input.value = '';
+                input.disabled = true;
+                try {
+                    const res = await fetch('/api/assistant/ask', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ question, currentUser })
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        addMessage(data.answer, 'companion-msg-bot');
+                        if (data.escalate) addEscalateOption(question);
+                    } else {
+                        addMessage(data.message || "I couldn't process that — please try again.", 'companion-msg-bot');
+                    }
+                } catch (e) {
+                    addMessage("I'm having trouble reaching the server right now.", 'companion-msg-bot');
+                } finally {
+                    input.disabled = false;
+                    input.focus();
+                }
+            });
+        })();
 
         function logout() {
             localStorage.removeItem('youth_user');
