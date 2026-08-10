@@ -106,7 +106,8 @@ let fallbackData = {
         { id: 'vocations', label: 'For vocations',      lit: false }
     ],
     memorialNames: [],
-    prayerPoints: []
+    prayerPoints: [],
+    mentors: []
 };
 
 async function readData() {
@@ -132,7 +133,8 @@ async function readData() {
             hymns: doc.hymns || fallbackData.hymns,
             candles: doc.candles || fallbackData.candles,
             memorialNames: doc.memorialNames || fallbackData.memorialNames,
-            prayerPoints: doc.prayerPoints || fallbackData.prayerPoints
+            prayerPoints: doc.prayerPoints || fallbackData.prayerPoints,
+            mentors: doc.mentors || fallbackData.mentors
         };
     } catch (e) {
         return fallbackData;
@@ -480,6 +482,121 @@ app.get('/api/prayer-globe/points', async (req, res) => {
     res.json({ success: true, points: data.prayerPoints || [] });
 });
 
+// Fixed contact info for the youth board (matches what's published on the
+// public homepage) — used as fallback knowledge for the assistant.
+const YOUTH_BOARD_CONTACTS = [
+    { role: 'Moderator', name: 'Alphonse', phone: '0745225589' },
+    { role: 'V. Moderator', name: 'Eric', phone: '0714826281' },
+    { role: 'O.G.', name: 'Victor', phone: '0754920679' }
+];
+
+// "St. Michael Companion" — the youth assistant. Always answers from the
+// portal's own live data (events, readings, mentor assignments, contacts).
+// If OPENAI_API_KEY is configured, it upgrades to a real conversational
+// model grounded in that same data; without a key it uses straightforward
+// keyword matching so it still gives real, accurate answers rather than
+// nothing. Either way, when it can't help, it says so and offers to
+// connect the member directly to an admin.
+app.post('/api/assistant/ask', async (req, res) => {
+    try {
+        const { question, currentUser } = req.body;
+        if (!question || !question.trim()) {
+            return res.status(400).json({ success: false, message: 'Please type a question.' });
+        }
+        const data = await readData();
+        const q = question.toLowerCase();
+
+        const member = currentUser
+            ? (data.members || []).find(m => (m.name || '').toLowerCase() === String(currentUser).toLowerCase())
+            : null;
+        const nextEvent = (data.events || [])[0] || null;
+        const currentReading = (data.readings || [])[0] || null;
+        const mentorForMember = member
+            ? (data.mentors || []).find(m => (m.group || '').toLowerCase() === (member.group || '').toLowerCase())
+            : null;
+
+        // ---- Path 1: real LLM, grounded in the same live context ----
+        if (process.env.OPENAI_API_KEY) {
+            try {
+                const contextLines = [
+                    `Next event: ${nextEvent ? `${nextEvent.title} — ${nextEvent.date}. ${nextEvent.description || ''}` : 'None scheduled yet.'}`,
+                    `Current Mass readings title: ${currentReading ? currentReading.title : 'Not posted yet.'}`,
+                    `Youth board contacts: ${YOUTH_BOARD_CONTACTS.map(c => `${c.role} ${c.name} (${c.phone})`).join('; ')}`,
+                    member ? `This member's group: ${member.group || 'unknown'}.` : `The asker is not logged in or not matched to a member record.`,
+                    mentorForMember ? `Their assigned mentor: ${mentorForMember.mentorName} (${mentorForMember.mentorContact || 'no contact on file'}), for ${mentorForMember.month || 'the current period'}.` : `No mentor is on file for this member's group yet.`,
+                    `Known hymns/songs in the hymnal: ${(data.hymns || []).slice(0, 15).map(h => h.title).join(', ') || 'none added yet'}.`
+                ].join('\n');
+
+                const systemPrompt = `You are the "St. Michael Companion", a friendly assistant for the St. Michael Kasaini Youth Portal. Answer ONLY using the parish information given below — never invent events, contacts, mentors, or facts that aren't listed. Keep answers short (2-4 sentences) and warm. If the answer isn't in the information provided, clearly say you don't have that information and that you'll connect them to an admin.\n\nParish information:\n${contextLines}`;
+
+                const apiRes = await fetch('https://api.openai.com/v1/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
+                    },
+                    body: JSON.stringify({
+                        model: 'gpt-4o-mini',
+                        messages: [
+                            { role: 'system', content: systemPrompt },
+                            { role: 'user', content: question }
+                        ],
+                        max_tokens: 220,
+                        temperature: 0.4
+                    })
+                });
+                const json = await apiRes.json();
+                const answer = json && json.choices && json.choices[0] && json.choices[0].message && json.choices[0].message.content;
+                if (answer) {
+                    const escalate = /don'?t have|not sure|connect you|no information|do not have/i.test(answer);
+                    return res.json({ success: true, answer: answer.trim(), escalate, mode: 'ai' });
+                }
+            } catch (e) {
+                // Fall through to the rule-based path below if the API call fails.
+            }
+        }
+
+        // ---- Path 2: rule-based fallback (always available, no API key needed) ----
+        function reply(answer, escalate) {
+            res.json({ success: true, answer, escalate: !!escalate, mode: 'rules' });
+        }
+
+        if (/mentor/.test(q)) {
+            if (mentorForMember) {
+                return reply(`Your mentor for ${mentorForMember.month || 'this period'} is ${mentorForMember.mentorName}${mentorForMember.mentorContact ? ` (${mentorForMember.mentorContact})` : ''}.`);
+            }
+            return reply("I don't have a mentor on file for your group yet — let me connect you to an admin.", true);
+        }
+        if (/camp|event|upcoming|schedule|next\b/.test(q)) {
+            if (nextEvent) {
+                return reply(`The next event is "${nextEvent.title}" — ${nextEvent.date}. ${nextEvent.description || ''}`.trim());
+            }
+            return reply("There's nothing on the events calendar yet — let me connect you to an admin to check.", true);
+        }
+        if (/reading|gospel|mass|psalm|scripture/.test(q)) {
+            if (currentReading) {
+                return reply(`This week's readings are posted under "${currentReading.title}" — check the Mass Readings section on the homepage for the full text.`);
+            }
+            return reply("Readings haven't been posted yet — let me connect you to an admin.", true);
+        }
+        if (/contact|admin|leader|moderator|phone|reach|call/.test(q)) {
+            return reply('You can reach the youth board directly: ' + YOUTH_BOARD_CONTACTS.map(c => `${c.role} ${c.name} (${c.phone})`).join(', ') + '.');
+        }
+        if (/hymn|song|music/.test(q)) {
+            const titles = (data.hymns || []).slice(0, 6).map(h => h.title);
+            if (titles.length) return reply(`A few songs in our hymnal: ${titles.join(', ')}. Check the homepage Hymnal section for the full list.`);
+            return reply("No songs have been added to the hymnal yet.");
+        }
+        if (/candle|pray|intention/.test(q)) {
+            return reply('You can light a virtual prayer candle or a Global Prayer Globe intention from the homepage and dashboard — look for the Prayer Sanctuary and Prayer Globe sections.');
+        }
+
+        return reply("I don't have an answer for that yet — I'll connect you directly to an admin.", true);
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'The assistant hit an error. Please try again.' });
+    }
+});
+
 app.get('/api/analytics/jumuiya-graph', async (req, res) => {
     const data = await readData();
     const labels = JUMUIYAS_LIST.map(j => j.name);
@@ -592,6 +709,7 @@ app.get('/api/youth/directory', async (req, res) => {
         hymns: data.hymns || [],
         candles: data.candles || [],
         memorialNames: data.memorialNames || [],
+        mentors: data.mentors || [],
         reflection,
         patronSaint,
         validPurposes: VALID_PURPOSES
@@ -660,6 +778,7 @@ app.get('/api/admin/data', async (req, res) => {
         hymns: data.hymns || [],
         candles: data.candles || [],
         memorialNames: data.memorialNames || [],
+        mentors: data.mentors || [],
         passwordRequests: data.passwordRequests || [],
         reflection,
         patronSaint,
@@ -799,6 +918,46 @@ app.post('/api/admin/delete-memorial-name', async (req, res) => {
         res.json({ success: true, memorialNames });
     } catch (e) {
         res.status(500).json({ success: false, message: 'Error deleting memorial name.' });
+    }
+});
+
+// Mentor assignments — lets an admin say which mentor covers each group,
+// so the Companion assistant can actually answer "who is my mentor?"
+app.post('/api/admin/save-mentor', async (req, res) => {
+    try {
+        const { id, group, mentorName, mentorContact, month } = req.body;
+        if (!group || !mentorName) return res.status(400).json({ success: false, message: 'Group and mentor name are required.' });
+        const data = await readData();
+        let mentors = data.mentors || [];
+        if (id) {
+            let found = false;
+            mentors = mentors.map(m => {
+                if (m.id === id) { found = true; return { ...m, group, mentorName, mentorContact, month }; }
+                return m;
+            });
+            if (!found) return res.status(404).json({ success: false, message: 'Mentor entry not found.' });
+        } else {
+            mentors.push({ id: Date.now().toString(), group, mentorName, mentorContact: mentorContact || '', month: month || '' });
+        }
+        await writeData({ mentors });
+        res.json({ success: true, mentors });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error saving mentor.' });
+    }
+});
+
+app.post('/api/admin/delete-mentor', async (req, res) => {
+    try {
+        const { id } = req.body;
+        if (!id) return res.status(400).json({ success: false, message: 'Missing id.' });
+        const data = await readData();
+        const before = (data.mentors || []).length;
+        const mentors = (data.mentors || []).filter(m => m.id !== id);
+        if (mentors.length === before) return res.status(404).json({ success: false, message: 'Mentor entry not found.' });
+        await writeData({ mentors });
+        res.json({ success: true, mentors });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error deleting mentor.' });
     }
 });
 
