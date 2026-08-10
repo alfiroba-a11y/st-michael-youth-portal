@@ -53,6 +53,11 @@
         #chapelCloseBtn { right: 14px; }
         #chapelVrBtn { left: 14px; }
         #chapelMuteBtn { left: 130px; }
+        #chapelYouTubeWrap {
+            position: absolute; bottom: 50px; right: 14px; z-index: 2001;
+            background: rgba(0,0,0,0.55); padding: 8px; border-radius: 10px;
+        }
+        #chapelYouTubeMount iframe { width: 200px; height: 112px; border: 0; border-radius: 6px; display: block; }
         #chapelLoading {
             position: absolute; inset: 0; z-index: 1999;
             display: flex; align-items: center; justify-content: center;
@@ -231,7 +236,11 @@
     <div id="chapelOverlay">
         <canvas id="chapelCanvas"></canvas>
         <div id="chapelLoading" style="display:none;">Entering the chapel...</div>
-        <button id="chapelMuteBtn" class="btn btn-sm btn-outline-light" style="display:none;">🔊 Music</button>
+        <div id="chapelYouTubeWrap" style="display:none;">
+            <div class="small text-white-50 mb-1">Chapel music</div>
+            <div id="chapelYouTubeMount"></div>
+        </div>
+        <button id="chapelMuteBtn" class="btn btn-sm btn-outline-light" style="display:none;">🔊 Ambience</button>
         <button id="chapelVrBtn" class="btn btn-sm btn-warning" style="display:none;">Enter VR</button>
         <button id="chapelCloseBtn" class="btn btn-sm btn-light">✕ Close</button>
         <div id="chapelHint">Drag to look around · glowing plaques are the memorial wall · watch for drifting spirits of light</div>
@@ -801,6 +810,9 @@
             const vrBtn = document.getElementById('chapelVrBtn');
             const muteBtn = document.getElementById('chapelMuteBtn');
             const loadingEl = document.getElementById('chapelLoading');
+            const ytWrap = document.getElementById('chapelYouTubeWrap');
+            const ytMount = document.getElementById('chapelYouTubeMount');
+            const CHAPEL_YOUTUBE_ID = 'PMIgzE0KyFM';
             const canvas = document.getElementById('chapelCanvas');
             if (!enterBtn || typeof THREE === 'undefined') return;
 
@@ -1343,11 +1355,31 @@
                 muteBtn.textContent = muted ? '🔇 Music' : '🔊 Music';
             });
 
+            // Real human vocals via YouTube's own embedded player — this
+            // plays the video from YouTube's platform directly; nothing is
+            // downloaded, copied, or re-hosted here.
+            function startChapelSong() {
+                if (!ytMount || ytMount.childElementCount) return; // already playing
+                const iframe = document.createElement('iframe');
+                iframe.src = `https://www.youtube.com/embed/${CHAPEL_YOUTUBE_ID}?autoplay=1&loop=1&playlist=${CHAPEL_YOUTUBE_ID}&rel=0`;
+                iframe.title = 'Chapel music';
+                iframe.allow = 'autoplay; encrypted-media';
+                iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+                ytMount.appendChild(iframe);
+                ytWrap.style.display = 'block';
+            }
+
+            function stopChapelSong() {
+                if (ytMount) ytMount.innerHTML = ''; // removing the iframe stops playback
+                if (ytWrap) ytWrap.style.display = 'none';
+            }
+
             async function openChapel() {
                 // Open instantly — the overlay (and a loading cue if the scene
                 // is still being built) shows right away, before any await.
                 overlay.classList.add('open');
                 startAmbience();
+                startChapelSong();
                 muteBtn.style.display = 'inline-block';
                 if (!started) {
                     loadingEl.style.display = 'flex';
@@ -1381,6 +1413,7 @@
             function closeChapel() {
                 overlay.classList.remove('open');
                 stopAmbience();
+                stopChapelSong();
                 if (xrSession) { xrSession.end().catch(() => {}); }
             }
 
