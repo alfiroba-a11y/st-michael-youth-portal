@@ -354,6 +354,51 @@
                 </div>
             </div>
 
+            <!-- Mentor Assignments: powers the "who is my mentor" answers from the St. Michael Companion assistant -->
+            <div class="card p-4 mb-4" id="mentors">
+                <h4 class="mb-3"><i class="fas fa-user-graduate me-2"></i> Manage Mentor Assignments</h4>
+                <p class="text-muted small mb-3">Assign a mentor per Group. Members ask the "St. Michael Companion" assistant who their mentor is, and it looks up their group here.</p>
+                <div class="row">
+                    <div class="col-md-5 mb-3">
+                        <form id="mentorForm">
+                            <input type="hidden" id="mentorId">
+                            <div class="mb-2">
+                                <label class="form-label small">Group</label>
+                                <input type="text" id="mentorGroup" class="form-control form-control-sm" placeholder="e.g. Choir, Youth General" required>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small">Mentor Name</label>
+                                <input type="text" id="mentorName" class="form-control form-control-sm" required>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small">Mentor Contact (optional)</label>
+                                <input type="text" id="mentorContact" class="form-control form-control-sm" placeholder="Phone or email">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small">Month / Period (optional)</label>
+                                <input type="text" id="mentorMonth" class="form-control form-control-sm" placeholder="e.g. August 2026">
+                            </div>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-primary btn-sm flex-grow-1">Save Assignment</button>
+                                <button type="button" class="btn btn-outline-secondary btn-sm" id="mentorFormResetBtn">Clear / New</button>
+                            </div>
+                            <div id="mentorFormErrorAlert" class="alert alert-danger d-none py-2 mt-2 mb-0" role="alert"></div>
+                        </form>
+                    </div>
+                    <div class="col-md-7 mb-3">
+                        <label class="form-label small fw-bold">Current Assignments</label>
+                        <div id="mentorsListAdmin" class="list-group" style="max-height: 300px; overflow-y: auto;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Member Messages: community board posts and assistant escalations, so admins can follow up directly -->
+            <div class="card p-4 mb-4" id="messages">
+                <h4 class="mb-3"><i class="fas fa-comments me-2"></i> Member Messages &amp; Assistant Escalations</h4>
+                <p class="text-muted small mb-3">Messages posted from the Community Board, and questions the St. Michael Companion assistant couldn't answer on its own.</p>
+                <div id="messagesListAdmin" class="list-group" style="max-height: 360px; overflow-y: auto;"></div>
+            </div>
+
         </main>
     </div>
 
@@ -520,7 +565,8 @@
                 readings: [],
                 passwordRequests: [],
                 hymns: [],
-                memorialNames: []
+                memorialNames: [],
+                mentors: []
             };
         }
 
@@ -782,6 +828,47 @@
                 memHtml = '<div class="list-group-item text-muted">No memorial names added yet.</div>';
             }
             document.getElementById('memorialListAdmin').innerHTML = memHtml;
+
+            // Mentor Assignments Admin List
+            let mentorHtml = '';
+            if (data.mentors && data.mentors.length > 0) {
+                data.mentors.forEach(m => {
+                    const id = recordId(m);
+                    mentorHtml += `<div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start gap-2">
+                            <div>
+                                <strong>${esc(m.group)}</strong> — ${esc(m.mentorName)}
+                                <div class="small text-muted">${esc(m.mentorContact || '')} ${m.month ? '· ' + esc(m.month) : ''}</div>
+                            </div>
+                            <div class="action-btns">
+                                <button class="btn btn-outline-primary btn-sm" data-action="edit-mentor" data-id="${id}">Edit</button>
+                                <button class="btn btn-outline-danger btn-sm" data-action="delete-mentor" data-id="${id}">Delete</button>
+                            </div>
+                        </div>
+                    </div>`;
+                });
+            } else {
+                mentorHtml = '<div class="list-group-item text-muted">No mentor assignments yet.</div>';
+            }
+            document.getElementById('mentorsListAdmin').innerHTML = mentorHtml;
+
+            // Member Messages Admin List (Community Board posts + assistant escalations)
+            let msgHtml = '';
+            if (data.messages && data.messages.length > 0) {
+                [...data.messages].reverse().forEach(msg => {
+                    const isEscalation = /\[assistant\]/i.test(msg.sender || '');
+                    msgHtml += `<div class="list-group-item ${isEscalation ? 'border-start border-warning border-4' : ''}">
+                        <div class="d-flex justify-content-between">
+                            <strong>${esc(msg.sender || 'Member')}</strong>
+                            <small class="text-muted">${esc(msg.time || '')}</small>
+                        </div>
+                        <div class="small">${esc(msg.text || '')}</div>
+                    </div>`;
+                });
+            } else {
+                msgHtml = '<div class="list-group-item text-muted">No member messages yet.</div>';
+            }
+            document.getElementById('messagesListAdmin').innerHTML = msgHtml;
 
             // Password Reset Requests Table
             let prHtml = '<table class="table table-bordered align-middle"><thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead><tbody>';
@@ -1136,6 +1223,37 @@
         });
 
         /* =========================================================
+           MENTOR ASSIGNMENT FORM
+        ========================================================= */
+        function resetMentorForm() {
+            document.getElementById('mentorId').value = '';
+            document.getElementById('mentorForm').reset();
+            document.getElementById('mentorFormErrorAlert').classList.add('d-none');
+        }
+        document.getElementById('mentorFormResetBtn').addEventListener('click', resetMentorForm);
+
+        document.getElementById('mentorForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const errorAlert = document.getElementById('mentorFormErrorAlert');
+            const payload = {
+                id: document.getElementById('mentorId').value || undefined,
+                group: document.getElementById('mentorGroup').value,
+                mentorName: document.getElementById('mentorName').value,
+                mentorContact: document.getElementById('mentorContact').value,
+                month: document.getElementById('mentorMonth').value
+            };
+            try {
+                await apiCall('/api/admin/save-mentor', { method: 'POST', body: JSON.stringify(payload) });
+                resetMentorForm();
+                await loadMasterData();
+                showGlobalStatus('Mentor assignment saved.', 'success');
+            } catch (err) {
+                errorAlert.textContent = 'Failed to save mentor: ' + err.message;
+                errorAlert.classList.remove('d-none');
+            }
+        });
+
+        /* =========================================================
            EDIT JUMUIYA RECORD MODAL
         ========================================================= */
         function openEditModal(id, name, amount, purpose) {
@@ -1265,6 +1383,25 @@
                     case 'delete-memorial': {
                         if (!confirm('Remove this name from the memorial wall?')) return;
                         await apiCall('/api/admin/delete-memorial-name', { method: 'POST', body: JSON.stringify({ id }) });
+                        await loadMasterData();
+                        break;
+                    }
+                    case 'edit-mentor': {
+                        const m = (cachedMasterData.mentors || []).find(x => recordId(x) === id);
+                        if (m) {
+                            document.getElementById('mentorId').value = id;
+                            document.getElementById('mentorGroup').value = m.group || '';
+                            document.getElementById('mentorName').value = m.mentorName || '';
+                            document.getElementById('mentorContact').value = m.mentorContact || '';
+                            document.getElementById('mentorMonth').value = m.month || '';
+                            document.getElementById('mentorFormErrorAlert').classList.add('d-none');
+                            document.getElementById('mentorGroup').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        }
+                        break;
+                    }
+                    case 'delete-mentor': {
+                        if (!confirm('Remove this mentor assignment?')) return;
+                        await apiCall('/api/admin/delete-mentor', { method: 'POST', body: JSON.stringify({ id }) });
                         await loadMasterData();
                         break;
                     }
