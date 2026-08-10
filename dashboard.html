@@ -935,71 +935,7 @@
                 backWall.position.set(0, 4.2, -3.6);
                 scene.add(backWall);
 
-                // --- Arched niche recessed into the wall, with a gold trim border ---
-                function makeArchShape(width, baseY, wallHeight, archHeight) {
-                    const w2 = width / 2;
-                    const shape = new THREE.Shape();
-                    shape.moveTo(-w2, baseY);
-                    shape.lineTo(-w2, baseY + wallHeight);
-                    shape.quadraticCurveTo(-w2, baseY + wallHeight + archHeight, 0, baseY + wallHeight + archHeight);
-                    shape.quadraticCurveTo(w2, baseY + wallHeight + archHeight, w2, baseY + wallHeight);
-                    shape.lineTo(w2, baseY);
-                    shape.lineTo(-w2, baseY);
-                    return shape;
-                }
                 const goldMat = new THREE.MeshStandardMaterial({ color: 0xcda43a, metalness: 0.6, roughness: 0.35 });
-                const nicheBorder = new THREE.Mesh(
-                    new THREE.ShapeGeometry(makeArchShape(2.58, 0.84, 2.68, 1.38)),
-                    goldMat
-                );
-                nicheBorder.position.set(0, 0, -3.47);
-                scene.add(nicheBorder);
-                const niche = new THREE.Mesh(
-                    new THREE.ShapeGeometry(makeArchShape(2.4, 0.9, 2.6, 1.3)),
-                    new THREE.MeshStandardMaterial({ color: 0x2c3f78, roughness: 0.45 })
-                );
-                niche.position.set(0, 0, -3.45);
-                scene.add(niche);
-
-                // --- Crucifix mounted in the niche, with gold trim edging and
-                // a titulus (INRI plaque), as on a traditional altar cross ---
-                const crossMat = new THREE.MeshStandardMaterial({ color: 0x5a3319, roughness: 0.55 });
-                const crossVertical = new THREE.Mesh(new THREE.BoxGeometry(0.18, 2.6, 0.13), crossMat);
-                crossVertical.position.set(0, 3.4, -3.35);
-                scene.add(crossVertical);
-                const crossHorizontal = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.18, 0.13), crossMat);
-                crossHorizontal.position.set(0, 3.95, -3.35);
-                scene.add(crossHorizontal);
-                // Thin gold edge trim on the cross arms
-                [[0.19, 2.6, 0.02, 0, 3.4], [1.4, 0.19, 0.02, 0, 3.95]].forEach(([w, h, d, x, y]) => {
-                    const trim = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), goldMat);
-                    trim.position.set(x, y, -3.28);
-                    scene.add(trim);
-                });
-                const titulus = new THREE.Mesh(
-                    new THREE.BoxGeometry(0.42, 0.16, 0.03),
-                    new THREE.MeshStandardMaterial({ color: 0xf3ead2, roughness: 0.7 })
-                );
-                titulus.position.set(0, 4.55, -3.32);
-                titulus.rotation.z = -0.08;
-                scene.add(titulus);
-                // Simple, abstract corpus — not a detailed figure, just enough
-                // to read as a figure on the cross.
-                const corpusMat = new THREE.MeshStandardMaterial({ color: 0xf1e6d3, roughness: 0.5 });
-                const corpusBody = new THREE.Mesh(new THREE.CapsuleGeometry(0.13, 0.85, 4, 8), corpusMat);
-                corpusBody.position.set(0, 3.55, -3.28);
-                scene.add(corpusBody);
-                const corpusHead = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 12), corpusMat);
-                corpusHead.position.set(0, 4.05, -3.28);
-                scene.add(corpusHead);
-                const corpusArmL = new THREE.Mesh(new THREE.CapsuleGeometry(0.07, 0.55, 4, 8), corpusMat);
-                corpusArmL.position.set(-0.42, 3.92, -3.3);
-                corpusArmL.rotation.z = Math.PI / 2.5;
-                scene.add(corpusArmL);
-                const corpusArmR = corpusArmL.clone();
-                corpusArmR.position.x = 0.42;
-                corpusArmR.rotation.z = -Math.PI / 2.5;
-                scene.add(corpusArmR);
 
                 // --- Predella: stepped platform the altar stands on, as on a
                 // real sanctuary, instead of the mensa floating at floor level ---
@@ -1035,49 +971,6 @@
                 mensaSlab.position.set(0, mensaTopY + 0.04, mensaZ);
                 scene.add(mensaSlab);
 
-                // --- Gradine (raised shelf behind the mensa) carrying the tabernacle ---
-                const gradineH = 0.22;
-                const gradineZ = mensaZ - 0.75;
-                const gradine = new THREE.Mesh(
-                    new THREE.BoxGeometry(2.3, gradineH, 0.55),
-                    new THREE.MeshStandardMaterial({ color: 0xece4d2, roughness: 0.55 })
-                );
-                const gradineCenterY = mensaTopY + gradineH / 2;
-                gradine.position.set(0, gradineCenterY, gradineZ);
-                scene.add(gradine);
-
-                // --- Tabernacle on the gradine, with a small veil (conopaeum)
-                // and a domed cap — colored with today's liturgical color, the
-                // way a real altar's furnishings change through the year ---
-                let liturgicalHex = 0x8e1f1f; // fallback: red
-                try {
-                    const litRes = await fetch('/api/liturgical/season', { cache: 'no-store' });
-                    const litData = await litRes.json();
-                    if (litData.success && litData.hex) liturgicalHex = parseInt(litData.hex.replace('#', '0x'));
-                } catch (e) { /* keep fallback color */ }
-
-                const tabernacleH = 0.55;
-                const tabernacleCenterY = gradineCenterY + gradineH / 2 + tabernacleH / 2;
-                const tabernacle = new THREE.Mesh(new THREE.BoxGeometry(0.62, tabernacleH, 0.48), goldMat);
-                tabernacle.position.set(0, tabernacleCenterY, gradineZ);
-                scene.add(tabernacle);
-                const tabernacleCap = new THREE.Mesh(new THREE.ConeGeometry(0.24, 0.3, 12), goldMat);
-                tabernacleCap.position.set(0, tabernacleCenterY + tabernacleH / 2 + 0.15, gradineZ);
-                scene.add(tabernacleCap);
-                // Veil draped over the tabernacle door — liturgical-color cloth
-                const veil = new THREE.Mesh(
-                    new THREE.PlaneGeometry(0.42, 0.46),
-                    new THREE.MeshStandardMaterial({ color: liturgicalHex, roughness: 0.75, side: THREE.DoubleSide })
-                );
-                veil.position.set(0, tabernacleCenterY - 0.02, gradineZ + 0.25);
-                scene.add(veil);
-                const veilTrim = new THREE.Mesh(
-                    new THREE.RingGeometry(0.09, 0.13, 16),
-                    new THREE.MeshStandardMaterial({ color: 0xf5d67a, metalness: 0.7, roughness: 0.3, side: THREE.DoubleSide })
-                );
-                veilTrim.position.set(0, tabernacleCenterY, gradineZ + 0.26);
-                scene.add(veilTrim);
-
                 // --- Sanctuary lamp — a small hanging red lamp near the altar,
                 // the traditional sign the Blessed Sacrament is reserved ---
                 const lampCord = new THREE.Mesh(
@@ -1096,75 +989,55 @@
                 lampLight.position.copy(lampGlass.position);
                 scene.add(lampLight);
 
-                // --- Two flanking pedestal statues with halos (simplified,
-                // abstract robed figures using a lathed silhouette — generic
-                // forms, not depicting a specific identifiable figure) ---
-                function makeStatue(x) {
-                    const pedestal = new THREE.Mesh(
-                        new THREE.BoxGeometry(0.6, 1.0, 0.6),
-                        new THREE.MeshStandardMaterial({ map: pedestalWoodTex, roughness: 0.7 })
-                    );
-                    pedestal.position.set(x, 0.5, -2.1);
-                    scene.add(pedestal);
-                    const pedestalTrim = new THREE.Mesh(new THREE.BoxGeometry(0.66, 0.06, 0.66), goldMat);
-                    pedestalTrim.position.set(x, 1.03, -2.1);
-                    scene.add(pedestalTrim);
+                // --- The actual altar photo, displayed as a properly
+                // proportioned framed picture on the sanctuary wall — this is
+                // the real photo (undistorted aspect ratio), not a 3D guess. ---
+                let liturgicalHex = 0x8e1f1f; // fallback trim color: red
+                try {
+                    const litRes = await fetch('/api/liturgical/season', { cache: 'no-store' });
+                    const litData = await litRes.json();
+                    if (litData.success && litData.hex) liturgicalHex = parseInt(litData.hex.replace('#', '0x'));
+                } catch (e) { /* keep fallback color */ }
 
-                    // A flowing robe silhouette via a lathed profile, instead
-                    // of a plain cone — reads more like drapery.
-                    const profile = [
-                        new THREE.Vector2(0.30, 0),
-                        new THREE.Vector2(0.27, 0.35),
-                        new THREE.Vector2(0.22, 0.75),
-                        new THREE.Vector2(0.14, 1.05),
-                        new THREE.Vector2(0.10, 1.25)
-                    ];
-                    const robe = new THREE.Mesh(new THREE.LatheGeometry(profile, 20), goldMat);
-                    robe.position.set(x, 1.36, -2.1);
-                    scene.add(robe);
-                    const head = new THREE.Mesh(new THREE.SphereGeometry(0.155, 14, 14), goldMat);
-                    head.position.set(x, 2.68, -2.1);
-                    scene.add(head);
-                    const halo = new THREE.Mesh(
-                        new THREE.TorusGeometry(0.19, 0.02, 8, 20),
-                        new THREE.MeshStandardMaterial({ color: 0xf5d67a, metalness: 0.7, roughness: 0.3 })
-                    );
-                    halo.position.set(x, 2.75, -2.1);
-                    halo.rotation.x = Math.PI / 2.4;
-                    scene.add(halo);
-                }
-                makeStatue(-1.75);
-                makeStatue(1.75);
+                const PHOTO_ASPECT = 365 / 547; // the actual uploaded photo's width/height
+                const photoHeight = 5.4;
+                const photoWidth = photoHeight * PHOTO_ASPECT;
+                const photoBaseY = mensaTopY;
+                const photoCenterY = photoBaseY + photoHeight / 2;
 
-                // --- Altar frontal (antependium): today's liturgical color,
-                // gold border, and a plain Chi-Rho-style monogram (a
-                // centuries-old, universally used Christian symbol) ---
-                function makeAltarFrontalTexture(colorHex) {
-                    const c = document.createElement('canvas');
-                    c.width = 512; c.height = 256;
-                    const ctx = c.getContext('2d');
-                    ctx.fillStyle = colorHex;
-                    ctx.fillRect(0, 0, 512, 256);
-                    ctx.strokeStyle = '#e9c65c';
-                    ctx.lineWidth = 6;
-                    ctx.strokeRect(4, 4, 504, 248);
-                    ctx.strokeStyle = '#f3dfa0';
-                    ctx.lineWidth = 7;
-                    ctx.lineCap = 'round';
-                    const cx = 256, cy = 128;
-                    ctx.beginPath(); ctx.moveTo(cx - 42, cy - 42); ctx.lineTo(cx + 42, cy + 42); ctx.stroke();
-                    ctx.beginPath(); ctx.moveTo(cx + 42, cy - 42); ctx.lineTo(cx - 42, cy + 42); ctx.stroke();
-                    ctx.beginPath(); ctx.moveTo(cx, cy - 58); ctx.lineTo(cx, cy + 58); ctx.stroke();
-                    ctx.beginPath(); ctx.arc(cx + 15, cy - 32, 21, Math.PI * 1.1, Math.PI * 2.3); ctx.stroke();
-                    return new THREE.CanvasTexture(c);
-                }
-                const liturgicalCssHex = '#' + liturgicalHex.toString(16).padStart(6, '0');
-                const frontal = new THREE.Mesh(
-                    new THREE.PlaneGeometry(1.86, 0.82),
-                    new THREE.MeshStandardMaterial({ map: makeAltarFrontalTexture(liturgicalCssHex), roughness: 0.8 })
+                // Thin liturgical-color trim, peeking out behind the frame
+                const trim = new THREE.Mesh(
+                    new THREE.PlaneGeometry(photoWidth + 0.34, photoHeight + 0.34),
+                    new THREE.MeshStandardMaterial({ color: liturgicalHex, roughness: 0.7 })
                 );
-                frontal.position.set(0, mensaCenterY, mensaZ + 0.43);
-                scene.add(frontal);
+                trim.position.set(0, photoCenterY, -3.62);
+                scene.add(trim);
+
+                // Dark wood frame
+                const frame = new THREE.Mesh(
+                    new THREE.PlaneGeometry(photoWidth + 0.2, photoHeight + 0.2),
+                    new THREE.MeshStandardMaterial({ color: 0x3a2416, roughness: 0.6 })
+                );
+                frame.position.set(0, photoCenterY, -3.58);
+                scene.add(frame);
+
+                // The actual uploaded photo. Upload it to your Render project's
+                // root folder (next to server.js) as "altar-photo.jpg" — since
+                // server.js already serves static files from that folder, it
+                // will automatically be reachable at /altar-photo.jpg.
+                const altarPhotoTexture = new THREE.TextureLoader().load(
+                    '/altar-photo.jpg',
+                    undefined,
+                    undefined,
+                    () => console.warn('Chapel: altar-photo.jpg not found — upload it to the project root on Render.')
+                );
+                if ('colorSpace' in altarPhotoTexture) altarPhotoTexture.colorSpace = THREE.SRGBColorSpace;
+                const altarPhoto = new THREE.Mesh(
+                    new THREE.PlaneGeometry(photoWidth, photoHeight),
+                    new THREE.MeshBasicMaterial({ map: altarPhotoTexture })
+                );
+                altarPhoto.position.set(0, photoCenterY, -3.5);
+                scene.add(altarPhoto);
 
                 // --- A small ambo (lectern) with a red cloth, off to the side ---
                 const ambo = new THREE.Mesh(
@@ -1181,29 +1054,30 @@
                 scene.add(amboCloth);
 
                 // --- Proper candlesticks (base, stem, wax, flame) instead of a
-                // bare glow point — two candles, close to the tabernacle ---
+                // bare glow point — two candles, close to the altar photo ---
+                const CANDLE_Z = 1.3;
                 function makeCandle(x) {
                     const baseY = mensaTopY;
                     const stickBase = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.12, 0.1, 12), goldMat);
-                    stickBase.position.set(x, baseY + 0.05, gradineZ + 0.55);
+                    stickBase.position.set(x, baseY + 0.05, CANDLE_Z);
                     scene.add(stickBase);
                     const stickStem = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.035, 0.32, 10), goldMat);
-                    stickStem.position.set(x, baseY + 0.1 + 0.16, gradineZ + 0.55);
+                    stickStem.position.set(x, baseY + 0.1 + 0.16, CANDLE_Z);
                     scene.add(stickStem);
                     const wax = new THREE.Mesh(
                         new THREE.CylinderGeometry(0.045, 0.05, 0.3, 10),
                         new THREE.MeshStandardMaterial({ color: 0xfaf3e2, roughness: 0.6 })
                     );
-                    wax.position.set(x, baseY + 0.1 + 0.32 + 0.15, gradineZ + 0.55);
+                    wax.position.set(x, baseY + 0.1 + 0.32 + 0.15, CANDLE_Z);
                     scene.add(wax);
                     const flame = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffcf6e }));
-                    flame.position.set(x, wax.position.y + 0.18, gradineZ + 0.55);
+                    flame.position.set(x, wax.position.y + 0.18, CANDLE_Z);
                     scene.add(flame);
                     return flame;
                 }
                 candleFlames = [makeCandle(-0.5), makeCandle(0.5)];
 
-                // Focused light on the crucifix/niche for a sanctuary-lit feel
+                // Focused light on the altar photo for a sanctuary-lit feel
                 const altarSpot = new THREE.SpotLight(0xfff6df, 1.1, 22, Math.PI / 6, 0.5);
                 altarSpot.position.set(0, 7, 5);
                 altarSpot.target.position.set(0, 3, -3.4);
