@@ -96,3 +96,67 @@ html, body {
     opacity: 0.85;
     flex-shrink: 0;
 }
+
+/* =============================================================
+   Liquid glass design system — applied site-wide via this shared
+   stylesheet, so every page gets it automatically (see server.js).
+   Frosted, translucent panels with soft blur, like the "liquid
+   glass" look — layered over each page's existing background.
+============================================================= */
+.app-shell .card,
+.app-shell .modal-content,
+.app-shell .list-group-item,
+.app-shell .alert,
+.app-shell .navbar {
+    background: rgba(255, 255, 255, 0.55) !important;
+    backdrop-filter: blur(14px) saturate(160%);
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    border: 1px solid rgba(255, 255, 255, 0.35) !important;
+}
+.app-shell .navbar.bg-dark {
+    background: rgba(20, 16, 40, 0.55) !important;
+}
+.app-shell .table-dark,
+.app-shell .table-light,
+.app-shell thead {
+    background: rgba(255, 255, 255, 0.35) !important;
+    backdrop-filter: blur(10px);
+}
+.app-shell .btn {
+    backdrop-filter: blur(6px);
+}
+.app-shell .card {
+    box-shadow: 0 8px 24px rgba(20, 16, 40, 0.10);
+}
+/* Full-bleed 3D/canvas surfaces (chapel, prayer globe, sanctuary
+   animations) should never get the glass treatment — it would just
+   fog up the WebGL canvas itself. */
+.app-shell #chapelOverlay,
+.app-shell #chapelCanvas,
+.app-shell canvas,
+.app-shell .sanctuary-section,
+.app-shell .globe-card {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+/* Animated icons — subtle, continuous motion on real icon elements
+   (Font Awesome <i> tags used across admin/nav/section headers), so
+   the effect works everywhere those icons appear without touching
+   every page's markup individually. */
+.app-shell i[class*="fa-"] {
+    display: inline-block;
+    animation: iconFloat 3.2s ease-in-out infinite;
+}
+@keyframes iconFloat {
+    0%, 100% { transform: translateY(0) rotate(0deg); }
+    50%      { transform: translateY(-2px) rotate(-4deg); }
+}
+.app-shell .navbar-brand,
+.app-shell .btn-close {
+    animation: none; /* keep the wordmark and close buttons still */
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-shell i[class*="fa-"] { animation: none !important; }
+}
