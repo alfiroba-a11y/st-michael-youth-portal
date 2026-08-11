@@ -741,6 +741,55 @@ app.post('/api/youth/login', async (req, res) => {
     res.json({ success: false, message: 'Member not found or pending approval.' });
 });
 
+// These two were called by dashboard.html (Community Board posts, assistant
+// escalations, and the Profile Settings form) but were never actually
+// implemented here — every request to them was silently 404ing, which is
+// why messages never reached the admin dashboard.
+app.post('/api/youth/message', async (req, res) => {
+    try {
+        const { sender, text } = req.body;
+        if (!text || !text.trim()) return res.status(400).json({ success: false, message: 'Message text is required.' });
+        const data = await readData();
+        const messages = [...(data.messages || []), {
+            id: Date.now().toString(),
+            sender: sender || 'Anonymous',
+            text: text.trim(),
+            time: new Date().toLocaleString()
+        }];
+        await writeData({ messages });
+        res.json({ success: true, messages });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error posting message.' });
+    }
+});
+
+app.post('/api/youth/update-profile', async (req, res) => {
+    try {
+        const { currentUser, name, group, password } = req.body;
+        if (!currentUser || !name) return res.status(400).json({ success: false, message: 'Missing required fields.' });
+        const data = await readData();
+        const cleanCurrent = currentUser.trim().toLowerCase();
+        let found = false;
+        const members = (data.members || []).map(m => {
+            if (m.name.toLowerCase() === cleanCurrent) {
+                found = true;
+                return {
+                    ...m,
+                    name: name.trim(),
+                    group: group !== undefined ? group : m.group,
+                    pass: password && password.trim() ? password.trim() : m.pass
+                };
+            }
+            return m;
+        });
+        if (!found) return res.status(404).json({ success: false, message: 'Member not found.' });
+        await writeData({ members });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error updating profile.' });
+    }
+});
+
 // Master Admin APIs
 app.post('/api/admin/login', (req, res) => {
     const { username, password } = req.body;
