@@ -504,7 +504,17 @@ app.post('/api/assistant/ask', async (req, res) => {
             return res.status(400).json({ success: false, message: 'Please type a question.' });
         }
         const data = await readData();
-        const q = question.toLowerCase();
+        const q = question.toLowerCase().trim();
+
+        // ---- Greetings get an instant, warm reply — no "thinking" needed ----
+        if (/^(hi|hello|hey|yo|howdy|good\s?(morning|afternoon|evening|day)|habari|niaje|mambo|sasa)\b[!.,\s]*$/.test(q)) {
+            const greetings = [
+                'Hello! Peace be with you. What can I help you with today?',
+                "Hi there! I'm the St. Michael Companion — ask me anything.",
+                'Habari! How can I help today?'
+            ];
+            return res.json({ success: true, answer: greetings[Math.floor(Math.random() * greetings.length)], escalate: false, mode: 'greeting' });
+        }
 
         const member = currentUser
             ? (data.members || []).find(m => (m.name || '').toLowerCase() === String(currentUser).toLowerCase())
@@ -515,7 +525,82 @@ app.post('/api/assistant/ask', async (req, res) => {
             ? (data.mentors || []).find(m => (m.group || '').toLowerCase() === (member.group || '').toLowerCase())
             : null;
 
-        // ---- Path 1: real LLM, grounded in the same live context ----
+        // ---- Parish-specific questions answered from real portal data first,
+        // so these stay accurate even in general-purpose mode ----
+        function parishAnswer() {
+            if (/mentor/.test(q)) {
+                if (mentorForMember) return `Your mentor for ${mentorForMember.month || 'this period'} is ${mentorForMember.mentorName}${mentorForMember.mentorContact ? ` (${mentorForMember.mentorContact})` : ''}.`;
+                return null;
+            }
+            if (/\b(camp|event|upcoming|schedule)\b/.test(q)) {
+                if (nextEvent) return `The next event is "${nextEvent.title}" — ${nextEvent.date}. ${nextEvent.description || ''}`.trim();
+                return null;
+            }
+            if (/reading|gospel|\bmass\b|psalm|scripture/.test(q)) {
+                if (currentReading) return `This week's readings are posted under "${currentReading.title}" — check the Mass Readings section on the homepage for the full text.`;
+                return null;
+            }
+            if (/contact|admin|\bleader\b|moderator|phone|reach|call/.test(q)) {
+                return 'You can reach the youth board directly: ' + YOUTH_BOARD_CONTACTS.map(c => `${c.role} ${c.name} (${c.phone})`).join(', ') + '.';
+            }
+            if (/hymn|\bsong\b|music/.test(q)) {
+                const titles = (data.hymns || []).slice(0, 6).map(h => h.title);
+                if (titles.length) return `A few songs in our hymnal: ${titles.join(', ')}. Check the homepage Hymnal section for the full list.`;
+                return null;
+            }
+            if (/candle|\bpray\b|intention/.test(q)) {
+                return 'You can light a virtual prayer candle or a Global Prayer Globe intention from the homepage and dashboard — look for the Prayer Sanctuary and Prayer Globe sections.';
+            }
+            return null;
+        }
+        const directAnswer = parishAnswer();
+        if (directAnswer) {
+            return res.json({ success: true, answer: directAnswer, escalate: false, mode: 'rules' });
+        }
+
+        // ---- General question: pull real, live internet results.
+        // Two free options, tried in order:
+        //   1. Google Custom Search (real web results) — needs
+        //      GOOGLE_SEARCH_API_KEY + GOOGLE_SEARCH_CX (free tier: 100
+        //      searches/day at no cost, from a Google Programmable Search
+        //      Engine — see the setup steps already sent).
+        //   2. DuckDuckGo's Instant Answer API — no key needed at all, but
+        //      only covers topics with a pre-summarized answer.
+        async function googleSearchLookup(query) {
+            if (!process.env.GOOGLE_SEARCH_API_KEY || !process.env.GOOGLE_SEARCH_CX) return null;
+            try {
+                const url = `https://www.googleapis.com/customsearch/v1?key=${process.env.GOOGLE_SEARCH_API_KEY}&cx=${process.env.GOOGLE_SEARCH_CX}&q=${encodeURIComponent(query)}&num=4`;
+                const gRes = await fetch(url);
+                const gJson = await gRes.json();
+                const items = (gJson.items || []).slice(0, 4).map(it => ({
+                    title: it.title,
+                    snippet: it.snippet,
+                    link: it.link
+                }));
+                return items.length ? items : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function duckDuckGoLookup(query) {
+            try {
+                const dRes = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_html=1&skip_disambig=1`);
+                const dJson = await dRes.json();
+                const text = dJson.AbstractText || (dJson.RelatedTopics && dJson.RelatedTopics[0] && dJson.RelatedTopics[0].Text) || '';
+                const url = dJson.AbstractURL || (dJson.RelatedTopics && dJson.RelatedTopics[0] && dJson.RelatedTopics[0].FirstURL) || '';
+                return text ? { text, url } : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        const googleResults = await googleSearchLookup(question);
+        const webResult = !googleResults ? await duckDuckGoLookup(question) : null;
+
+        // ---- If an OpenAI key is configured, use it for genuinely
+        // open-ended, conversational answers — grounded in both the parish
+        // context and whatever the web lookup found ----
         if (process.env.OPENAI_API_KEY) {
             try {
                 const contextLines = [
@@ -524,10 +609,10 @@ app.post('/api/assistant/ask', async (req, res) => {
                     `Youth board contacts: ${YOUTH_BOARD_CONTACTS.map(c => `${c.role} ${c.name} (${c.phone})`).join('; ')}`,
                     member ? `This member's group: ${member.group || 'unknown'}.` : `The asker is not logged in or not matched to a member record.`,
                     mentorForMember ? `Their assigned mentor: ${mentorForMember.mentorName} (${mentorForMember.mentorContact || 'no contact on file'}), for ${mentorForMember.month || 'the current period'}.` : `No mentor is on file for this member's group yet.`,
-                    `Known hymns/songs in the hymnal: ${(data.hymns || []).slice(0, 15).map(h => h.title).join(', ') || 'none added yet'}.`
+                    googleResults ? `A web search for this question found:\n${googleResults.map((r, i) => `${i + 1}. ${r.title} — ${r.snippet} (${r.link})`).join('\n')}` : (webResult ? `A web search for this question found: "${webResult.text}" (source: ${webResult.url || 'unspecified'}).` : `No relevant web search result was found for this question.`)
                 ].join('\n');
 
-                const systemPrompt = `You are the "St. Michael Companion", a friendly assistant for the St. Michael Kasaini Youth Portal. Answer ONLY using the parish information given below — never invent events, contacts, mentors, or facts that aren't listed. Keep answers short (2-4 sentences) and warm. If the answer isn't in the information provided, clearly say you don't have that information and that you'll connect them to an admin.\n\nParish information:\n${contextLines}`;
+                const systemPrompt = `You are the "St. Michael Companion", a warm, helpful general-purpose assistant on the St. Michael Kasaini Youth Portal. You can answer ANY question — parish-related or general knowledge — like a normal AI assistant. Use the parish information below when relevant. Use the web search result below when it's helpful for factual/current questions, and mention it came from a web search if you use it. Keep answers concise (2-5 sentences). If you genuinely don't know or aren't confident, say so plainly and offer to connect them to an admin.\n\nContext:\n${contextLines}`;
 
                 const apiRes = await fetch('https://api.openai.com/v1/chat/completions', {
                     method: 'POST',
@@ -541,57 +626,39 @@ app.post('/api/assistant/ask', async (req, res) => {
                             { role: 'system', content: systemPrompt },
                             { role: 'user', content: question }
                         ],
-                        max_tokens: 220,
-                        temperature: 0.4
+                        max_tokens: 260,
+                        temperature: 0.5
                     })
                 });
                 const json = await apiRes.json();
                 const answer = json && json.choices && json.choices[0] && json.choices[0].message && json.choices[0].message.content;
                 if (answer) {
-                    const escalate = /don'?t have|not sure|connect you|no information|do not have/i.test(answer);
+                    const escalate = /don'?t (know|have)|not sure|connect you|no information|not confident/i.test(answer);
                     return res.json({ success: true, answer: answer.trim(), escalate, mode: 'ai' });
                 }
             } catch (e) {
-                // Fall through to the rule-based path below if the API call fails.
+                // Fall through to the web-only / escalation path below.
             }
         }
 
-        // ---- Path 2: rule-based fallback (always available, no API key needed) ----
-        function reply(answer, escalate) {
-            res.json({ success: true, answer, escalate: !!escalate, mode: 'rules' });
+        // ---- No OpenAI key (or it failed): use whichever free web lookup
+        // succeeded, directly ----
+        if (googleResults) {
+            const answer = googleResults
+                .map((r, i) => `${i + 1}. ${r.title} — ${r.snippet} (${r.link})`)
+                .join('\n');
+            return res.json({ success: true, answer, escalate: false, mode: 'web' });
+        }
+        if (webResult) {
+            return res.json({
+                success: true,
+                answer: webResult.text + (webResult.url ? ` (Source: ${webResult.url})` : ''),
+                escalate: false,
+                mode: 'web'
+            });
         }
 
-        if (/mentor/.test(q)) {
-            if (mentorForMember) {
-                return reply(`Your mentor for ${mentorForMember.month || 'this period'} is ${mentorForMember.mentorName}${mentorForMember.mentorContact ? ` (${mentorForMember.mentorContact})` : ''}.`);
-            }
-            return reply("I don't have a mentor on file for your group yet — let me connect you to an admin.", true);
-        }
-        if (/camp|event|upcoming|schedule|next\b/.test(q)) {
-            if (nextEvent) {
-                return reply(`The next event is "${nextEvent.title}" — ${nextEvent.date}. ${nextEvent.description || ''}`.trim());
-            }
-            return reply("There's nothing on the events calendar yet — let me connect you to an admin to check.", true);
-        }
-        if (/reading|gospel|mass|psalm|scripture/.test(q)) {
-            if (currentReading) {
-                return reply(`This week's readings are posted under "${currentReading.title}" — check the Mass Readings section on the homepage for the full text.`);
-            }
-            return reply("Readings haven't been posted yet — let me connect you to an admin.", true);
-        }
-        if (/contact|admin|leader|moderator|phone|reach|call/.test(q)) {
-            return reply('You can reach the youth board directly: ' + YOUTH_BOARD_CONTACTS.map(c => `${c.role} ${c.name} (${c.phone})`).join(', ') + '.');
-        }
-        if (/hymn|song|music/.test(q)) {
-            const titles = (data.hymns || []).slice(0, 6).map(h => h.title);
-            if (titles.length) return reply(`A few songs in our hymnal: ${titles.join(', ')}. Check the homepage Hymnal section for the full list.`);
-            return reply("No songs have been added to the hymnal yet.");
-        }
-        if (/candle|pray|intention/.test(q)) {
-            return reply('You can light a virtual prayer candle or a Global Prayer Globe intention from the homepage and dashboard — look for the Prayer Sanctuary and Prayer Globe sections.');
-        }
-
-        return reply("I don't have an answer for that yet — I'll connect you directly to an admin.", true);
+        return res.json({ success: true, answer: "I don't have a confident answer for that yet — I'll connect you directly to an admin.", escalate: true, mode: 'none' });
     } catch (e) {
         res.status(500).json({ success: false, message: 'The assistant hit an error. Please try again.' });
     }
