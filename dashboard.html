@@ -83,26 +83,30 @@
             color: #fff; border: none; font-size: 1.3rem;
             box-shadow: 0 6px 20px rgba(0,0,0,0.3);
         }
+        .companion-fab img, .companion-fab svg { width: 28px; height: 28px; display: block; margin: auto; }
         .companion-panel {
-            position: fixed; right: 18px; bottom: 86px; z-index: 1500;
-            width: min(340px, 90vw); max-height: 70vh;
+            position: fixed; inset: 0; z-index: 1500;
+            width: 100vw; height: 100vh; height: 100dvh;
             display: flex; flex-direction: column;
-            border-radius: 16px; overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+            border-radius: 0; overflow: hidden;
+            background: #0b0f2b;
         }
         .companion-header {
             display: flex; justify-content: space-between; align-items: center;
-            padding: 10px 12px; background: rgba(20, 16, 40, 0.85); color: #fff;
+            padding: 14px 16px; background: rgba(20, 16, 40, 0.9); color: #fff;
+            flex-shrink: 0;
         }
+        .companion-header-title { display: flex; align-items: center; gap: 10px; }
+        .companion-header-title img, .companion-header-title svg { width: 30px; height: 30px; flex-shrink: 0; }
         .companion-messages {
-            flex: 1; overflow-y: auto; padding: 10px; background: rgba(255,255,255,0.7);
+            flex: 1; overflow-y: auto; padding: 14px; background: rgba(255,255,255,0.85);
             backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
         }
-        .companion-msg { padding: 8px 10px; border-radius: 10px; margin-bottom: 8px; font-size: 0.88rem; max-width: 88%; }
-        .companion-msg-bot { background: rgba(255,255,255,0.9); border: 1px solid rgba(0,0,0,0.08); }
+        .companion-msg { padding: 8px 10px; border-radius: 10px; margin-bottom: 8px; font-size: 0.9rem; max-width: 88%; }
+        .companion-msg-bot { background: rgba(255,255,255,0.95); border: 1px solid rgba(0,0,0,0.08); }
         .companion-msg-user { background: #2f6f4e; color: #fff; margin-left: auto; }
         .companion-msg-escalate { background: #fff3cd; border: 1px solid #ffe08a; }
-        .companion-input-row { display: flex; gap: 6px; padding: 8px; background: rgba(255,255,255,0.85); }
+        .companion-input-row { display: flex; gap: 6px; padding: 10px; background: rgba(255,255,255,0.9); flex-shrink: 0; }
         .companion-input-row .form-control { flex: 1; }
     </style>
 </head>
@@ -264,13 +268,65 @@
 
     <!-- St. Michael Companion — floating assistant widget -->
     <button id="companionToggleBtn" class="companion-fab" aria-label="Open St. Michael Companion">
-        <i class="fas fa-comment-dots"></i>
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <defs>
+                <linearGradient id="companionIconGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#c05fd0"/>
+                    <stop offset="55%" stop-color="#6a6bf0"/>
+                    <stop offset="100%" stop-color="#3fd0e6"/>
+                </linearGradient>
+            </defs>
+            <path d="M36 14
+                     C 50 9, 64 17, 67 31
+                     C 69 39, 67 45, 69 49
+                     C 71 52, 70 56, 67 57
+                     L 65 59
+                     C 67 63, 65 67, 61 67
+                     L 61 83
+                     L 53 83
+                     L 53 70
+                     C 47 74, 39 72, 35 66
+                     C 31 60, 29 52, 31 46
+                     C 25 44, 23 38, 26 33
+                     C 23 28, 25 20, 31 16
+                     C 32.5 15.2, 34 14.5, 36 14 Z"
+                  fill="none" stroke="url(#companionIconGrad)" stroke-width="3.4" stroke-linejoin="round" stroke-linecap="round"/>
+            <rect x="33" y="27" width="32" height="21" rx="7" fill="none" stroke="url(#companionIconGrad)" stroke-width="3.4"/>
+            <path d="M39 48 L35 55 L46 48 Z" fill="url(#companionIconGrad)"/>
+            <circle cx="42" cy="37.5" r="2" fill="url(#companionIconGrad)"/>
+            <circle cx="49" cy="37.5" r="2" fill="url(#companionIconGrad)"/>
+            <circle cx="56" cy="37.5" r="2" fill="url(#companionIconGrad)"/>
+        </svg>
     </button>
     <div id="companionPanel" class="companion-panel d-none">
         <div class="companion-header">
-            <div>
-                <strong>St. Michael Companion</strong>
-                <div class="small text-white-50">Ask about events, readings, mentors, contacts...</div>
+            <div class="companion-header-title">
+                <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path d="M36 14
+                             C 50 9, 64 17, 67 31
+                             C 69 39, 67 45, 69 49
+                             C 71 52, 70 56, 67 57
+                             L 65 59
+                             C 67 63, 65 67, 61 67
+                             L 61 83
+                             L 53 83
+                             L 53 70
+                             C 47 74, 39 72, 35 66
+                             C 31 60, 29 52, 31 46
+                             C 25 44, 23 38, 26 33
+                             C 23 28, 25 20, 31 16
+                             C 32.5 15.2, 34 14.5, 36 14 Z"
+                          fill="none" stroke="url(#companionIconGrad)" stroke-width="3.4" stroke-linejoin="round" stroke-linecap="round"/>
+                    <rect x="33" y="27" width="32" height="21" rx="7" fill="none" stroke="url(#companionIconGrad)" stroke-width="3.4"/>
+                    <path d="M39 48 L35 55 L46 48 Z" fill="url(#companionIconGrad)"/>
+                    <circle cx="42" cy="37.5" r="2" fill="url(#companionIconGrad)"/>
+                    <circle cx="49" cy="37.5" r="2" fill="url(#companionIconGrad)"/>
+                    <circle cx="56" cy="37.5" r="2" fill="url(#companionIconGrad)"/>
+                </svg>
+                <div>
+                    <strong>St. Michael Companion</strong>
+                    <div class="small text-white-50">Ask about events, readings, mentors, contacts...</div>
+                </div>
             </div>
             <button id="companionCloseBtn" class="btn btn-sm btn-outline-light">✕</button>
         </div>
