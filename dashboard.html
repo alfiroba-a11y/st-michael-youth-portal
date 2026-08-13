@@ -124,7 +124,7 @@
 </head>
 <body class="bg-light d-flex flex-column min-vh-100">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
-        <a class="navbar-brand" href="/">✝ St. Michael Kasaini Youth Portal</a>
+        <a class="navbar-brand" href="/" data-i18n="nav_brand_dashboard">✝ St. Michael Kasaini Youth Portal</a>
         <div class="ms-auto d-flex align-items-center">
             <span id="welcomeUser" class="text-light me-3 small"></span>
             <!-- Profile Tab Toggle Button -->
@@ -132,9 +132,9 @@
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm6.9 3.5c-.42-.3-1.12-.3-1.54 0l-.65.46a7.96 7.96 0 0 1-1.12-.65l-.01-.81a1.11 1.11 0 0 0-1.11-1.11h-.94a1.11 1.11 0 0 0-1.11 1.11l-.01.81c-.41.26-.78.47-1.12.65l-.65-.46c-.42-.3-1.12-.3-1.54 0l-.92.65c-.42.3-.53.88-.26 1.3l.53.79c-.19.39-.34.8-.46 1.22h-.94c-.5 0-.91.41-.91.91v1.11c0 .5.41.91.91.91h.94c.12.42.27.83.46 1.22l-.53.79c-.27.42-.16 1 .26 1.3l.92.65c.42.3 1.12.3 1.54 0l.65-.46c.34.18.71.39 1.12.65l.01.81c0 .5.41.91.11 1.11h.94c.5 0 .91-.41.91-.91l.01-.81c.41-.26.78-.47 1.12-.65l.65.46c.42.3 1.12.3 1.54 0l.92-.65c.42-.3.53-.88.26-1.3l-.53-.79c.19-.39.34-.8.46-1.22h-.94c.5 0 .91-.41.91-.91v-1.11c0-.5-.41-.91-.91-.91h-.94c-.12-.42-.27-.83-.46-1.22l.53-.79c.27-.42.16-1-.26-1.3l-.92-.65zM12 21.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                 </svg>
-                Profile Tab
+                <span data-i18n="nav_profile_tab">Profile Tab</span>
             </button>
-            <button class="btn btn-outline-light btn-sm" onclick="logout()">Sign Out</button>
+            <button class="btn btn-outline-light btn-sm" onclick="logout()" data-i18n="nav_signout">Sign Out</button>
         </div>
     </nav>
 
@@ -146,32 +146,32 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm6.9 3.5c-.42-.3-1.12-.3-1.54 0l-.65.46a7.96 7.96 0 0 1-1.12-.65l-.01-.81a1.11 1.11 0 0 0-1.11-1.11h-.94a1.11 1.11 0 0 0-1.11 1.11l-.01.81c-.41.26-.78.47-1.12.65l-.65-.46c-.42-.3-1.12-.3-1.54 0l-.92.65c-.42.3-.53.88-.26 1.3l.53.79c-.19.39-.34.8-.46 1.22h-.94c-.5 0-.91.41-.91.91v1.11c0 .5.41.91.91.91h.94c.12.42.27.83.46 1.22l-.53.79c-.27.42-.16 1 .26 1.3l.92.65c.42.3 1.12.3 1.54 0l.65-.46c.34.18.71.39 1.12.65l.01.81c0 .5.41.91.11 1.11h.94c.5 0 .91-.41.91-.91l.01-.81c.41-.26.78-.47 1.12-.65l.65.46c.42.3 1.12.3 1.54 0l.92-.65c.42-.3.53-.88.26-1.3l-.53-.79c.19-.39.34-.8.46-1.22h-.94c.5 0 .91-.41.91-.91v-1.11c0-.5-.41-.91-.91-.91h-.94c-.12-.42-.27-.83-.46-1.22l.53-.79c.27-.42.16-1-.26-1.3l-.92-.65zM12 21.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                     </svg>
-                    My Profile Settings
+                    <span data-i18n="profile_heading">My Profile Settings</span>
                 </h4>
                 <div id="profileAlert" class="alert d-none" role="alert"></div>
                 <form id="profileForm">
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label for="profileName" class="form-label" style="font-size: 14px; color: #333;">Full Name</label>
+                            <label for="profileName" class="form-label" style="font-size: 14px; color: #333;" data-i18n="profile_name">Full Name</label>
                             <input type="text" id="profileName" class="form-control" required>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label for="profileGroup" class="form-label" style="font-size: 14px; color: #333;">Group</label>
+                            <label for="profileGroup" class="form-label" style="font-size: 14px; color: #333;" data-i18n="profile_group">Group</label>
                             <input type="text" id="profileGroup" class="form-control" required>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label for="profilePassword" class="form-label" style="font-size: 14px; color: #333;">New Password (leave blank to keep current)</label>
+                            <label for="profilePassword" class="form-label" style="font-size: 14px; color: #333;" data-i18n="profile_password">New Password (leave blank to keep current)</label>
                             <input type="password" id="profilePassword" class="form-control" placeholder="••••">
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-primary" style="background-color: #0d6efd; border: none; padding: 8px 16px; font-weight: 500;">Save Profile Changes</button>
+                    <button type="submit" class="btn btn-primary" style="background-color: #0d6efd; border: none; padding: 8px 16px; font-weight: 500;" data-i18n="profile_save">Save Profile Changes</button>
                 </form>
             </div>
         </div>
 
         <!-- Updates Banner -->
         <div class="alert alert-info shadow-sm">
-            <h4 class="alert-heading">📢 Community Updates & Announcements</h4>
+            <h4 class="alert-heading" data-i18n="updates_heading">📢 Community Updates & Announcements</h4>
             <p class="mb-0 fw-bold" id="userAnnouncement">Loading community announcements...</p>
         </div>
 
@@ -179,7 +179,7 @@
         <div class="card shadow-sm p-4 mb-4 border-warning">
             <div class="row align-items-center">
                 <div class="col-md-9">
-                    <h4 class="text-warning text-dark mb-2">🛡️ Our Patron Saint: St. Aloysius Gonzaga</h4>
+                    <h4 class="text-warning text-dark mb-2" data-i18n="patron_heading">🛡️ Our Patron Saint: St. Aloysius Gonzaga</h4>
                     <p class="mb-1 text-secondary"><em>"I am a piece of wax, to be molded by God."</em> – Patron Saint of Christian Youth.</p>
                     <p class="small text-muted mb-0">Feast Day: June 21. St. Aloysius Gonzaga inspires our youth community with his deep purity, dedication to prayer, and selfless service to the sick, showing us how to live a life totally devoted to Christ.</p>
                 </div>
@@ -194,7 +194,7 @@
 
         <!-- Saint of the Day -->
         <div class="card shadow-sm p-4 mb-4 border-info-subtle">
-            <h4 class="text-primary mb-3">🖼️ Saint of the Day</h4>
+            <h4 class="text-primary mb-3" data-i18n="saint_of_day_heading">🖼️ Saint of the Day</h4>
             <div class="d-flex flex-wrap align-items-center gap-3">
                 <div class="saint-portrait-wrap" id="saintPortraitWrap">
                     <canvas class="saint-portrait-canvas" id="saintPortraitCanvas" width="280" height="280"></canvas>
@@ -211,21 +211,21 @@
         <!-- Real-Time Global Prayer Globe -->
         <div class="card shadow-sm p-0 mb-4 globe-card">
             <div class="p-3 pb-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <h4 class="mb-0">🌍 Global Prayer Globe</h4>
+                <h4 class="mb-0" data-i18n="globe_heading">🌍 Global Prayer Globe</h4>
                 <span class="globe-count-badge" id="globeCount">0 intentions lit</span>
             </div>
             <canvas id="prayerGlobeCanvas"></canvas>
             <div class="p-3 pt-2 d-flex flex-wrap gap-2 align-items-center">
-                <button class="btn btn-sm btn-warning" id="lightGlobeIntentionBtn">✨ Light a prayer intention from here</button>
+                <button class="btn btn-sm btn-warning" id="lightGlobeIntentionBtn" data-i18n="light_intention_btn">✨ Light a prayer intention from here</button>
                 <span class="small text-white-50" id="globeStatusText"></span>
             </div>
         </div>
 
         <!-- Virtual Basilica (WebXR chapel + memorial wall) -->
         <div class="card shadow-sm p-4 mb-4">
-            <h4 class="text-primary mb-2">🕯️ Virtual Basilica Chapel <span class="badge bg-secondary">Beta</span></h4>
+            <h4 class="text-primary mb-2"><span data-i18n="chapel_heading">🕯️ Virtual Basilica Chapel</span> <span class="badge bg-secondary">Beta</span></h4>
             <p class="small text-muted mb-3">A sunlit 3D basilica prayer space — colonnades, a glowing dome, drifting spirits of light, and a memorial wall, with a soft ambient choir. Enter from your browser, or with a VR headset if you have one. This is a starting foundation, not yet a model of our actual church building.</p>
-            <button class="btn btn-primary" id="enterChapelBtn">Enter Virtual Chapel</button>
+            <button class="btn btn-primary" id="enterChapelBtn" data-i18n="enter_chapel_btn">Enter Virtual Chapel</button>
         </div>
 
         <!-- Daily Spiritual Reflection & Verse -->
@@ -240,13 +240,13 @@
 
         <!-- Upcoming Youth Events Section -->
         <div class="card shadow-sm p-4 mb-4">
-            <h4 class="text-success mb-3">📅 Upcoming Youth Events</h4>
+            <h4 class="text-success mb-3" data-i18n="events_heading">📅 Upcoming Youth Events</h4>
             <div id="eventsList" class="row g-3">Loading upcoming events...</div>
         </div>
 
         <!-- Analytics Graph Section (Generalized across all Jumuiyas) -->
         <div class="card shadow-sm p-4 mb-4">
-            <h4 class="text-primary mb-3">📊 Contributions Overview by Jumuiya</h4>
+            <h4 class="text-primary mb-3" data-i18n="contributions_chart_heading">📊 Contributions Overview by Jumuiya</h4>
             <div style="position: relative; height: 280px; width: 100%;">
                 <canvas id="memberContributionChart"></canvas>
             </div>
@@ -254,25 +254,38 @@
 
         <!-- Master Approved Contributions List -->
         <div class="card shadow-sm p-4 mb-4">
-            <h4 class="text-success mb-2">💰 Official Approved Contributions List</h4>
+            <h4 class="text-success mb-2" data-i18n="contributions_list_heading">💰 Official Approved Contributions List</h4>
             <p class="text-muted small">Combined contributions from all Jumuiyas approved by the administration.</p>
             <div id="masterContributionsList" class="table-responsive">Loading contributions...</div>
         </div>
 
         <!-- Youth Directory Table -->
         <div class="card shadow-sm p-4 mb-4">
-            <h4 class="text-primary mb-3">Official Youth Directory & Members</h4>
+            <h4 class="text-primary mb-3" data-i18n="directory_heading">Official Youth Directory & Members</h4>
             <div id="directoryList" class="table-responsive">Loading directory...</div>
         </div>
 
         <!-- Community Chat / Message Board -->
         <div class="card shadow-sm p-4 mb-4">
-            <h4 class="text-primary mb-3">Youth Community Board & Queries</h4>
+            <h4 class="text-primary mb-3" data-i18n="board_heading">Youth Community Board & Queries</h4>
             <div id="messageBoard" class="border p-3 mb-3 bg-white rounded" style="height: 200px; overflow-y: auto;">Loading messages...</div>
             <form id="messageForm">
                 <div class="input-group">
-                    <input type="text" id="messageInput" class="form-control" placeholder="Type a message or query for leaders..." required>
-                    <button class="btn btn-primary" type="submit">Post Message</button>
+                    <input type="text" id="messageInput" class="form-control" placeholder="Type a message or query for leaders..." data-i18n-placeholder="message_placeholder" required>
+                    <button class="btn btn-primary" type="submit" data-i18n="post_message_btn">Post Message</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- Private Messages with Admin -->
+        <div class="card shadow-sm p-4 mb-4">
+            <h4 class="text-primary mb-3">🔒 My Private Messages</h4>
+            <p class="text-muted small mb-2">A private thread between you and the parish admin — not visible to other members. This is also where St. Michael Companion escalations end up.</p>
+            <div id="privateMessagesBox" class="border p-3 mb-3 bg-white rounded" style="height: 200px; overflow-y: auto;">Loading...</div>
+            <form id="privateMessageForm">
+                <div class="input-group">
+                    <input type="text" id="privateMessageInput" class="form-control" placeholder="Message the admin privately..." required>
+                    <button class="btn btn-primary" type="submit">Send</button>
                 </div>
             </form>
         </div>
@@ -336,8 +349,8 @@
                     <circle cx="56" cy="37.5" r="2" fill="url(#companionIconGrad)"/>
                 </svg>
                 <div>
-                    <strong>St. Michael Companion</strong>
-                    <div class="small text-white-50">Ask about events, readings, mentors, contacts...</div>
+                    <strong data-i18n="companion_title">St. Michael Companion</strong>
+                    <div class="small text-white-50" data-i18n="companion_sub">Ask about events, readings, mentors, contacts...</div>
                 </div>
             </div>
             <button id="companionCloseBtn" class="btn btn-sm btn-outline-light">✕</button>
@@ -346,8 +359,8 @@
             <div class="companion-msg companion-msg-bot">Peace be with you! I'm the St. Michael Companion. Ask me things like "when is the next event?" or "who is my mentor?" — and if I can't help, I'll connect you straight to an admin.</div>
         </div>
         <form id="companionForm" class="companion-input-row">
-            <input type="text" id="companionInput" class="form-control form-control-sm" placeholder="Type your question..." autocomplete="off" required>
-            <button type="submit" class="btn btn-primary btn-sm">Send</button>
+            <input type="text" id="companionInput" class="form-control form-control-sm" placeholder="Type your question..." data-i18n-placeholder="companion_placeholder" autocomplete="off" required>
+            <button type="submit" class="btn btn-primary btn-sm" data-i18n="send_btn">Send</button>
         </form>
     </div>
 
@@ -583,6 +596,64 @@
         });
 
         /* =========================================================
+           PRIVATE MESSAGES (member <-> admin, never public)
+        ========================================================= */
+        (function initPrivateMessages() {
+            const box = document.getElementById('privateMessagesBox');
+            const form = document.getElementById('privateMessageForm');
+            const input = document.getElementById('privateMessageInput');
+            if (!box || !currentUser) return;
+
+            function esc(v) {
+                return String(v === undefined || v === null ? '' : v)
+                    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            }
+
+            async function loadPrivateMessages() {
+                try {
+                    const res = await fetch(`/api/messages/private?member=${encodeURIComponent(currentUser)}`, { cache: 'no-store' });
+                    const data = await res.json();
+                    if (!data.success) { box.textContent = 'Could not load your messages.'; return; }
+                    const msgs = data.messages || [];
+                    if (!msgs.length) {
+                        box.innerHTML = '<p class="text-muted small mb-0">No private messages yet. Anything you send here, or the Companion escalates, goes straight to the admin.</p>';
+                        return;
+                    }
+                    box.innerHTML = msgs.map(m => {
+                        const fromAdmin = m.sender === 'Admin' || m.sender === 'Parish Admin';
+                        return `<div class="d-flex ${fromAdmin ? '' : 'justify-content-end'} mb-2">
+                            <div class="p-2 rounded ${fromAdmin ? 'bg-light' : 'bg-primary text-white'}" style="max-width: 85%;">
+                                <div class="small">${esc(m.text)}</div>
+                                <div class="small ${fromAdmin ? 'text-muted' : 'text-white-50'}">${esc(m.sender)} · ${esc(m.time || '')}</div>
+                            </div>
+                        </div>`;
+                    }).join('');
+                    box.scrollTop = box.scrollHeight;
+                } catch (e) {
+                    box.textContent = 'Could not load your messages.';
+                }
+            }
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const text = input.value.trim();
+                if (!text) return;
+                input.value = '';
+                try {
+                    await fetch('/api/messages/private/send', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ member: currentUser, sender: currentUser, text })
+                    });
+                    loadPrivateMessages();
+                } catch (e) { /* leave input cleared; user can resend if needed */ }
+            });
+
+            loadPrivateMessages();
+            setInterval(loadPrivateMessages, 6000);
+        })();
+
+        /* =========================================================
            ST. MICHAEL COMPANION — assistant widget
         ========================================================= */
         (function initCompanion() {
@@ -613,12 +684,13 @@
                     btn.disabled = true;
                     btn.textContent = 'Sending...';
                     try {
-                        await fetch('/api/youth/message', {
+                        await fetch('/api/messages/private/send', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                sender: `[Assistant] ${currentUser || 'A member'}`,
-                                text: originalQuestion
+                                member: currentUser || 'A member',
+                                sender: currentUser || 'A member',
+                                text: `[From St. Michael Companion] ${originalQuestion}`
                             })
                         });
                         btn.textContent = 'Sent to admin ✓';
