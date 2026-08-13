@@ -88,6 +88,10 @@
             en: 'The Way of the Cross (Stations 1 to 14)',
             sw: 'Njia ya Msalaba (Vituo 1 hadi 14)'
         },
+        resources_heading: {
+            en: '✝️ Catholic Resources & Guides',
+            sw: '✝️ Rasilimali na Miongozo ya Kikatoliki'
+        },
         contacts_heading: {
             en: '📞 Youth Board Contacts',
             sw: '📞 Mawasiliano ya Bodi ya Vijana'
