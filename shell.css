@@ -170,3 +170,18 @@ html, body {
 @media (prefers-reduced-motion: reduce) {
     .app-shell i[class*="fa-"] { animation: none !important; }
 }
+
+/* Language switcher — the <select id="langSwitcher"> is injected by the
+   server into the liturgical banner on every page (see server.js);
+   /i18n.js wires it up and does the actual translating. */
+#langSwitcher {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 999px;
+    font-size: 0.68rem;
+    font-weight: 600;
+    padding: 1px 6px;
+    margin-left: 8px;
+}
+#langSwitcher option { color: #111; }
