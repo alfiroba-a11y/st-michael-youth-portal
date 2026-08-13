@@ -107,7 +107,8 @@ let fallbackData = {
     ],
     memorialNames: [],
     prayerPoints: [],
-    mentors: []
+    mentors: [],
+    privateMessages: []
 };
 
 async function readData() {
@@ -134,7 +135,8 @@ async function readData() {
             candles: doc.candles || fallbackData.candles,
             memorialNames: doc.memorialNames || fallbackData.memorialNames,
             prayerPoints: doc.prayerPoints || fallbackData.prayerPoints,
-            mentors: doc.mentors || fallbackData.mentors
+            mentors: doc.mentors || fallbackData.mentors,
+            privateMessages: doc.privateMessages || fallbackData.privateMessages
         };
     } catch (e) {
         return fallbackData;
@@ -325,6 +327,7 @@ app.get('/api/liturgical/season', (req, res) => {
 
 function injectAppShell(html) {
     const linkTag = '<link rel="stylesheet" href="/app-shell.css">';
+    const i18nScriptTag = '<script defer src="/i18n.js"></script>';
     const liturgical = getLiturgicalInfo(new Date());
     const themeStyle = `<style>
         :root {
@@ -335,12 +338,16 @@ function injectAppShell(html) {
     const bannerHtml = `<div class="liturgical-banner" style="background:${liturgical.hex};">
         <span class="liturgical-banner-dot"></span>
         <span>${liturgical.seasonName} &middot; ${liturgical.colorName}</span>
+        <select id="langSwitcher" aria-label="Choose language">
+            <option value="en">EN</option>
+            <option value="sw">SW</option>
+        </select>
     </div>`;
 
     let out = html;
     out = /<\/head>/i.test(out)
-        ? out.replace(/<\/head>/i, `    ${linkTag}\n    ${themeStyle}\n</head>`)
-        : linkTag + themeStyle + out;
+        ? out.replace(/<\/head>/i, `    ${linkTag}\n    ${i18nScriptTag}\n    ${themeStyle}\n</head>`)
+        : linkTag + i18nScriptTag + themeStyle + out;
     out = out.replace(/(<body[^>]*>)/i, `$1\n<div class="app-shell">\n${bannerHtml}`);
     out = out.replace(/(<\/body>)/i, `</div><!-- /.app-shell -->\n$1`);
     return out;
@@ -830,6 +837,50 @@ app.post('/api/youth/message', async (req, res) => {
     }
 });
 
+// Private messages: a two-way channel between one member and the admin.
+// Kept entirely separate from the public Community Board (`messages`
+// above) — a member's thread is only readable by that member (filtered
+// by name here) and by the admin (who sees every thread via
+// /api/admin/data). The assistant's "connect me to an admin" escalation
+// posts here too, so escalated questions stay private rather than
+// showing up on the public board.
+app.post('/api/messages/private/send', async (req, res) => {
+    try {
+        const { member, sender, text } = req.body;
+        if (!member || !text || !text.trim()) {
+            return res.status(400).json({ success: false, message: 'Missing member or message text.' });
+        }
+        const data = await readData();
+        const privateMessages = [...(data.privateMessages || []), {
+            id: Date.now().toString(),
+            member: member.trim(),
+            sender: sender || member,
+            text: text.trim(),
+            time: new Date().toLocaleString()
+        }];
+        await writeData({ privateMessages });
+        res.json({ success: true });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error sending private message.' });
+    }
+});
+
+// A member fetches only their own thread — the server filters by name
+// rather than shipping every member's private messages to every client.
+app.get('/api/messages/private', async (req, res) => {
+    try {
+        const { member } = req.query;
+        if (!member) return res.status(400).json({ success: false, message: 'Missing member.' });
+        const data = await readData();
+        const thread = (data.privateMessages || []).filter(
+            m => m.member.trim().toLowerCase() === String(member).trim().toLowerCase()
+        );
+        res.json({ success: true, messages: thread });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Error loading messages.' });
+    }
+});
+
 app.post('/api/youth/update-profile', async (req, res) => {
     try {
         const { currentUser, name, group, password } = req.body;
@@ -895,6 +946,7 @@ app.get('/api/admin/data', async (req, res) => {
         candles: data.candles || [],
         memorialNames: data.memorialNames || [],
         mentors: data.mentors || [],
+        privateMessages: data.privateMessages || [],
         passwordRequests: data.passwordRequests || [],
         reflection,
         patronSaint,
