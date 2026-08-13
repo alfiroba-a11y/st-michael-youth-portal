@@ -48,20 +48,20 @@
         <div class="card p-4 shadow" style="width: 100%; max-width: 400px;">
             <div class="text-center mb-4">
                 <h3 class="fw-bold text-primary">St. Michael Kasaini</h3>
-                <p class="text-muted small">Admin Portal Login</p>
+                <p class="text-muted small" data-i18n="admin_login_heading">Admin Portal Login</p>
             </div>
             <form id="adminLoginForm">
                 <div class="mb-3">
-                    <label class="form-label">Username</label>
+                    <label class="form-label" data-i18n="admin_username">Username</label>
                     <input type="text" id="adminUser" class="form-control" required autocomplete="username">
                 </div>
                 <div class="mb-3">
-                    <label class="form-label">Password</label>
+                    <label class="form-label" data-i18n="admin_password">Password</label>
                     <input type="password" id="adminPass" class="form-control" required autocomplete="current-password">
                 </div>
                 <div id="adminAlert" class="alert alert-danger small d-none" role="alert"></div>
                 <button type="submit" id="adminLoginBtn" class="btn btn-primary w-100">
-                    <span id="adminLoginBtnText">Login to Dashboard</span>
+                    <span id="adminLoginBtnText" data-i18n="admin_login_btn">Login to Dashboard</span>
                 </button>
             </form>
         </div>
@@ -72,7 +72,7 @@
         <!-- Top Navbar -->
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm px-4">
             <div class="container-fluid">
-                <a class="navbar-brand fw-bold" href="#">St. Michael Admin Portal</a>
+                <a class="navbar-brand fw-bold" href="#" data-i18n="nav_brand_admin">St. Michael Admin Portal</a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbarContent">
                     <span class="navbar-toggler-icon"></span>
                 </button>
@@ -96,16 +96,16 @@
 
             <!-- Top Bar Header -->
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2">Dashboard Overview</h1>
+                <h1 class="h2" data-i18n="admin_dashboard_overview">Dashboard Overview</h1>
                 <div class="btn-toolbar mb-2 mb-md-0 gap-2">
                     <button class="btn btn-sm btn-outline-success" onclick="openDownloadModal('pdf')">
-                        <i class="fas fa-download me-1"></i> Download Report
+                        <i class="fas fa-download me-1"></i> <span data-i18n="admin_download_report">Download Report</span>
                     </button>
                     <button class="btn btn-sm btn-outline-primary" onclick="openTargetModal()">
-                        <i class="fas fa-bullseye me-1"></i> Set Targets
+                        <i class="fas fa-bullseye me-1"></i> <span data-i18n="admin_set_targets">Set Targets</span>
                     </button>
                     <button class="btn btn-sm btn-outline-secondary" onclick="loadMasterData()">
-                        <i class="fas fa-rotate me-1"></i> Refresh
+                        <i class="fas fa-rotate me-1"></i> <span data-i18n="admin_refresh">Refresh</span>
                     </button>
                 </div>
             </div>
@@ -116,14 +116,14 @@
             <div class="row row-cols-1 row-cols-md-3 g-4 mb-4">
                 <div class="col">
                     <div class="card p-3 border-start border-success border-4">
-                        <h6 class="text-muted">Total Collected</h6>
+                        <h6 class="text-muted" data-i18n="admin_total_collected">Total Collected</h6>
                         <h3 id="totalCollectedDisplay" class="text-success fw-bold">KES 0</h3>
                         <small class="text-muted" id="progressPercentageText">0% Achieved</small>
                     </div>
                 </div>
                 <div class="col">
                     <div class="card p-3 border-start border-primary border-4">
-                        <h6 class="text-muted">Total Target</h6>
+                        <h6 class="text-muted" data-i18n="admin_total_target">Total Target</h6>
                         <h3 id="totalTargetDisplay" class="text-primary fw-bold">KES 500,000</h3>
                         <small class="text-muted">Goal: <span id="goalInputDisplay">500000</span> KES</small>
                     </div>
@@ -390,11 +390,33 @@
                 </div>
             </div>
 
-            <!-- Member Messages: community board posts and assistant escalations, so admins can follow up directly -->
-            <div class="card p-4 mb-4" id="messages">
-                <h4 class="mb-3"><i class="fas fa-comments me-2"></i> Member Messages &amp; Assistant Escalations</h4>
-                <p class="text-muted small mb-3">Messages posted from the Community Board, and questions the St. Michael Companion assistant couldn't answer on its own.</p>
-                <div id="messagesListAdmin" class="list-group" style="max-height: 360px; overflow-y: auto;"></div>
+            <!-- Public Community Board: visible to all members -->
+            <div class="card p-4 mb-4" id="board">
+                <h4 class="mb-3"><i class="fas fa-bullhorn me-2"></i> Public Community Board</h4>
+                <p class="text-muted small mb-3">Visible to every member on their dashboard. Anyone can post here — including you.</p>
+                <form id="boardPostForm" class="mb-3">
+                    <div class="row g-2">
+                        <div class="col-md-3">
+                            <input type="text" id="boardPostSender" class="form-control form-control-sm" placeholder="Post as..." value="Parish Admin">
+                        </div>
+                        <div class="col-md-7">
+                            <input type="text" id="boardPostText" class="form-control form-control-sm" placeholder="Write a message to the whole community..." required>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary btn-sm w-100">Post</button>
+                        </div>
+                    </div>
+                </form>
+                <div id="messagesListAdmin" class="list-group" style="max-height: 320px; overflow-y: auto;"></div>
+            </div>
+
+            <!-- Private Messages: one-to-one threads with members, including
+                 questions the St. Michael Companion couldn't answer. Never
+                 shown on the public board. -->
+            <div class="card p-4 mb-4" id="private-messages">
+                <h4 class="mb-3"><i class="fas fa-lock me-2"></i> Private Messages</h4>
+                <p class="text-muted small mb-3">One-to-one threads between you and individual members — including questions escalated by the St. Michael Companion assistant. Only visible to you and that member.</p>
+                <div id="privateThreadsAdmin"></div>
             </div>
 
         </main>
@@ -564,7 +586,8 @@
                 passwordRequests: [],
                 hymns: [],
                 memorialNames: [],
-                mentors: []
+                mentors: [],
+                privateMessages: []
             };
         }
 
@@ -850,12 +873,11 @@
             }
             document.getElementById('mentorsListAdmin').innerHTML = mentorHtml;
 
-            // Member Messages Admin List (Community Board posts + assistant escalations)
+            // Public Community Board Admin List
             let msgHtml = '';
             if (data.messages && data.messages.length > 0) {
                 [...data.messages].reverse().forEach(msg => {
-                    const isEscalation = /\[assistant\]/i.test(msg.sender || '');
-                    msgHtml += `<div class="list-group-item ${isEscalation ? 'border-start border-warning border-4' : ''}">
+                    msgHtml += `<div class="list-group-item">
                         <div class="d-flex justify-content-between">
                             <strong>${esc(msg.sender || 'Member')}</strong>
                             <small class="text-muted">${esc(msg.time || '')}</small>
@@ -864,9 +886,67 @@
                     </div>`;
                 });
             } else {
-                msgHtml = '<div class="list-group-item text-muted">No member messages yet.</div>';
+                msgHtml = '<div class="list-group-item text-muted">No community board messages yet.</div>';
             }
             document.getElementById('messagesListAdmin').innerHTML = msgHtml;
+
+            // Private Messages — grouped into one thread per member, newest last
+            const threadsByMember = {};
+            (data.privateMessages || []).forEach(m => {
+                const key = (m.member || 'Unknown').trim();
+                if (!threadsByMember[key]) threadsByMember[key] = [];
+                threadsByMember[key].push(m);
+            });
+            const memberNames = Object.keys(threadsByMember).sort((a, b) => {
+                const aLast = threadsByMember[a][threadsByMember[a].length - 1];
+                const bLast = threadsByMember[b][threadsByMember[b].length - 1];
+                return new Date(bLast.time) - new Date(aLast.time);
+            });
+            let privateHtml = '';
+            if (memberNames.length === 0) {
+                privateHtml = '<p class="text-muted small mb-0">No private messages yet.</p>';
+            } else {
+                memberNames.forEach(name => {
+                    const thread = threadsByMember[name];
+                    const bubbles = thread.map(m => `
+                        <div class="d-flex ${m.sender === 'Admin' || m.sender === 'Parish Admin' ? 'justify-content-end' : ''} mb-1">
+                            <div class="p-2 rounded ${m.sender === 'Admin' || m.sender === 'Parish Admin' ? 'bg-primary text-white' : 'bg-light'}" style="max-width: 80%;">
+                                <div class="small">${esc(m.text)}</div>
+                                <div class="small ${m.sender === 'Admin' || m.sender === 'Parish Admin' ? 'text-white-50' : 'text-muted'}">${esc(m.sender)} · ${esc(m.time || '')}</div>
+                            </div>
+                        </div>
+                    `).join('');
+                    privateHtml += `
+                        <div class="border rounded p-3 mb-3">
+                            <div class="fw-bold mb-2">${esc(name)}</div>
+                            <div class="mb-2" style="max-height: 220px; overflow-y: auto;">${bubbles}</div>
+                            <form class="d-flex gap-2 private-reply-form" data-member="${esc(name)}">
+                                <input type="text" class="form-control form-control-sm" placeholder="Reply to ${esc(name)}..." required>
+                                <button type="submit" class="btn btn-primary btn-sm">Reply</button>
+                            </form>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('privateThreadsAdmin').innerHTML = privateHtml;
+            document.querySelectorAll('.private-reply-form').forEach(form => {
+                form.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const input = form.querySelector('input');
+                    const text = input.value.trim();
+                    if (!text) return;
+                    try {
+                        await apiCall('/api/messages/private/send', {
+                            method: 'POST',
+                            body: JSON.stringify({ member: form.dataset.member, sender: 'Parish Admin', text })
+                        });
+                        input.value = '';
+                        await loadMasterData();
+                    } catch (err) {
+                        showGlobalStatus('Failed to send reply: ' + err.message, 'danger');
+                    }
+                });
+            });
 
             // Password Reset Requests Table
             let prHtml = '<table class="table table-bordered align-middle"><thead><tr><th>Name</th><th>Phone</th><th>Status</th><th>Action</th></tr></thead><tbody>';
@@ -1200,6 +1280,23 @@
             document.getElementById('memorialFormErrorAlert').classList.add('d-none');
         }
         document.getElementById('memorialFormResetBtn').addEventListener('click', resetMemorialForm);
+
+        document.getElementById('boardPostForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const senderInput = document.getElementById('boardPostSender');
+            const textInput = document.getElementById('boardPostText');
+            const sender = senderInput.value.trim() || 'Parish Admin';
+            const text = textInput.value.trim();
+            if (!text) return;
+            try {
+                await apiCall('/api/youth/message', { method: 'POST', body: JSON.stringify({ sender, text }) });
+                textInput.value = '';
+                await loadMasterData();
+                showGlobalStatus('Posted to the community board.', 'success');
+            } catch (err) {
+                showGlobalStatus('Failed to post: ' + err.message, 'danger');
+            }
+        });
 
         document.getElementById('memorialForm').addEventListener('submit', async (e) => {
             e.preventDefault();
