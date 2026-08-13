@@ -910,9 +910,9 @@
                     const thread = threadsByMember[name];
                     const bubbles = thread.map(m => `
                         <div class="d-flex ${m.sender === 'Admin' || m.sender === 'Parish Admin' ? 'justify-content-end' : ''} mb-1">
-                            <div class="p-2 rounded ${m.sender === 'Admin' || m.sender === 'Parish Admin' ? 'bg-primary text-white' : 'bg-light'}" style="max-width: 80%;">
+                            <div class="p-2 rounded ${m.sender === 'Admin' || m.sender === 'Portal Admin' ? 'bg-primary text-white' : 'bg-light'}" style="max-width: 80%;">
                                 <div class="small">${esc(m.text)}</div>
-                                <div class="small ${m.sender === 'Admin' || m.sender === 'Parish Admin' ? 'text-white-50' : 'text-muted'}">${esc(m.sender)} · ${esc(m.time || '')}</div>
+                                <div class="small ${m.sender === 'Admin' || m.sender === 'Portal Admin' ? 'text-white-50' : 'text-muted'}">${esc(m.sender)} · ${esc(m.time || '')}</div>
                             </div>
                         </div>
                     `).join('');
@@ -938,7 +938,7 @@
                     try {
                         await apiCall('/api/messages/private/send', {
                             method: 'POST',
-                            body: JSON.stringify({ member: form.dataset.member, sender: 'Parish Admin', text })
+                            body: JSON.stringify({ member: form.dataset.member, sender: 'Portal Admin', text })
                         });
                         input.value = '';
                         await loadMasterData();
