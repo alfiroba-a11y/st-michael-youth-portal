@@ -178,11 +178,11 @@
     </style>
 </head><body class="bg-light">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
-        <a class="navbar-brand" href="/">✝ St. Michael Kasaini Youth</a>
+        <a class="navbar-brand" href="/" data-i18n="nav_brand">✝ St. Michael Kasaini Youth</a>
         <div class="ms-auto">
-            <a href="/jumuiya-portal" class="btn btn-outline-warning btn-sm me-2">Jumuiya Portal</a>
-            <a href="/login" class="btn btn-outline-light btn-sm me-2">Sign In</a>
-            <a href="/login" class="btn btn-warning btn-sm">Sign Up</a>
+            <a href="/jumuiya-portal" class="btn btn-outline-warning btn-sm me-2" data-i18n="nav_jumuiya">Jumuiya Portal</a>
+            <a href="/login" class="btn btn-outline-light btn-sm me-2" data-i18n="nav_signin">Sign In</a>
+            <a href="/login" class="btn btn-warning btn-sm" data-i18n="nav_signup">Sign Up</a>
         </div>
     </nav>
 
@@ -196,11 +196,11 @@
         
         <!-- Hero Content -->
         <div class="container position-relative py-5" style="z-index: 3;">
-            <h1 class="display-5 fw-bold">St. Michael Kasaini Youth Portal</h1>
-            <p class="lead">Pilgrims of Hope.</p>
+            <h1 class="display-5 fw-bold" data-i18n="hero_title">St. Michael Kasaini Youth Portal</h1>
+            <p class="lead" data-i18n="hero_subtitle">Pilgrims of Hope.</p>
             <div class="mt-4">
-                <a href="/jumuiya-portal" class="btn btn-warning btn-lg me-2">Jumuiya Portal</a>
-                <a href="/login" class="btn btn-outline-light btn-lg">Member Portal</a>
+                <a href="/jumuiya-portal" class="btn btn-warning btn-lg me-2" data-i18n="hero_jumuiya_btn">Jumuiya Portal</a>
+                <a href="/login" class="btn btn-outline-light btn-lg" data-i18n="hero_member_btn">Member Portal</a>
             </div>
         </div>
     </div>
@@ -242,10 +242,10 @@
 
             <div class="sanctuary-content">
                 <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-2">
-                    <h3 class="mb-0">🕯️ Virtual Prayer Sanctuary</h3>
+                    <h3 class="mb-0" data-i18n="sanctuary_heading">🕯️ Virtual Prayer Sanctuary</h3>
                     <span class="live-badge"><span class="live-badge-dot"></span> Live</span>
                 </div>
-                <p class="small mb-3" style="color: rgba(255,255,255,0.75);">Tap a candle to light it for a prayer intention, or tap again to let it rest.</p>
+                <p class="small mb-3" style="color: rgba(255,255,255,0.75);" data-i18n="sanctuary_sub">Tap a candle to light it for a prayer intention, or tap again to let it rest.</p>
                 <div class="d-flex flex-wrap justify-content-center gap-2" id="candleRow">
                     <!-- candles injected by JS -->
                 </div>
@@ -254,30 +254,30 @@
 
         <!-- Sunday Holy Mass Readings -->
         <div class="card shadow-sm p-4 mb-4">
-            <h3 id="readingTitle" class="text-primary mb-3">Sunday Holy Mass Readings & Updates</h3>
+            <h3 id="readingTitle" class="text-primary mb-3" data-i18n="readings_heading">Sunday Holy Mass Readings & Updates</h3>
             <div id="announcementBanner" class="alert alert-warning mb-3">Loading updates...</div>
             <div class="row g-3">
                 <div class="col-md-6 col-lg-3">
                     <div class="p-3 border rounded bg-white h-100 shadow-sm">
-                        <h6 class="text-secondary fw-bold border-bottom pb-2">First Reading</h6>
+                        <h6 class="text-secondary fw-bold border-bottom pb-2" data-i18n="reading_first">First Reading</h6>
                         <p id="firstReading" class="small text-muted mb-0">Loading...</p>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-3">
                     <div class="p-3 border rounded bg-white h-100 shadow-sm">
-                        <h6 class="text-secondary fw-bold border-bottom pb-2">Responsorial Psalm</h6>
+                        <h6 class="text-secondary fw-bold border-bottom pb-2" data-i18n="reading_psalm">Responsorial Psalm</h6>
                         <p id="psalmReading" class="small text-muted mb-0">Loading...</p>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-3">
                     <div class="p-3 border rounded bg-white h-100 shadow-sm">
-                        <h6 class="text-secondary fw-bold border-bottom pb-2">Second Reading</h6>
+                        <h6 class="text-secondary fw-bold border-bottom pb-2" data-i18n="reading_second">Second Reading</h6>
                         <p id="secondReading" class="small text-muted mb-0">Loading...</p>
                     </div>
                 </div>
                 <div class="col-md-6 col-lg-3">
                     <div class="p-3 border rounded bg-white h-100 shadow-sm">
-                        <h6 class="text-secondary fw-bold border-bottom pb-2">Gospel</h6>
+                        <h6 class="text-secondary fw-bold border-bottom pb-2" data-i18n="reading_gospel">Gospel</h6>
                         <p id="gospelReading" class="small text-muted mb-0">Loading...</p>
                     </div>
                 </div>
@@ -286,7 +286,7 @@
 
         <!-- Daily Spiritual Reflection Card -->
         <div class="card shadow-sm p-4 mb-4 border-info-subtle bg-white">
-            <h3 class="text-primary mb-3">📖 Daily Spiritual Reflection</h3>
+            <h3 class="text-primary mb-3" data-i18n="reflection_heading">📖 Daily Spiritual Reflection</h3>
             <div id="textReflectionsWidget">
                 <h6 id="reflectionTitle" class="fw-bold text-dark">Loading daily reflection...</h6>
                 <p id="reflectionRef" class="small text-muted mb-1"><strong>Ref:</strong> Loading...</p>
@@ -296,8 +296,8 @@
 
         <!-- Parish Hymnal: Tumshangilie Bwana -->
         <div class="card shadow-sm p-4 mb-4">
-            <h3 class="text-primary mb-3">🎵 Tumshangilie Bwana — Parish Hymnal</h3>
-            <p class="text-muted small">Tap a title below to open the full song or prayer.</p>
+            <h3 class="text-primary mb-3" data-i18n="hymnal_heading">🎵 Tumshangilie Bwana — Parish Hymnal</h3>
+            <p class="text-muted small" data-i18n="hymnal_sub">Tap a title below to open the full song or prayer.</p>
             <div id="hymnTOC" class="list-group mb-3">
                 <div class="list-group-item text-muted">Loading hymnal...</div>
             </div>
@@ -305,7 +305,7 @@
 
         <!-- Catholic Prayers (Home & Mass) -->
         <div class="card shadow-sm p-4 mb-4">
-            <h3 class="text-primary mb-3">Catholic Church Prayers (Mass & Home)</h3>
+            <h3 class="text-primary mb-3" data-i18n="prayers_heading">Catholic Church Prayers (Mass & Home)</h3>
             <p class="text-muted small">Click any prayer title to reveal its full, traditional content.</p>
             
             <div class="list-group">
@@ -332,7 +332,7 @@
 
         <!-- The Holy Rosary (Mysteries hidden until pressed) -->
         <div class="card shadow-sm p-4 mb-4">
-            <h3 class="text-primary mb-3">The Holy Rosary: Complete Guide & Mysteries</h3>
+            <h3 class="text-primary mb-3" data-i18n="rosary_heading">The Holy Rosary: Complete Guide & Mysteries</h3>
             <p class="text-muted small">Press a mystery button to display its detailed content step-by-step.</p>
             
             <div class="btn-group w-100 mb-3 flex-wrap" role="group">
@@ -389,7 +389,7 @@
 
         <!-- Way of the Cross Stations 1 to 14 (Full Content) -->
         <div class="card shadow-sm p-4 mb-4">
-            <h3 class="text-primary mb-3">The Way of the Cross (Stations 1 to 14)</h3>
+            <h3 class="text-primary mb-3" data-i18n="stations_heading">The Way of the Cross (Stations 1 to 14)</h3>
             <p class="text-muted small">Click any station to read its full meditation.</p>
             <div class="accordion" id="stationsAccordion">
                 <!-- Station 1 -->
@@ -467,7 +467,7 @@
 
         <!-- Youth Board Contacts -->
         <div class="card shadow-sm p-4 mx-auto mb-5" style="max-width: 700px;">
-            <h4 class="text-dark mb-3">📞 Youth Board Contacts</h4>
+            <h4 class="text-dark mb-3" data-i18n="contacts_heading">📞 Youth Board Contacts</h4>
             <div class="list-group shadow-sm">
                 <div class="list-group-item p-3"><strong>Moderator: Alphonse</strong><br><span class="text-muted">📞 0745225589</span></div>
                 <div class="list-group-item p-3"><strong>V. Moderator: Eric</strong><br><span class="text-muted">📞 0714826281</span></div>
@@ -477,7 +477,7 @@
 
         <!-- Copyright Footer -->
         <div class="text-center pb-4 text-muted small">
-            &copy; 2026 St. Michael Kasaini Youth Portal. All rights reserved.
+            <span data-i18n="footer_text">&copy; 2026 St. Michael Kasaini Youth Portal. All rights reserved.</span>
         </div>
     </div>
 
