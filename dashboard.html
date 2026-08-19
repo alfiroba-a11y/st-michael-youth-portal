@@ -7,6 +7,9 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Chart.js for graphs -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- GSAP for polished entrance/hover animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
     <!-- Three.js for the Prayer Globe and Virtual Chapel (WebXR) -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
     <style>
@@ -108,6 +111,33 @@
         .companion-msg-escalate { background: #fff3cd; border: 1px solid #ffe08a; }
         .companion-input-row { display: flex; gap: 6px; padding: 10px; background: rgba(255,255,255,0.9); flex-shrink: 0; }
         .companion-input-row .form-control { flex: 1; }
+
+        /* Overview stat cards */
+        .stat-card {
+            background: var(--glass-bg, #fff);
+            border: 1px solid var(--glass-border, transparent);
+            color: var(--text-color, #1a1a2e);
+            border-radius: 14px;
+            padding: 18px;
+            box-shadow: 0 6px 18px rgba(20, 16, 40, 0.08);
+            height: 100%;
+        }
+        .stat-card-icon { font-size: 1.4rem; margin-bottom: 6px; }
+        .stat-card-label { font-size: 0.78rem; color: var(--text-muted-color, #6c757d); }
+        .stat-card-value { font-size: 1.5rem; font-weight: 700; margin-top: 2px; }
+
+        /* Recent activity feed */
+        .activity-feed { max-height: 260px; overflow-y: auto; }
+        .activity-item {
+            display: flex; gap: 10px; align-items: flex-start;
+            padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-icon {
+            width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(47, 111, 78, 0.12); font-size: 0.9rem;
+        }
         .companion-msg-thinking { color: rgba(0,0,0,0.55); font-style: italic; }
         .thinking-dots span {
             display: inline-block;
@@ -139,6 +169,57 @@
     </nav>
 
     <div class="container my-4 flex-grow-1">
+        <!-- Overview stat cards -->
+        <div class="row g-3 mb-4" id="statCardsRow">
+            <div class="col-6 col-lg-3">
+                <div class="stat-card">
+                    <div class="stat-card-icon">🙏</div>
+                    <div class="stat-card-label">Total Contributions</div>
+                    <div class="stat-card-value" id="statContributions" data-count-to="0">KES 0</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="stat-card">
+                    <div class="stat-card-icon">📅</div>
+                    <div class="stat-card-label">Upcoming Events</div>
+                    <div class="stat-card-value" id="statEvents" data-count-to="0">0</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="stat-card">
+                    <div class="stat-card-icon">👥</div>
+                    <div class="stat-card-label">Registered Members</div>
+                    <div class="stat-card-value" id="statMembers" data-count-to="0">0</div>
+                </div>
+            </div>
+            <div class="col-6 col-lg-3">
+                <div class="stat-card">
+                    <div class="stat-card-icon">🕯️</div>
+                    <div class="stat-card-label">Prayer Candles Lit</div>
+                    <div class="stat-card-value" id="statCandles" data-count-to="0">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Engagement donut + recent activity -->
+        <div class="row g-3 mb-4">
+            <div class="col-lg-5">
+                <div class="card shadow-sm p-4 h-100">
+                    <h5 class="mb-3">Prayer Sanctuary Engagement</h5>
+                    <div style="position: relative; height: 220px;">
+                        <canvas id="engagementDonut"></canvas>
+                    </div>
+                    <p class="text-muted small text-center mb-0 mt-2" id="engagementDonutCaption">Loading...</p>
+                </div>
+            </div>
+            <div class="col-lg-7">
+                <div class="card shadow-sm p-4 h-100">
+                    <h5 class="mb-3">🔔 Recent Activity</h5>
+                    <div id="activityFeed" class="activity-feed">Loading activity...</div>
+                </div>
+            </div>
+        </div>
+
         <!-- Collapsible Profile Settings Tab Section -->
         <div class="collapse mb-4" id="profileTabSection">
             <div class="card shadow-sm p-4" style="border: 1px solid #cfe2ff; border-radius: 8px;">
@@ -166,6 +247,55 @@
                     </div>
                     <button type="submit" class="btn btn-primary" style="background-color: #0d6efd; border: none; padding: 8px 16px; font-weight: 500;" data-i18n="profile_save">Save Profile Changes</button>
                 </form>
+
+                <hr class="my-4">
+
+                <h5 class="mb-3">⚙️ Appearance &amp; Preferences</h5>
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center p-2 border rounded">
+                            <div>
+                                <div class="fw-bold small">Theme</div>
+                                <div class="text-muted small">Light or dark mode, applied across the whole site.</div>
+                            </div>
+                            <button type="button" id="settingsThemeBtn" class="btn btn-sm btn-outline-secondary">Toggle</button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center p-2 border rounded">
+                            <div>
+                                <div class="fw-bold small">Language</div>
+                                <div class="text-muted small">English or Kiswahili.</div>
+                            </div>
+                            <select id="settingsLangSelect" class="form-select form-select-sm" style="width: auto;">
+                                <option value="en">English</option>
+                                <option value="sw">Kiswahili</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center p-2 border rounded">
+                            <div>
+                                <div class="fw-bold small">Compact View</div>
+                                <div class="text-muted small">Tighter spacing, fits more on screen.</div>
+                            </div>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="settingsCompactToggle">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex justify-content-between align-items-center p-2 border rounded">
+                            <div>
+                                <div class="fw-bold small">Auto-play Chapel Music</div>
+                                <div class="text-muted small">Play music automatically when entering the Virtual Chapel.</div>
+                            </div>
+                            <div class="form-check form-switch mb-0">
+                                <input class="form-check-input" type="checkbox" id="settingsChapelAutoplayToggle" checked>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -468,10 +598,105 @@
                         });
                     }
                     document.getElementById('messageBoard').innerHTML = mHtml;
+
+                    // Overview stat cards
+                    const totalContributions = (data.masterContributions || []).reduce((sum, c) => sum + Number(c.amount || 0), 0);
+                    const eventCount = (data.events || []).length;
+                    const memberCount = (data.members || []).length;
+                    const candles = data.candles || [];
+                    const candlesLit = candles.filter(c => c.lit).length;
+
+                    animateCounter('statContributions', totalContributions, v => 'KES ' + Math.round(v).toLocaleString());
+                    animateCounter('statEvents', eventCount);
+                    animateCounter('statMembers', memberCount);
+                    animateCounter('statCandles', candlesLit);
+
+                    // Prayer Sanctuary Engagement donut (candles lit vs resting)
+                    renderEngagementDonut(candlesLit, Math.max(candles.length - candlesLit, 0));
+
+                    // Recent activity feed — built from the real data already
+                    // on the page, newest-looking items first (arrays are
+                    // appended in order, so the tail is the most recent).
+                    const activity = [];
+                    (data.events || []).slice(-3).reverse().forEach(ev => {
+                        activity.push({ icon: '📅', text: `New event: "${ev.title}"`, sub: ev.date || '' });
+                    });
+                    (data.hymns || []).slice(-2).reverse().forEach(h => {
+                        activity.push({ icon: '🎵', text: `New song added to the hymnal: "${h.title}"`, sub: h.category || '' });
+                    });
+                    (data.messages || []).slice(-3).reverse().forEach(m => {
+                        activity.push({ icon: '💬', text: `${m.sender || 'A member'} posted on the Community Board`, sub: m.time || '' });
+                    });
+                    (data.memorialNames || []).slice(-2).reverse().forEach(m => {
+                        activity.push({ icon: '🕊️', text: `${m.name} added to the Memorial Wall`, sub: m.years || '' });
+                    });
+                    const feedEl = document.getElementById('activityFeed');
+                    if (activity.length === 0) {
+                        feedEl.innerHTML = '<p class="text-muted small mb-0">No recent activity yet.</p>';
+                    } else {
+                        feedEl.innerHTML = activity.slice(0, 8).map(a => `
+                            <div class="activity-item">
+                                <div class="activity-icon">${a.icon}</div>
+                                <div>
+                                    <div class="small">${a.text}</div>
+                                    <div class="small text-muted">${a.sub}</div>
+                                </div>
+                            </div>
+                        `).join('');
+                    }
                 }
             } catch (err) {
                 console.error("Error loading dashboard data:", err);
             }
+        }
+
+        // Smoothly counts a stat card up to its real value using GSAP —
+        // falls back to setting the value instantly if GSAP didn't load.
+        function animateCounter(elId, endValue, formatter) {
+            const el = document.getElementById(elId);
+            if (!el) return;
+            const format = formatter || (v => Math.round(v).toLocaleString());
+            if (typeof gsap === 'undefined') {
+                el.textContent = format(endValue);
+                return;
+            }
+            const state = { v: 0 };
+            gsap.to(state, {
+                v: endValue,
+                duration: 1.1,
+                ease: 'power2.out',
+                onUpdate: () => { el.textContent = format(state.v); }
+            });
+        }
+
+        let engagementDonutInstance = null;
+        function renderEngagementDonut(lit, resting) {
+            const canvas = document.getElementById('engagementDonut');
+            const caption = document.getElementById('engagementDonutCaption');
+            if (!canvas) return;
+            const total = lit + resting;
+            caption.textContent = total > 0
+                ? `${lit} of ${total} prayer candles are currently lit`
+                : 'No candles on the board yet.';
+            if (engagementDonutInstance) engagementDonutInstance.destroy();
+            engagementDonutInstance = new Chart(canvas.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Lit', 'Resting'],
+                    datasets: [{
+                        data: total > 0 ? [lit, resting] : [1],
+                        backgroundColor: total > 0 ? ['#ffcf6e', 'rgba(0,0,0,0.08)'] : ['rgba(0,0,0,0.08)'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '72%',
+                    animation: { animateRotate: true, duration: 900, easing: 'easeOutQuart' },
+                    plugins: { legend: { display: total > 0, position: 'bottom' } }
+                }
+            });
         }
 
         function renderMemberChart(contributions) {
@@ -594,6 +819,97 @@
             document.getElementById('messageInput').value = '';
             loadDashboardData();
         });
+
+        /* =========================================================
+           SETTINGS PANEL — theme, language, density, chapel autoplay
+        ========================================================= */
+        (function initSettingsPanel() {
+            const themeBtn = document.getElementById('settingsThemeBtn');
+            const langSelect = document.getElementById('settingsLangSelect');
+            const compactToggle = document.getElementById('settingsCompactToggle');
+            const chapelAutoplayToggle = document.getElementById('settingsChapelAutoplayToggle');
+            const COMPACT_KEY = 'site_compact_view';
+            const CHAPEL_AUTOPLAY_KEY = 'chapel_autoplay_music';
+
+            if (themeBtn) {
+                themeBtn.addEventListener('click', () => {
+                    const realToggle = document.getElementById('themeToggleBtn');
+                    if (realToggle) realToggle.click();
+                });
+            }
+
+            if (langSelect) {
+                try { langSelect.value = localStorage.getItem('site_lang') || 'en'; } catch (e) {}
+                langSelect.addEventListener('change', () => {
+                    const realSwitcher = document.getElementById('langSwitcher');
+                    if (realSwitcher) {
+                        realSwitcher.value = langSelect.value;
+                        realSwitcher.dispatchEvent(new Event('change'));
+                    }
+                });
+            }
+
+            function applyCompact(on) {
+                document.documentElement.classList.toggle('compact-view', on);
+            }
+            if (compactToggle) {
+                let savedCompact = false;
+                try { savedCompact = localStorage.getItem(COMPACT_KEY) === '1'; } catch (e) {}
+                compactToggle.checked = savedCompact;
+                applyCompact(savedCompact);
+                compactToggle.addEventListener('change', () => {
+                    try { localStorage.setItem(COMPACT_KEY, compactToggle.checked ? '1' : '0'); } catch (e) {}
+                    applyCompact(compactToggle.checked);
+                });
+            }
+
+            if (chapelAutoplayToggle) {
+                let savedAutoplay = true;
+                try {
+                    const stored = localStorage.getItem(CHAPEL_AUTOPLAY_KEY);
+                    savedAutoplay = stored === null ? true : stored === '1';
+                } catch (e) {}
+                chapelAutoplayToggle.checked = savedAutoplay;
+                chapelAutoplayToggle.addEventListener('change', () => {
+                    try { localStorage.setItem(CHAPEL_AUTOPLAY_KEY, chapelAutoplayToggle.checked ? '1' : '0'); } catch (e) {}
+                });
+            }
+        })();
+
+        /* =========================================================
+           TOP-TIER ANIMATIONS (GSAP) — entrance + hover polish
+        ========================================================= */
+        (function initTopTierAnimations() {
+            if (typeof gsap === 'undefined') return;
+
+            const cards = document.querySelectorAll('.app-shell .card, .app-shell .alert, .app-shell .stat-card');
+            gsap.set(cards, { opacity: 0, y: 26 });
+            gsap.to(cards, {
+                opacity: 1, y: 0, duration: 0.7, ease: 'power3.out',
+                stagger: 0.07, delay: 0.05
+            });
+
+            // Subtle lift-and-glow on hover for buttons — real micro-interaction,
+            // not just a CSS :hover, so it feels intentional and smooth.
+            document.querySelectorAll('.app-shell .btn').forEach(btn => {
+                btn.addEventListener('mouseenter', () => {
+                    gsap.to(btn, { scale: 1.045, duration: 0.18, ease: 'power2.out' });
+                });
+                btn.addEventListener('mouseleave', () => {
+                    gsap.to(btn, { scale: 1, duration: 0.25, ease: 'power2.out' });
+                });
+            });
+
+            // Gentle card lift on hover, like the reference dashboard's cards.
+            document.querySelectorAll('.app-shell .card').forEach(card => {
+                card.addEventListener('mouseenter', () => {
+                    gsap.to(card, { y: -4, boxShadow: '0 14px 30px rgba(20,16,40,0.18)', duration: 0.25, ease: 'power2.out' });
+                });
+                card.addEventListener('mouseleave', () => {
+                    gsap.to(card, { y: 0, boxShadow: '0 8px 24px rgba(20,16,40,0.10)', duration: 0.3, ease: 'power2.out' });
+                });
+            });
+        })();
 
         /* =========================================================
            PRIVATE MESSAGES (member <-> admin, never public)
@@ -1667,8 +1983,15 @@
                 // Open instantly — the overlay (and a loading cue if the scene
                 // is still being built) shows right away, before any await.
                 overlay.classList.add('open');
-                startAmbience();
-                startChapelSong();
+                let autoplayMusic = true;
+                try {
+                    const stored = localStorage.getItem('chapel_autoplay_music');
+                    autoplayMusic = stored === null ? true : stored === '1';
+                } catch (e) { /* default to autoplay on */ }
+                if (autoplayMusic) {
+                    startAmbience();
+                    startChapelSong();
+                }
                 muteBtn.style.display = 'inline-block';
                 if (!started) {
                     loadingEl.style.display = 'flex';
