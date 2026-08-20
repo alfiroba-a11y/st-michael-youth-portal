@@ -1,156 +1,234 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Member Dashboard - St. Michael Kasaini Youth</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Chart.js for graphs -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- GSAP for polished entrance/hover animations -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
-    <!-- Three.js for the Prayer Globe and Virtual Chapel (WebXR) -->
-    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
-    <style>
-        /* Saint of the Day: reveal-shader style portrait */
-        .saint-portrait-wrap {
-            position: relative;
-            width: 140px; height: 140px;
-            border-radius: 50%;
-            overflow: hidden;
-            flex-shrink: 0;
-            box-shadow: 0 0 0 4px rgba(255,255,255,0.6), 0 4px 18px rgba(0,0,0,0.25);
-        }
-        .saint-portrait-canvas { width: 100%; height: 100%; display: block; }
-        .saint-portrait-wrap.revealing::after {
-            content: "";
-            position: absolute; inset: 0;
-            background: linear-gradient(120deg, rgba(255,255,255,0) 40%, rgba(255,255,255,0.55) 50%, rgba(255,255,255,0) 60%);
-            background-size: 250% 250%;
-            animation: saintPaintSheen 2.2s ease-in-out 1;
-        }
-        @keyframes saintPaintSheen {
-            0%   { background-position: 120% 0%; opacity: 1; }
-            100% { background-position: -20% 0%; opacity: 0; }
-        }
+<body>
+    <div class="app-shell">
+        
+        <!-- Liturgical Banner -->
+        <div class="liturgical-banner bg-primary">
+            <span class="liturgical-banner-dot"></span>
+            <span>Ordinary Time</span>
+        </div>
 
-        /* Prayer Globe */
-        .globe-card { background: #0b0f2b; color: #fff; border-radius: 0.75rem; overflow: hidden; }
-        #prayerGlobeCanvas { width: 100%; height: 320px; display: block; cursor: grab; }
-        #prayerGlobeCanvas:active { cursor: grabbing; }
-        .globe-count-badge { font-size: 0.75rem; color: rgba(255,255,255,0.7); }
+        <!-- Navigation Bar -->
+        <nav class="navbar navbar-dark bg-dark px-4">
+            <a class="navbar-brand" href="#"><i class="fa-solid fa-church me-2"></i>St. Michael Kasaini Youth Portal</a>
+            <div class="d-flex align-items-center">
+                <span class="text-white me-3 small" id="userBadgeId">ID: Loading...</span>
+                <button class="btn btn-outline-light btn-sm" onclick="logout()">Sign Out</button>
+            </div>
+        </nav>
 
-        /* Virtual Chapel overlay */
-        #chapelOverlay {
-            position: fixed; inset: 0; z-index: 2000;
-            background: #000;
-            display: none;
-        }
-        #chapelOverlay.open { display: block; }
-        #chapelCanvas { width: 100%; height: 100%; display: block; cursor: grab; }
-        #chapelCanvas:active { cursor: grabbing; }
-        #chapelCloseBtn, #chapelVrBtn, #chapelMuteBtn {
-            position: absolute; top: 14px; z-index: 2001;
-        }
-        #chapelCloseBtn { right: 14px; }
-        #chapelVrBtn { left: 14px; }
-        #chapelMuteBtn { left: 130px; }
-        #chapelYouTubeWrap {
-            position: absolute; bottom: 50px; right: 14px; z-index: 2001;
-            background: rgba(0,0,0,0.55); padding: 8px; border-radius: 10px;
-        }
-        #chapelYouTubeMount iframe { width: 200px; height: 112px; border: 0; border-radius: 6px; display: block; }
-        #chapelLoading {
-            position: absolute; inset: 0; z-index: 1999;
-            display: flex; align-items: center; justify-content: center;
-            color: rgba(255,230,180,0.85);
-            font-size: 0.95rem; letter-spacing: 0.04em;
-            background: radial-gradient(ellipse at center, #150e2a 0%, #05040c 75%);
-            animation: chapelLoadingPulse 1.6s ease-in-out infinite;
-        }
-        @keyframes chapelLoadingPulse {
-            0%, 100% { opacity: 0.6; }
-            50% { opacity: 1; }
-        }
-        #chapelHint {
-            position: absolute; bottom: 14px; left: 50%; transform: translateX(-50%);
-            color: rgba(255,255,255,0.7); font-size: 0.78rem; z-index: 2001; text-align: center;
-        }
+        <div class="container py-4">
+            <div class="alert alert-success d-flex justify-content-between align-items-center mb-4">
+                <span>Welcome back, <strong id="welcomeName"></strong>!</span>
+                <span id="announcementBanner" class="badge bg-warning text-dark px-3 py-2">St. Michael Feast Prep Ongoing</span>
+            </div>
 
-        /* St. Michael Companion widget */
-        .companion-fab {
-            position: fixed; right: 18px; bottom: 18px; z-index: 1500;
-            width: 56px; height: 56px; border-radius: 50%;
-            background: linear-gradient(135deg, #6a4cff, #2f6f4e);
-            color: #fff; border: none; font-size: 1.3rem;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-        }
-        .companion-fab img, .companion-fab svg { width: 28px; height: 28px; display: block; margin: auto; }
-        .companion-panel {
-            position: fixed; inset: 0; z-index: 1500;
-            width: 100vw; height: 100vh; height: 100dvh;
-            display: flex; flex-direction: column;
-            border-radius: 0; overflow: hidden;
-            background: #0b0f2b;
-        }
-        .companion-header {
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 14px 16px; background: rgba(20, 16, 40, 0.9); color: #fff;
-            flex-shrink: 0;
-        }
-        .companion-header-title { display: flex; align-items: center; gap: 10px; }
-        .companion-header-title img, .companion-header-title svg { width: 30px; height: 30px; flex-shrink: 0; }
-        .companion-messages {
-            flex: 1; overflow-y: auto; padding: 14px; background: rgba(255,255,255,0.85);
-            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-        }
-        .companion-msg { padding: 8px 10px; border-radius: 10px; margin-bottom: 8px; font-size: 0.9rem; max-width: 88%; white-space: pre-line; }
-        .companion-msg-bot { background: rgba(255,255,255,0.95); border: 1px solid rgba(0,0,0,0.08); }
-        .companion-msg-user { background: #2f6f4e; color: #fff; margin-left: auto; }
-        .companion-msg-escalate { background: #fff3cd; border: 1px solid #ffe08a; }
-        .companion-input-row { display: flex; gap: 6px; padding: 10px; background: rgba(255,255,255,0.9); flex-shrink: 0; }
-        .companion-input-row .form-control { flex: 1; }
+            <!-- DASHBOARD TABS -->
+            <ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#homeContent" type="button" role="tab"><i class="fa-solid fa-house me-1"></i> Home & Devotions</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="members-tab" data-bs-toggle="tab" data-bs-target="#membersContent" type="button" role="tab"><i class="fa-solid fa-users me-1"></i> Members Portal</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="events-tab" data-bs-toggle="tab" data-bs-target="#eventsContent" type="button" role="tab"><i class="fa-solid fa-calendar-days me-1"></i> Station Events</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chatContent" type="button" role="tab"><i class="fa-solid fa-comments me-1"></i> Chat Admin</button>
+                </li>
+            </ul>
 
-        /* Overview stat cards */
-        .stat-card {
-            background: var(--glass-bg, #fff);
-            border: 1px solid var(--glass-border, transparent);
-            color: var(--text-color, #1a1a2e);
-            border-radius: 14px;
-            padding: 18px;
-            box-shadow: 0 6px 18px rgba(20, 16, 40, 0.08);
-            height: 100%;
-        }
-        .stat-card-icon { font-size: 1.4rem; margin-bottom: 6px; }
-        .stat-card-label { font-size: 0.78rem; color: var(--text-muted-color, #6c757d); }
-        .stat-card-value { font-size: 1.5rem; font-weight: 700; margin-top: 2px; }
+            <div class="tab-content" id="dashboardTabContent">
+                
+                <!-- TAB 1: HOME & DEVOTIONS (Mass Readings, Rosary, Way of the Cross, Prayers) -->
+                <div class="tab-pane fade show active" id="homeContent" role="tabpanel">
+                    
+                    <!-- Mass Readings -->
+                    <div class="card shadow-sm p-4 mb-4">
+                        <h3 class="text-primary mb-3"><i class="fa-solid fa-book-open me-2"></i>Sunday Holy Mass Readings</h3>
+                        <div class="row g-3">
+                            <div class="col-md-6 col-lg-3">
+                                <div class="p-3 border rounded bg-white h-100 shadow-sm">
+                                    <h6 class="text-secondary fw-bold border-bottom pb-2">First Reading</h6>
+                                    <p class="small text-muted mb-0">Isaiah 22:19-23: I will place the key of the House of David upon his shoulder...</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="p-3 border rounded bg-white h-100 shadow-sm">
+                                    <h6 class="text-secondary fw-bold border-bottom pb-2">Responsorial Psalm</h6>
+                                    <p class="small text-muted mb-0">Psalm 138: Lord, your love is eternal; do not forsake the work of your hands.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="p-3 border rounded bg-white h-100 shadow-sm">
+                                    <h6 class="text-secondary fw-bold border-bottom pb-2">Second Reading</h6>
+                                    <p class="small text-muted mb-0">Romans 11:33-36: From him and through him and in him are all things.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-3">
+                                <div class="p-3 border rounded bg-white h-100 shadow-sm">
+                                    <h6 class="text-secondary fw-bold border-bottom pb-2">Gospel</h6>
+                                    <p class="small text-muted mb-0">Matthew 16:13-20: You are Peter, and upon this rock I will build my Church.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-        /* Recent activity feed */
-        .activity-feed { max-height: 260px; overflow-y: auto; }
-        .activity-item {
-            display: flex; gap: 10px; align-items: flex-start;
-            padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.06);
+                    <!-- Holy Rosary Mysteries (Hidden by default, click to show content) -->
+                    <div class="card shadow-sm p-4 mb-4">
+                        <h3 class="text-primary mb-3"><i class="fa-solid fa-circle-nodes me-2"></i>The Holy Rosary: Mysteries & Guide</h3>
+                        <p class="text-muted small">Select a mystery category below to reveal the full content:</p>
+                        <div class="btn-group w-100 mb-3 flex-wrap gap-1" role="group">
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="toggleMystery('joyful')">Joyful Mysteries (Mon/Sat)</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="toggleMystery('sorrowful')">Sorrowful Mysteries (Tue/Fri)</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="toggleMystery('glorious')">Glorious Mysteries (Wed/Sun)</button>
+                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="toggleMystery('luminous')">Luminous Mysteries (Thu)</button>
+                        </div>
+
+                        <div id="joyfulContent" class="mystery-pane d-none p-3 border rounded bg-white mb-2">
+                            <h5 class="text-success">Joyful Mysteries</h5>
+                            <ul class="small mb-0">
+                                <li><strong>1st Annunciation:</strong> Gabriel announces Christ's birth to Mary.</li>
+                                <li><strong>2nd Visitation:</strong> Mary visits Elizabeth.</li>
+                                <li><strong>3rd Nativity:</strong> Jesus is born in Bethlehem.</li>
+                                <li><strong>4th Presentation:</strong> Jesus presented in the Temple.</li>
+                                <li><strong>5th Finding in the Temple:</strong> Finding Jesus among teachers.</li>
+                            </ul>
+                        </div>
+
+                        <div id="sorrowfulContent" class="mystery-pane d-none p-3 border rounded bg-white mb-2">
+                            <h5 class="text-danger">Sorrowful Mysteries</h5>
+                            <ul class="small mb-0">
+                                <li><strong>1st Agony in the Garden:</strong> Jesus prays in Gethsemane.</li>
+                                <li><strong>2nd Scourging at the Pillar:</strong> Jesus is whipped.</li>
+                                <li><strong>3rd Crowning with Thorns:</strong> Mocked with thorns.</li>
+                                <li><strong>4th Carrying of the Cross:</strong> Journey to Calvary.</li>
+                                <li><strong>5th Crucifixion:</strong> Jesus dies on the cross.</li>
+                            </ul>
+                        </div>
+
+                        <div id="gloriousContent" class="mystery-pane d-none p-3 border rounded bg-white mb-2">
+                            <h5 class="text-dark">Glorious Mysteries</h5>
+                            <ul class="small mb-0">
+                                <li><strong>1st Resurrection:</strong> Christ rises from the dead.</li>
+                                <li><strong>2nd Ascension:</strong> Jesus ascends to Heaven.</li>
+                                <li><strong>3rd Descent of the Holy Spirit:</strong> Pentecost fire descends.</li>
+                                <li><strong>4th Assumption:</strong> Mary taken body and soul to Heaven.</li>
+                                <li><strong>5th Coronation:</strong> Mary crowned Queen of Heaven.</li>
+                            </ul>
+                        </div>
+
+                        <div id="luminousContent" class="mystery-pane d-none p-3 border rounded bg-white mb-2">
+                            <h5 class="text-info">Luminous Mysteries</h5>
+                            <ul class="small mb-0">
+                                <li><strong>1st Baptism in the Jordan:</strong> Spirit descends on Jesus.</li>
+                                <li><strong>2nd Wedding at Cana:</strong> First public sign.</li>
+                                <li><strong>3rd Proclamation of Kingdom:</strong> Call to conversion.</li>
+                                <li><strong>4th Transfiguration:</strong> Christ shines in glory.</li>
+                                <li><strong>5th Eucharist:</strong> Institution of the Holy Eucharist.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Way of the Cross (1 to 14 Full Content) -->
+                    <div class="card shadow-sm p-4 mb-4">
+                        <h3 class="text-primary mb-3"><i class="fa-solid fa-cross me-2"></i>The Way of the Cross (1 to 14)</h3>
+                        <div class="accordion" id="wayOfCrossAccordion">
+                            <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#station1">1st Station: Jesus is condemned to death</button></h2><div id="station1" class="accordion-collapse collapse" data-bs-parent="#wayOfCrossAccordion"><div class="accordion-body small">V. We adore you, O Christ, and we bless you. <br>R. Because by your holy cross you have redeemed the world...</div></div></div>
+                            <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#station2">2nd Station: Jesus takes up His cross</button></h2><div id="station2" class="accordion-collapse collapse" data-bs-parent="#wayOfCrossAccordion"><div class="accordion-body small">V. We adore you, O Christ, and we bless you. <br>R. Because by your holy cross you have redeemed the world...</div></div></div>
+                            <!-- (Stations 3 through 13 can follow this exact structure) -->
+                            <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#station14">14th Station: Jesus is laid in the tomb</button></h2><div id="station14" class="accordion-collapse collapse" data-bs-parent="#wayOfCrossAccordion"><div class="accordion-body small">V. We adore you, O Christ, and we bless you. <br>R. Because by your holy cross you have redeemed the world...</div></div></div>
+                        </div>
+                    </div>
+
+                    <!-- Catholic Prayers (Mass & Home) -->
+                    <div class="card shadow-sm p-4 mb-4">
+                        <h3 class="text-primary mb-3"><i class="fa-solid fa-hands-praying me-2"></i>Catholic Prayers (Mass & Home)</h3>
+                        <div class="accordion" id="prayersAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header"><button class="accordion-button" data-bs-toggle="collapse" data-bs-target="#massPrayers">Order of Mass Prayers (Confiteor, Gloria, Creed, Sanctus, Agnus Dei)</button></h2>
+                                <div id="massPrayers" class="accordion-collapse collapse show" data-bs-parent="#prayersAccordion">
+                                    <div class="accordion-body small">
+                                        <p><strong>Confiteor:</strong> I confess to almighty God...</p>
+                                        <p><strong>Gloria:</strong> Glory to God in the highest...</p>
+                                        <p><strong>Nicene Creed:</strong> I believe in one God...</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- TAB 2: REGISTERED MEMBERS LIST -->
+                <div class="tab-pane fade" id="membersContent" role="tabpanel">
+                    <div class="card shadow-sm p-4">
+                        <h3 class="text-primary mb-3"><i class="fa-solid fa-user-group me-2"></i>Registered Station Members</h3>
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr><th>#</th><th>Name</th><th>Phone / Contact</th><th>Role</th></tr>
+                                </thead>
+                                <tbody id="membersTableBody">
+                                    <tr><td>1</td><td>Abraham Weldeabzgi</td><td>+254 7...</td><td>Youth Member</td></tr>
+                                    <!-- Dynamic rows loaded from backend -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: UPCOMING & PAST EVENTS -->
+                <div class="tab-pane fade" id="eventsContent" role="tabpanel">
+                    <div class="card shadow-sm p-4">
+                        <h3 class="text-primary mb-3"><i class="fa-solid fa-calendar-alt me-2"></i>Station Events</h3>
+                        <ul class="list-group">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div><strong>Youth Sunday Mass Animation</strong><br><small class="text-muted">Next Sunday, 9:00 AM at St. Michael Kasaini</small></div>
+                                <span class="badge bg-success">Upcoming</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div><strong>Rosary Prayers & Youth Bonfire</strong><br><small class="text-muted">Last Saturday of the Month</small></div>
+                                <span class="badge bg-secondary">Past</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- TAB 4: CHAT ADMIN -->
+                <div class="tab-pane fade" id="chatContent" role="tabpanel">
+                    <div class="card shadow-sm p-4">
+                        <h3 class="text-primary mb-3"><i class="fa-solid fa-headset me-2"></i>Message & Chat Admin</h3>
+                        <div class="border rounded p-3 mb-3 bg-white" style="height: 300px; overflow-y: auto;" id="adminChatBox">
+                            <div class="text-muted small text-center mb-3">Connected with St. Michael Station Admin. Send your inquiries or prayer intentions below.</div>
+                        </div>
+                        <div class="input-group">
+                            <input type="text" id="adminMessageInput" class="form-control" placeholder="Type a message to admin...">
+                            <button class="btn btn-primary" onclick="sendAdminMessage()">Send</button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleMystery(type) {
+            document.querySelectorAll('.mystery-pane').forEach(el => el.classList.add('d-none'));
+            document.getElementById(type + 'Content').classList.remove('d-none');
         }
-        .activity-item:last-child { border-bottom: none; }
-        .activity-icon {
-            width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center;
-            background: rgba(47, 111, 78, 0.12); font-size: 0.9rem;
+        function sendAdminMessage() {
+            const input = document.getElementById('adminMessageInput');
+            if(!input.value.trim()) return;
+            const chatBox = document.getElementById('adminChatBox');
+            chatBox.innerHTML += `<div class="p-2 mb-2 bg-success text-white rounded small ms-auto" style="max-width:75%;">${input.value}</div>`;
+            input.value = '';
+            chatBox.scrollTop = chatBox.scrollHeight;
         }
-        .companion-msg-thinking { color: rgba(0,0,0,0.55); font-style: italic; }
-        .thinking-dots span {
-            display: inline-block;
-            animation: thinkingBounce 1.2s infinite;
-            opacity: 0.3;
-        }
-        .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
-        .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes thinkingBounce {
-            0%, 60%, 100% { opacity: 0.3; }
-            30% { opacity: 1; }
-        }
-    </style>
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
 </head>
 <body class="bg-light d-flex flex-column min-vh-100">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
