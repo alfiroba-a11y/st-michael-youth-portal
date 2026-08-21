@@ -34,7 +34,7 @@
         nav_signin: { en: 'Sign In', sw: 'Ingia' },
         nav_signup: { en: 'Sign Up', sw: 'Jisajili' },
         nav_signout: { en: 'Sign Out', sw: 'Toka' },
-        nav_profile_tab: { en: 'Profile Tab', sw: 'Wasifu Wangu' },
+        nav_profile_tab: { en: 'Profile', sw: 'Wasifu' },
 
         hero_title: {
             en: 'St. Michael Kasaini Youth Portal',
