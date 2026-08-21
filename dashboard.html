@@ -1,246 +1,144 @@
-<body>
-    <div class="app-shell">
-        
-        <!-- Liturgical Banner -->
-        <div class="liturgical-banner bg-primary">
-            <span class="liturgical-banner-dot"></span>
-            <span>Ordinary Time</span>
-        </div>
-
-        <!-- Navigation Bar -->
-        <nav class="navbar navbar-dark bg-dark px-4">
-            <a class="navbar-brand" href="#"><i class="fa-solid fa-church me-2"></i>St. Michael Kasaini Youth Portal</a>
-            <div class="d-flex align-items-center">
-                <span class="text-white me-3 small" id="userBadgeId">ID: Loading...</span>
-                <button class="btn btn-outline-light btn-sm" onclick="logout()">Sign Out</button>
-            </div>
-        </nav>
-
-        <div class="container py-4">
-            <div class="alert alert-success d-flex justify-content-between align-items-center mb-4">
-                <span>Welcome back, <strong id="welcomeName"></strong>!</span>
-                <span id="announcementBanner" class="badge bg-warning text-dark px-3 py-2">St. Michael Feast Prep Ongoing</span>
-            </div>
-
-            <!-- DASHBOARD TABS -->
-            <ul class="nav nav-tabs mb-4" id="dashboardTabs" role="tablist">
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#homeContent" type="button" role="tab"><i class="fa-solid fa-house me-1"></i> Home & Devotions</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="members-tab" data-bs-toggle="tab" data-bs-target="#membersContent" type="button" role="tab"><i class="fa-solid fa-users me-1"></i> Members Portal</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="events-tab" data-bs-toggle="tab" data-bs-target="#eventsContent" type="button" role="tab"><i class="fa-solid fa-calendar-days me-1"></i> Station Events</button>
-                </li>
-                <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="chat-tab" data-bs-toggle="tab" data-bs-target="#chatContent" type="button" role="tab"><i class="fa-solid fa-comments me-1"></i> Chat Admin</button>
-                </li>
-            </ul>
-
-            <div class="tab-content" id="dashboardTabContent">
-                
-                <!-- TAB 1: HOME & DEVOTIONS (Mass Readings, Rosary, Way of the Cross, Prayers) -->
-                <div class="tab-pane fade show active" id="homeContent" role="tabpanel">
-                    
-                    <!-- Mass Readings -->
-                    <div class="card shadow-sm p-4 mb-4">
-                        <h3 class="text-primary mb-3"><i class="fa-solid fa-book-open me-2"></i>Sunday Holy Mass Readings</h3>
-                        <div class="row g-3">
-                            <div class="col-md-6 col-lg-3">
-                                <div class="p-3 border rounded bg-white h-100 shadow-sm">
-                                    <h6 class="text-secondary fw-bold border-bottom pb-2">First Reading</h6>
-                                    <p class="small text-muted mb-0">Isaiah 22:19-23: I will place the key of the House of David upon his shoulder...</p>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-3">
-                                <div class="p-3 border rounded bg-white h-100 shadow-sm">
-                                    <h6 class="text-secondary fw-bold border-bottom pb-2">Responsorial Psalm</h6>
-                                    <p class="small text-muted mb-0">Psalm 138: Lord, your love is eternal; do not forsake the work of your hands.</p>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-3">
-                                <div class="p-3 border rounded bg-white h-100 shadow-sm">
-                                    <h6 class="text-secondary fw-bold border-bottom pb-2">Second Reading</h6>
-                                    <p class="small text-muted mb-0">Romans 11:33-36: From him and through him and in him are all things.</p>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-3">
-                                <div class="p-3 border rounded bg-white h-100 shadow-sm">
-                                    <h6 class="text-secondary fw-bold border-bottom pb-2">Gospel</h6>
-                                    <p class="small text-muted mb-0">Matthew 16:13-20: You are Peter, and upon this rock I will build my Church.</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Holy Rosary Mysteries (Hidden by default, click to show content) -->
-                    <div class="card shadow-sm p-4 mb-4">
-                        <h3 class="text-primary mb-3"><i class="fa-solid fa-circle-nodes me-2"></i>The Holy Rosary: Mysteries & Guide</h3>
-                        <p class="text-muted small">Select a mystery category below to reveal the full content:</p>
-                        <div class="btn-group w-100 mb-3 flex-wrap gap-1" role="group">
-                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="toggleMystery('joyful')">Joyful Mysteries (Mon/Sat)</button>
-                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="toggleMystery('sorrowful')">Sorrowful Mysteries (Tue/Fri)</button>
-                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="toggleMystery('glorious')">Glorious Mysteries (Wed/Sun)</button>
-                            <button type="button" class="btn btn-outline-primary btn-sm" onclick="toggleMystery('luminous')">Luminous Mysteries (Thu)</button>
-                        </div>
-
-                        <div id="joyfulContent" class="mystery-pane d-none p-3 border rounded bg-white mb-2">
-                            <h5 class="text-success">Joyful Mysteries</h5>
-                            <ul class="small mb-0">
-                                <li><strong>1st Annunciation:</strong> Gabriel announces Christ's birth to Mary.</li>
-                                <li><strong>2nd Visitation:</strong> Mary visits Elizabeth.</li>
-                                <li><strong>3rd Nativity:</strong> Jesus is born in Bethlehem.</li>
-                                <li><strong>4th Presentation:</strong> Jesus presented in the Temple.</li>
-                                <li><strong>5th Finding in the Temple:</strong> Finding Jesus among teachers.</li>
-                            </ul>
-                        </div>
-
-                        <div id="sorrowfulContent" class="mystery-pane d-none p-3 border rounded bg-white mb-2">
-                            <h5 class="text-danger">Sorrowful Mysteries</h5>
-                            <ul class="small mb-0">
-                                <li><strong>1st Agony in the Garden:</strong> Jesus prays in Gethsemane.</li>
-                                <li><strong>2nd Scourging at the Pillar:</strong> Jesus is whipped.</li>
-                                <li><strong>3rd Crowning with Thorns:</strong> Mocked with thorns.</li>
-                                <li><strong>4th Carrying of the Cross:</strong> Journey to Calvary.</li>
-                                <li><strong>5th Crucifixion:</strong> Jesus dies on the cross.</li>
-                            </ul>
-                        </div>
-
-                        <div id="gloriousContent" class="mystery-pane d-none p-3 border rounded bg-white mb-2">
-                            <h5 class="text-dark">Glorious Mysteries</h5>
-                            <ul class="small mb-0">
-                                <li><strong>1st Resurrection:</strong> Christ rises from the dead.</li>
-                                <li><strong>2nd Ascension:</strong> Jesus ascends to Heaven.</li>
-                                <li><strong>3rd Descent of the Holy Spirit:</strong> Pentecost fire descends.</li>
-                                <li><strong>4th Assumption:</strong> Mary taken body and soul to Heaven.</li>
-                                <li><strong>5th Coronation:</strong> Mary crowned Queen of Heaven.</li>
-                            </ul>
-                        </div>
-
-                        <div id="luminousContent" class="mystery-pane d-none p-3 border rounded bg-white mb-2">
-                            <h5 class="text-info">Luminous Mysteries</h5>
-                            <ul class="small mb-0">
-                                <li><strong>1st Baptism in the Jordan:</strong> Spirit descends on Jesus.</li>
-                                <li><strong>2nd Wedding at Cana:</strong> First public sign.</li>
-                                <li><strong>3rd Proclamation of Kingdom:</strong> Call to conversion.</li>
-                                <li><strong>4th Transfiguration:</strong> Christ shines in glory.</li>
-                                <li><strong>5th Eucharist:</strong> Institution of the Holy Eucharist.</li>
-                            </ul>
-                        </div>
-                    </div>
-
-                    <!-- Way of the Cross (1 to 14 Full Content) -->
-                    <div class="card shadow-sm p-4 mb-4">
-                        <h3 class="text-primary mb-3"><i class="fa-solid fa-cross me-2"></i>The Way of the Cross (1 to 14)</h3>
-                        <div class="accordion" id="wayOfCrossAccordion">
-                            <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#station1">1st Station: Jesus is condemned to death</button></h2><div id="station1" class="accordion-collapse collapse" data-bs-parent="#wayOfCrossAccordion"><div class="accordion-body small">V. We adore you, O Christ, and we bless you. <br>R. Because by your holy cross you have redeemed the world...</div></div></div>
-                            <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#station2">2nd Station: Jesus takes up His cross</button></h2><div id="station2" class="accordion-collapse collapse" data-bs-parent="#wayOfCrossAccordion"><div class="accordion-body small">V. We adore you, O Christ, and we bless you. <br>R. Because by your holy cross you have redeemed the world...</div></div></div>
-                            <!-- (Stations 3 through 13 can follow this exact structure) -->
-                            <div class="accordion-item"><h2 class="accordion-header"><button class="accordion-button collapsed" data-bs-toggle="collapse" data-bs-target="#station14">14th Station: Jesus is laid in the tomb</button></h2><div id="station14" class="accordion-collapse collapse" data-bs-parent="#wayOfCrossAccordion"><div class="accordion-body small">V. We adore you, O Christ, and we bless you. <br>R. Because by your holy cross you have redeemed the world...</div></div></div>
-                        </div>
-                    </div>
-
-                    <!-- Catholic Prayers (Mass & Home) -->
-                    <div class="card shadow-sm p-4 mb-4">
-                        <h3 class="text-primary mb-3"><i class="fa-solid fa-hands-praying me-2"></i>Catholic Prayers (Mass & Home)</h3>
-                        <div class="accordion" id="prayersAccordion">
-                            <div class="accordion-item">
-                                <h2 class="accordion-header"><button class="accordion-button" data-bs-toggle="collapse" data-bs-target="#massPrayers">Order of Mass Prayers (Confiteor, Gloria, Creed, Sanctus, Agnus Dei)</button></h2>
-                                <div id="massPrayers" class="accordion-collapse collapse show" data-bs-parent="#prayersAccordion">
-                                    <div class="accordion-body small">
-                                        <p><strong>Confiteor:</strong> I confess to almighty God...</p>
-                                        <p><strong>Gloria:</strong> Glory to God in the highest...</p>
-                                        <p><strong>Nicene Creed:</strong> I believe in one God...</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                </div>
-
-                <!-- TAB 2: REGISTERED MEMBERS LIST -->
-                <div class="tab-pane fade" id="membersContent" role="tabpanel">
-                    <div class="card shadow-sm p-4">
-                        <h3 class="text-primary mb-3"><i class="fa-solid fa-user-group me-2"></i>Registered Station Members</h3>
-                        <div class="table-responsive">
-                            <table class="table table-hover align-middle">
-                                <thead class="table-light">
-                                    <tr><th>#</th><th>Name</th><th>Phone / Contact</th><th>Role</th></tr>
-                                </thead>
-                                <tbody id="membersTableBody">
-                                    <tr><td>1</td><td>Abraham Weldeabzgi</td><td>+254 7...</td><td>Youth Member</td></tr>
-                                    <!-- Dynamic rows loaded from backend -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- TAB 3: UPCOMING & PAST EVENTS -->
-                <div class="tab-pane fade" id="eventsContent" role="tabpanel">
-                    <div class="card shadow-sm p-4">
-                        <h3 class="text-primary mb-3"><i class="fa-solid fa-calendar-alt me-2"></i>Station Events</h3>
-                        <ul class="list-group">
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div><strong>Youth Sunday Mass Animation</strong><br><small class="text-muted">Next Sunday, 9:00 AM at St. Michael Kasaini</small></div>
-                                <span class="badge bg-success">Upcoming</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div><strong>Rosary Prayers & Youth Bonfire</strong><br><small class="text-muted">Last Saturday of the Month</small></div>
-                                <span class="badge bg-secondary">Past</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- TAB 4: CHAT ADMIN -->
-                <div class="tab-pane fade" id="chatContent" role="tabpanel">
-                    <div class="card shadow-sm p-4">
-                        <h3 class="text-primary mb-3"><i class="fa-solid fa-headset me-2"></i>Message & Chat Admin</h3>
-                        <div class="border rounded p-3 mb-3 bg-white" style="height: 300px; overflow-y: auto;" id="adminChatBox">
-                            <div class="text-muted small text-center mb-3">Connected with St. Michael Station Admin. Send your inquiries or prayer intentions below.</div>
-                        </div>
-                        <div class="input-group">
-                            <input type="text" id="adminMessageInput" class="form-control" placeholder="Type a message to admin...">
-                            <button class="btn btn-primary" onclick="sendAdminMessage()">Send</button>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-    </div>
-
-    <script>
-        function toggleMystery(type) {
-            document.querySelectorAll('.mystery-pane').forEach(el => el.classList.add('d-none'));
-            document.getElementById(type + 'Content').classList.remove('d-none');
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Member Dashboard - St. Michael Kasaini Youth</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Chart.js for graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- GSAP for polished entrance/hover animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <!-- Three.js for the Prayer Globe -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <style>
+        /* Saint of the Day: reveal-shader style portrait */
+        .saint-portrait-wrap {
+            position: relative;
+            width: 140px; height: 140px;
+            border-radius: 50%;
+            overflow: hidden;
+            flex-shrink: 0;
+            box-shadow: 0 0 0 4px rgba(255,255,255,0.6), 0 4px 18px rgba(0,0,0,0.25);
         }
-        function sendAdminMessage() {
-            const input = document.getElementById('adminMessageInput');
-            if(!input.value.trim()) return;
-            const chatBox = document.getElementById('adminChatBox');
-            chatBox.innerHTML += `<div class="p-2 mb-2 bg-success text-white rounded small ms-auto" style="max-width:75%;">${input.value}</div>`;
-            input.value = '';
-            chatBox.scrollTop = chatBox.scrollHeight;
+        .saint-portrait-canvas { width: 100%; height: 100%; display: block; }
+        .saint-portrait-wrap.revealing::after {
+            content: "";
+            position: absolute; inset: 0;
+            background: linear-gradient(120deg, rgba(255,255,255,0) 40%, rgba(255,255,255,0.55) 50%, rgba(255,255,255,0) 60%);
+            background-size: 250% 250%;
+            animation: saintPaintSheen 2.2s ease-in-out 1;
         }
-    </script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+        @keyframes saintPaintSheen {
+            0%   { background-position: 120% 0%; opacity: 1; }
+            100% { background-position: -20% 0%; opacity: 0; }
+        }
+
+        /* Prayer Globe */
+        .globe-card { background: #0b0f2b; color: #fff; border-radius: 0.75rem; overflow: hidden; }
+        #prayerGlobeCanvas { width: 100%; height: 320px; display: block; cursor: grab; }
+        #prayerGlobeCanvas:active { cursor: grabbing; }
+        .globe-count-badge { font-size: 0.75rem; color: rgba(255,255,255,0.7); }
+
+        /* St. Michael Companion widget */
+        .companion-fab {
+            position: fixed; right: 18px; bottom: 18px; z-index: 1500;
+            width: 56px; height: 56px; border-radius: 50%;
+            background: linear-gradient(135deg, #6a4cff, #2f6f4e);
+            color: #fff; border: none; font-size: 1.3rem;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        .companion-fab img, .companion-fab svg { width: 28px; height: 28px; display: block; margin: auto; }
+        .companion-panel {
+            position: fixed; inset: 0; z-index: 1500;
+            width: 100vw; height: 100vh; height: 100dvh;
+            display: flex; flex-direction: column;
+            border-radius: 0; overflow: hidden;
+            background: #0b0f2b;
+        }
+        .companion-header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 14px 16px; background: rgba(20, 16, 40, 0.9); color: #fff;
+            flex-shrink: 0;
+        }
+        .companion-header-title { display: flex; align-items: center; gap: 10px; }
+        .companion-header-title img, .companion-header-title svg { width: 30px; height: 30px; flex-shrink: 0; }
+        .companion-messages {
+            flex: 1; overflow-y: auto; padding: 14px; background: rgba(255,255,255,0.85);
+            backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+        }
+        .companion-msg { padding: 8px 10px; border-radius: 10px; margin-bottom: 8px; font-size: 0.9rem; max-width: 88%; white-space: pre-line; }
+        .companion-msg-bot { background: rgba(255,255,255,0.95); border: 1px solid rgba(0,0,0,0.08); }
+        .companion-msg-user { background: #2f6f4e; color: #fff; margin-left: auto; }
+        .companion-msg-escalate { background: #fff3cd; border: 1px solid #ffe08a; }
+        .companion-input-row { display: flex; gap: 6px; padding: 10px; background: rgba(255,255,255,0.9); flex-shrink: 0; }
+        .companion-input-row .form-control { flex: 1; }
+
+        /* Overview stat cards */
+        .stat-card {
+            background: var(--glass-bg, #fff);
+            border: 1px solid var(--glass-border, transparent);
+            color: var(--text-color, #1a1a2e);
+            border-radius: 14px;
+            padding: 18px;
+            box-shadow: 0 6px 18px rgba(20, 16, 40, 0.08);
+            height: 100%;
+        }
+        .stat-card-icon { font-size: 1.4rem; margin-bottom: 6px; }
+        .stat-card-label { font-size: 0.78rem; color: var(--text-muted-color, #6c757d); }
+        .stat-card-value { font-size: 1.5rem; font-weight: 700; margin-top: 2px; }
+
+        /* Recent activity feed */
+        .activity-feed { max-height: 260px; overflow-y: auto; }
+        .activity-item {
+            display: flex; gap: 10px; align-items: flex-start;
+            padding: 8px 0; border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-icon {
+            width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(47, 111, 78, 0.12); font-size: 0.9rem;
+        }
+        .companion-msg-thinking { color: rgba(0,0,0,0.55); font-style: italic; }
+        .thinking-dots span {
+            display: inline-block;
+            animation: thinkingBounce 1.2s infinite;
+            opacity: 0.3;
+        }
+        .thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes thinkingBounce {
+            0%, 60%, 100% { opacity: 0.3; }
+            30% { opacity: 1; }
+        }
+    </style>
 </head>
 <body class="bg-light d-flex flex-column min-vh-100">
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
         <a class="navbar-brand" href="/" data-i18n="nav_brand_dashboard">✝ St. Michael Kasaini Youth Portal</a>
         <div class="ms-auto d-flex align-items-center">
             <span id="welcomeUser" class="text-light me-3 small"></span>
+
+            <!-- Notifications Bell -->
+            <div class="dropdown me-2">
+                <button class="btn btn-outline-light btn-sm position-relative" type="button" id="notificationsBellBtn" data-bs-toggle="dropdown" aria-expanded="false" aria-label="Notifications">
+                    🔔
+                    <span id="notificationsBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger d-none" style="font-size: 0.6rem;">0</span>
+                </button>
+                <div class="dropdown-menu dropdown-menu-end p-0" style="width: 320px; max-height: 400px; overflow-y: auto;" aria-labelledby="notificationsBellBtn">
+                    <div class="p-2 border-bottom fw-bold small">Recent Activity</div>
+                    <div id="activityFeed" class="activity-feed p-2">Loading activity...</div>
+                </div>
+            </div>
+
             <!-- Profile Tab Toggle Button -->
             <button class="btn btn-outline-light btn-sm me-2" type="button" data-bs-toggle="collapse" data-bs-target="#profileTabSection" aria-expanded="false" aria-controls="profileTabSection" style="display: flex; align-items: center; gap: 6px;">
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm6.9 3.5c-.42-.3-1.12-.3-1.54 0l-.65.46a7.96 7.96 0 0 1-1.12-.65l-.01-.81a1.11 1.11 0 0 0-1.11-1.11h-.94a1.11 1.11 0 0 0-1.11 1.11l-.01.81c-.41.26-.78.47-1.12.65l-.65-.46c-.42-.3-1.12-.3-1.54 0l-.92.65c-.42.3-.53.88-.26 1.3l.53.79c-.19.39-.34.8-.46 1.22h-.94c-.5 0-.91.41-.91.91v1.11c0 .5.41.91.91.91h.94c.12.42.27.83.46 1.22l-.53.79c-.27.42-.16 1 .26 1.3l.92.65c.42.3 1.12.3 1.54 0l.65-.46c.34.18.71.39 1.12.65l.01.81c0 .5.41.91.11 1.11h.94c.5 0 .91-.41.91-.91l.01-.81c.41-.26.78-.47 1.12-.65l.65.46c.42.3 1.12.3 1.54 0l.92-.65c.42-.3.53-.88.26-1.3l-.53-.79c.19-.39.34-.8.46-1.22h-.94c.5 0 .91-.41.91-.91v-1.11c0-.5-.41-.91-.91-.91h-.94c-.12-.42-.27-.83-.46-1.22l.53-.79c.27-.42.16-1-.26-1.3l-.92-.65zM12 21.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
                 </svg>
-                <span data-i18n="nav_profile_tab">Profile Tab</span>
+                <span data-i18n="nav_profile_tab">Profile</span>
             </button>
             <button class="btn btn-outline-light btn-sm" onclick="logout()" data-i18n="nav_signout">Sign Out</button>
         </div>
@@ -281,19 +179,13 @@
 
         <!-- Engagement donut + recent activity -->
         <div class="row g-3 mb-4">
-            <div class="col-lg-5">
+            <div class="col-lg-6 mx-lg-auto">
                 <div class="card shadow-sm p-4 h-100">
                     <h5 class="mb-3">Prayer Sanctuary Engagement</h5>
                     <div style="position: relative; height: 220px;">
                         <canvas id="engagementDonut"></canvas>
                     </div>
                     <p class="text-muted small text-center mb-0 mt-2" id="engagementDonutCaption">Loading...</p>
-                </div>
-            </div>
-            <div class="col-lg-7">
-                <div class="card shadow-sm p-4 h-100">
-                    <h5 class="mb-3">🔔 Recent Activity</h5>
-                    <div id="activityFeed" class="activity-feed">Loading activity...</div>
                 </div>
             </div>
         </div>
@@ -362,17 +254,6 @@
                             </div>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="d-flex justify-content-between align-items-center p-2 border rounded">
-                            <div>
-                                <div class="fw-bold small">Auto-play Chapel Music</div>
-                                <div class="text-muted small">Play music automatically when entering the Virtual Chapel.</div>
-                            </div>
-                            <div class="form-check form-switch mb-0">
-                                <input class="form-check-input" type="checkbox" id="settingsChapelAutoplayToggle" checked>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>
@@ -427,13 +308,6 @@
                 <button class="btn btn-sm btn-warning" id="lightGlobeIntentionBtn" data-i18n="light_intention_btn">✨ Light a prayer intention from here</button>
                 <span class="small text-white-50" id="globeStatusText"></span>
             </div>
-        </div>
-
-        <!-- Virtual Basilica (WebXR chapel + memorial wall) -->
-        <div class="card shadow-sm p-4 mb-4">
-            <h4 class="text-primary mb-2"><span data-i18n="chapel_heading">🕯️ Virtual Basilica Chapel</span> <span class="badge bg-secondary">Beta</span></h4>
-            <p class="small text-muted mb-3">A sunlit 3D basilica prayer space — colonnades, a glowing dome, drifting spirits of light, and a memorial wall, with a soft ambient choir. Enter from your browser, or with a VR headset if you have one. This is a starting foundation, not yet a model of our actual church building.</p>
-            <button class="btn btn-primary" id="enterChapelBtn" data-i18n="enter_chapel_btn">Enter Virtual Chapel</button>
         </div>
 
         <!-- Daily Spiritual Reflection & Verse -->
@@ -570,20 +444,6 @@
             <input type="text" id="companionInput" class="form-control form-control-sm" placeholder="Type your question..." data-i18n-placeholder="companion_placeholder" autocomplete="off" required>
             <button type="submit" class="btn btn-primary btn-sm" data-i18n="send_btn">Send</button>
         </form>
-    </div>
-
-    <!-- Virtual Chapel fullscreen overlay -->
-    <div id="chapelOverlay">
-        <canvas id="chapelCanvas"></canvas>
-        <div id="chapelLoading" style="display:none;">Entering the chapel...</div>
-        <div id="chapelYouTubeWrap" style="display:none;">
-            <div class="small text-white-50 mb-1">Chapel music</div>
-            <div id="chapelYouTubeMount"></div>
-        </div>
-        <button id="chapelMuteBtn" class="btn btn-sm btn-outline-light" style="display:none;">🔊 Ambience</button>
-        <button id="chapelVrBtn" class="btn btn-sm btn-warning" style="display:none;">Enter VR</button>
-        <button id="chapelCloseBtn" class="btn btn-sm btn-light">✕ Close</button>
-        <div id="chapelHint">Drag to look around · glowing plaques are the memorial wall · watch for drifting spirits of light</div>
     </div>
 
     <footer class="text-center py-3 mt-auto text-muted small border-top bg-white">
@@ -899,15 +759,13 @@
         });
 
         /* =========================================================
-           SETTINGS PANEL — theme, language, density, chapel autoplay
+           SETTINGS PANEL — theme, language, density
         ========================================================= */
         (function initSettingsPanel() {
             const themeBtn = document.getElementById('settingsThemeBtn');
             const langSelect = document.getElementById('settingsLangSelect');
             const compactToggle = document.getElementById('settingsCompactToggle');
-            const chapelAutoplayToggle = document.getElementById('settingsChapelAutoplayToggle');
             const COMPACT_KEY = 'site_compact_view';
-            const CHAPEL_AUTOPLAY_KEY = 'chapel_autoplay_music';
 
             if (themeBtn) {
                 themeBtn.addEventListener('click', () => {
@@ -938,18 +796,6 @@
                 compactToggle.addEventListener('change', () => {
                     try { localStorage.setItem(COMPACT_KEY, compactToggle.checked ? '1' : '0'); } catch (e) {}
                     applyCompact(compactToggle.checked);
-                });
-            }
-
-            if (chapelAutoplayToggle) {
-                let savedAutoplay = true;
-                try {
-                    const stored = localStorage.getItem(CHAPEL_AUTOPLAY_KEY);
-                    savedAutoplay = stored === null ? true : stored === '1';
-                } catch (e) {}
-                chapelAutoplayToggle.checked = savedAutoplay;
-                chapelAutoplayToggle.addEventListener('change', () => {
-                    try { localStorage.setItem(CHAPEL_AUTOPLAY_KEY, chapelAutoplayToggle.checked ? '1' : '0'); } catch (e) {}
                 });
             }
         })();
@@ -1312,58 +1158,21 @@
             sunLight.position.set(5, 3, 5);
             scene.add(sunLight);
 
-            // An original, procedurally-drawn world map (approximate continent
-            // shapes on an ocean base) — not a photo or any existing map asset,
-            // just simple shapes placed at roughly the right latitude/longitude
-            // so the globe reads as an actual Earth rather than an abstract orb.
-            function makeEarthTexture() {
-                const w = 1024, h = 512;
-                const c = document.createElement('canvas');
-                c.width = w; c.height = h;
-                const ctx = c.getContext('2d');
-
-                const ocean = ctx.createLinearGradient(0, 0, 0, h);
-                ocean.addColorStop(0, '#1b4f7c');
-                ocean.addColorStop(0.5, '#1f6698');
-                ocean.addColorStop(1, '#153f63');
-                ctx.fillStyle = ocean;
-                ctx.fillRect(0, 0, w, h);
-
-                function land(cxN, cyN, rxN, ryN, rot) {
-                    ctx.save();
-                    ctx.translate(cxN * w, cyN * h);
-                    ctx.rotate(rot || 0);
-                    ctx.beginPath();
-                    ctx.ellipse(0, 0, rxN * w, ryN * h, 0, 0, Math.PI * 2);
-                    ctx.fillStyle = '#4f8a44';
-                    ctx.fill();
-                    ctx.restore();
-                }
-
-                // Rough continent placements (normalized across an equirectangular map).
-                land(0.18, 0.28, 0.075, 0.11, -0.15);   // North America
-                land(0.155, 0.40, 0.028, 0.05);          // Central America
-                land(0.235, 0.62, 0.045, 0.14, 0.08);    // South America
-                land(0.475, 0.26, 0.045, 0.065);         // Europe
-                land(0.49, 0.47, 0.058, 0.16);           // Africa
-                land(0.62, 0.28, 0.10, 0.095, 0.05);     // Asia (main)
-                land(0.73, 0.20, 0.055, 0.06);           // Siberia / far east
-                land(0.70, 0.44, 0.04, 0.045);           // South Asia
-                land(0.78, 0.54, 0.035, 0.03);           // Maritime SE Asia
-                land(0.835, 0.68, 0.045, 0.035);         // Australia
-                land(0.5, 0.94, 0.5, 0.045);             // Antarctica strip
-
-                // Subtle terrain speckle so it doesn't look flat.
-                for (let i = 0; i < 900; i++) {
-                    ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.05})`;
-                    ctx.fillRect(Math.random() * w, Math.random() * h, 2, 2);
-                }
-                return new THREE.CanvasTexture(c);
-            }
+            // The real Earth photo you provided. Upload it to your Render
+            // project's root folder (next to server.js) as "earth-photo.jpg" —
+            // server.js already serves static files from there, so it becomes
+            // reachable at /earth-photo.jpg automatically, same as the altar photo.
+            const earthTexture = new THREE.TextureLoader().load(
+                '/earth-photo.jpg',
+                undefined,
+                undefined,
+                () => console.warn('Prayer Globe: earth-photo.jpg not found — upload it to the project root on Render.')
+            );
+            if ('colorSpace' in earthTexture) earthTexture.colorSpace = THREE.SRGBColorSpace;
 
             const earth = new THREE.Mesh(
-                new THREE.SphereGeometry(2, 48, 32),
-                new THREE.MeshStandardMaterial({ map: makeEarthTexture(), roughness: 0.9 })
+                new THREE.SphereGeometry(2, 64, 48),
+                new THREE.MeshStandardMaterial({ map: earthTexture, roughness: 0.85 })
             );
             globeGroup.add(earth);
 
@@ -1387,20 +1196,69 @@
                 pointsGroup.add(dot);
             }
 
-            // Drag-to-rotate (no external OrbitControls dependency needed).
+            // 3D navigation: drag-to-rotate with momentum/inertia after
+            // release, plus scroll-wheel and pinch zoom.
             let isDragging = false, lastX = 0, lastY = 0;
-            canvas.addEventListener('pointerdown', (e) => { isDragging = true; lastX = e.clientX; lastY = e.clientY; });
+            let velX = 0, velY = 0;
+            let zoomDistance = 6;
+            const ZOOM_MIN = 3.2, ZOOM_MAX = 12;
+
+            canvas.addEventListener('pointerdown', (e) => {
+                isDragging = true; lastX = e.clientX; lastY = e.clientY;
+                velX = 0; velY = 0;
+                canvas.setPointerCapture(e.pointerId);
+            });
             window.addEventListener('pointerup', () => { isDragging = false; });
             window.addEventListener('pointermove', (e) => {
                 if (!isDragging) return;
                 const dx = e.clientX - lastX, dy = e.clientY - lastY;
-                globeGroup.rotation.y += dx * 0.005;
-                globeGroup.rotation.x += dy * 0.005;
+                velX = dx * 0.005;
+                velY = dy * 0.005;
+                globeGroup.rotation.y += velX;
+                globeGroup.rotation.x += velY;
                 lastX = e.clientX; lastY = e.clientY;
             });
 
+            canvas.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                zoomDistance = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, zoomDistance + e.deltaY * 0.01));
+            }, { passive: false });
+
+            // Pinch-to-zoom on touch devices
+            let pinchStartDist = null, pinchStartZoom = zoomDistance;
+            canvas.addEventListener('touchstart', (e) => {
+                if (e.touches.length === 2) {
+                    pinchStartDist = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    pinchStartZoom = zoomDistance;
+                }
+            }, { passive: true });
+            canvas.addEventListener('touchmove', (e) => {
+                if (e.touches.length === 2 && pinchStartDist) {
+                    const dist = Math.hypot(
+                        e.touches[0].clientX - e.touches[1].clientX,
+                        e.touches[0].clientY - e.touches[1].clientY
+                    );
+                    zoomDistance = Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, pinchStartZoom * (pinchStartDist / dist)));
+                }
+            }, { passive: true });
+            canvas.addEventListener('touchend', () => { pinchStartDist = null; });
+
             function animate() {
-                if (!isDragging) globeGroup.rotation.y += 0.0025;
+                if (isDragging) {
+                    // no momentum while actively dragging
+                } else if (Math.abs(velX) > 0.0002 || Math.abs(velY) > 0.0002) {
+                    // Momentum: keep spinning after release, decaying smoothly.
+                    globeGroup.rotation.y += velX;
+                    globeGroup.rotation.x += velY;
+                    velX *= 0.94;
+                    velY *= 0.94;
+                } else {
+                    globeGroup.rotation.y += 0.0018; // gentle idle auto-rotate
+                }
+                camera.position.z += (zoomDistance - camera.position.z) * 0.12;
                 renderer.render(scene, camera);
                 requestAnimationFrame(animate);
             }
@@ -1481,645 +1339,6 @@
             });
         })();
 
-        /* =========================================================
-           VIRTUAL PRAYER CHAPEL — WebXR-capable starter scene with a
-           glowing memorial wall. Enterable via mouse/touch on desktop,
-           or a VR headset where WebXR is supported.
-        ========================================================= */
-        (function initVirtualChapel() {
-            const enterBtn = document.getElementById('enterChapelBtn');
-            const overlay = document.getElementById('chapelOverlay');
-            const closeBtn = document.getElementById('chapelCloseBtn');
-            const vrBtn = document.getElementById('chapelVrBtn');
-            const muteBtn = document.getElementById('chapelMuteBtn');
-            const loadingEl = document.getElementById('chapelLoading');
-            const ytWrap = document.getElementById('chapelYouTubeWrap');
-            const ytMount = document.getElementById('chapelYouTubeMount');
-            const CHAPEL_YOUTUBE_ID = 'PMIgzE0KyFM';
-            const canvas = document.getElementById('chapelCanvas');
-            if (!enterBtn || typeof THREE === 'undefined') return;
-
-            let started = false;
-            let renderer, scene, camera, xrSession = null;
-            let yaw = 0, pitch = 0;
-            let candleLight, stars, spiritsGroup, candleFlames = [], clockStart = 0;
-
-            function makeNameplateTexture(text) {
-                const c = document.createElement('canvas');
-                c.width = 512; c.height = 128;
-                const tctx = c.getContext('2d');
-                tctx.fillStyle = 'rgba(0,0,0,0)';
-                tctx.fillRect(0, 0, c.width, c.height);
-                tctx.font = 'bold 48px Georgia, serif';
-                tctx.fillStyle = '#ffe6a8';
-                tctx.textAlign = 'center';
-                tctx.textBaseline = 'middle';
-                tctx.shadowColor = '#ffd680';
-                tctx.shadowBlur = 18;
-                tctx.fillText(text, c.width / 2, c.height / 2);
-                return new THREE.CanvasTexture(c);
-            }
-
-            let memorialGroup = null;
-
-            async function buildScene() {
-                scene = new THREE.Scene();
-                scene.background = new THREE.Color(0xdcebf7);
-                scene.fog = new THREE.Fog(0xdcebf7, 10, 34);
-
-                camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-                camera.position.set(0, 1.6, 8);
-
-                renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-                renderer.setSize(window.innerWidth, window.innerHeight);
-                renderer.xr.enabled = true;
-
-                // Bright, airy daylight lighting instead of a dark night scene.
-                const hemi = new THREE.HemisphereLight(0xfff6df, 0xcfd8e6, 0.9);
-                scene.add(hemi);
-                const sun = new THREE.DirectionalLight(0xfff2d0, 0.8);
-                sun.position.set(-6, 12, 4);
-                scene.add(sun);
-                candleLight = new THREE.PointLight(0xffcf6e, 1.1, 12);
-                candleLight.position.set(0, 1.5, 1.9);
-                scene.add(candleLight);
-                const domeLight = new THREE.PointLight(0xfff0cf, 0.7, 30);
-                domeLight.position.set(0, 10, 0);
-                scene.add(domeLight);
-
-                // Simple procedural wood-grain texture (canvas-drawn stripes +
-                // grain noise) — original, no external texture assets needed.
-                function makeWoodTexture(base, stripe, repeatX, repeatY) {
-                    const c = document.createElement('canvas');
-                    c.width = 256; c.height = 256;
-                    const ctx = c.getContext('2d');
-                    ctx.fillStyle = base;
-                    ctx.fillRect(0, 0, 256, 256);
-                    ctx.strokeStyle = stripe;
-                    ctx.lineWidth = 2;
-                    for (let i = 0; i < 14; i++) {
-                        const x = (i / 14) * 256 + (Math.random() - 0.5) * 6;
-                        ctx.beginPath();
-                        ctx.moveTo(x, 0);
-                        ctx.lineTo(x + (Math.random() - 0.5) * 10, 256);
-                        ctx.stroke();
-                    }
-                    for (let i = 0; i < 500; i++) {
-                        ctx.fillStyle = `rgba(0,0,0,${Math.random() * 0.05})`;
-                        ctx.fillRect(Math.random() * 256, Math.random() * 256, 1, Math.random() * 24);
-                    }
-                    const tex = new THREE.CanvasTexture(c);
-                    tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
-                    tex.repeat.set(repeatX || 1, repeatY || 1);
-                    return tex;
-                }
-                const floorWoodTex = makeWoodTexture('#8a5a34', '#6b4023', 10, 10);
-                const wallWoodTex = makeWoodTexture('#c8996a', '#a97a4d', 6, 3);
-                const pedestalWoodTex = makeWoodTexture('#7a4c2a', '#5c391c', 1, 1);
-
-                // Sanctuary floor — warm wood instead of pale stone
-                const floor = new THREE.Mesh(
-                    new THREE.CircleGeometry(13, 56),
-                    new THREE.MeshStandardMaterial({ map: floorWoodTex, roughness: 0.7 })
-                );
-                floor.rotation.x = -Math.PI / 2;
-                scene.add(floor);
-
-                // Colonnade: two rows of pale stone columns lining the nave
-                const columnGeo = new THREE.CylinderGeometry(0.28, 0.34, 6, 16);
-                const columnMat = new THREE.MeshStandardMaterial({ color: 0xf1ead9, roughness: 0.6 });
-                const columnCapGeo = new THREE.CylinderGeometry(0.5, 0.5, 0.25, 16);
-                for (let side = -1; side <= 1; side += 2) {
-                    for (let i = 0; i < 6; i++) {
-                        const z = -9 + i * 3.4;
-                        const col = new THREE.Mesh(columnGeo, columnMat);
-                        col.position.set(side * 4.2, 3, z);
-                        scene.add(col);
-                        const cap = new THREE.Mesh(columnCapGeo, columnMat);
-                        cap.position.set(side * 4.2, 6.1, z);
-                        scene.add(cap);
-                    }
-                }
-
-                // Dome above the altar — soft glowing daylight gold, not a dark night shell
-                const dome = new THREE.Mesh(
-                    new THREE.SphereGeometry(6, 24, 16, 0, Math.PI * 2, 0, Math.PI / 2),
-                    new THREE.MeshBasicMaterial({ color: 0xfff0cf, transparent: true, opacity: 0.35, side: THREE.BackSide })
-                );
-                dome.position.set(0, 8, 1.5);
-                scene.add(dome);
-
-                // Stained-glass-style colored light shafts falling from the dome
-                const beamColors = [0xffd6a0, 0xc9e6ff, 0xffc9dd, 0xd7ffd0];
-                beamColors.forEach((color, i) => {
-                    const beam = new THREE.Mesh(
-                        new THREE.ConeGeometry(0.9, 9, 12, 1, true),
-                        new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.10, side: THREE.DoubleSide })
-                    );
-                    const angle = (i / beamColors.length) * Math.PI * 2;
-                    beam.position.set(Math.cos(angle) * 3, 5.5, 1.5 + Math.sin(angle) * 3);
-                    beam.rotation.x = Math.PI;
-                    scene.add(beam);
-                });
-
-                // --- Sanctuary wall behind the altar ---
-                const backWall = new THREE.Mesh(
-                    new THREE.PlaneGeometry(11, 8.5),
-                    new THREE.MeshStandardMaterial({ map: wallWoodTex, roughness: 0.75 })
-                );
-                backWall.position.set(0, 4.2, -3.6);
-                scene.add(backWall);
-
-                const goldMat = new THREE.MeshStandardMaterial({ color: 0xcda43a, metalness: 0.6, roughness: 0.35 });
-
-                // --- Predella: stepped platform the altar stands on, as on a
-                // real sanctuary, instead of the mensa floating at floor level ---
-                const PREDELLA_H = 0.3;
-                const step1 = new THREE.Mesh(
-                    new THREE.BoxGeometry(6.2, 0.15, 3.6),
-                    new THREE.MeshStandardMaterial({ map: floorWoodTex, roughness: 0.7 })
-                );
-                step1.position.set(0, 0.075, 1.1);
-                scene.add(step1);
-                const step2 = new THREE.Mesh(
-                    new THREE.BoxGeometry(4.6, 0.15, 2.6),
-                    new THREE.MeshStandardMaterial({ map: floorWoodTex, roughness: 0.7 })
-                );
-                step2.position.set(0, 0.225, 1.0);
-                scene.add(step2);
-
-                // --- Mensa (altar table) on the predella ---
-                const mensaCenterY = PREDELLA_H + 0.45;
-                const mensaTopY = mensaCenterY + 0.45;
-                const mensaZ = 1.5;
-                const altar = new THREE.Mesh(
-                    new THREE.BoxGeometry(1.9, 0.9, 0.85),
-                    new THREE.MeshStandardMaterial({ color: 0xece4d2, roughness: 0.55 })
-                );
-                altar.position.set(0, mensaCenterY, mensaZ);
-                scene.add(altar);
-                // A thin stone slab overhang, as real altar tops usually have
-                const mensaSlab = new THREE.Mesh(
-                    new THREE.BoxGeometry(2.0, 0.08, 0.95),
-                    new THREE.MeshStandardMaterial({ color: 0xf5f0e2, roughness: 0.4 })
-                );
-                mensaSlab.position.set(0, mensaTopY + 0.04, mensaZ);
-                scene.add(mensaSlab);
-
-                // --- Sanctuary lamp — a small hanging red lamp near the altar,
-                // the traditional sign the Blessed Sacrament is reserved ---
-                const lampCord = new THREE.Mesh(
-                    new THREE.CylinderGeometry(0.012, 0.012, 2.4, 6),
-                    new THREE.MeshStandardMaterial({ color: 0x3a2c1a })
-                );
-                lampCord.position.set(2.6, 4.3, 0.6);
-                scene.add(lampCord);
-                const lampGlass = new THREE.Mesh(
-                    new THREE.SphereGeometry(0.16, 14, 14),
-                    new THREE.MeshStandardMaterial({ color: 0xb31f2b, transparent: true, opacity: 0.85, emissive: 0x8a1017, emissiveIntensity: 0.4 })
-                );
-                lampGlass.position.set(2.6, 3.05, 0.6);
-                scene.add(lampGlass);
-                const lampLight = new THREE.PointLight(0xff5a4a, 0.4, 4);
-                lampLight.position.copy(lampGlass.position);
-                scene.add(lampLight);
-
-                // --- The actual altar photo, displayed as a properly
-                // proportioned framed picture on the sanctuary wall — this is
-                // the real photo (undistorted aspect ratio), not a 3D guess. ---
-                let liturgicalHex = 0x8e1f1f; // fallback trim color: red
-                try {
-                    const litRes = await fetch('/api/liturgical/season', { cache: 'no-store' });
-                    const litData = await litRes.json();
-                    if (litData.success && litData.hex) liturgicalHex = parseInt(litData.hex.replace('#', '0x'));
-                } catch (e) { /* keep fallback color */ }
-
-                const PHOTO_ASPECT = 365 / 547; // the actual uploaded photo's width/height
-                const photoHeight = 5.4;
-                const photoWidth = photoHeight * PHOTO_ASPECT;
-                const photoBaseY = mensaTopY;
-                const photoCenterY = photoBaseY + photoHeight / 2;
-
-                // Thin liturgical-color trim, peeking out behind the frame
-                const trim = new THREE.Mesh(
-                    new THREE.PlaneGeometry(photoWidth + 0.34, photoHeight + 0.34),
-                    new THREE.MeshStandardMaterial({ color: liturgicalHex, roughness: 0.7 })
-                );
-                trim.position.set(0, photoCenterY, -3.62);
-                scene.add(trim);
-
-                // Dark wood frame
-                const frame = new THREE.Mesh(
-                    new THREE.PlaneGeometry(photoWidth + 0.2, photoHeight + 0.2),
-                    new THREE.MeshStandardMaterial({ color: 0x3a2416, roughness: 0.6 })
-                );
-                frame.position.set(0, photoCenterY, -3.58);
-                scene.add(frame);
-
-                // The actual uploaded photo. Upload it to your Render project's
-                // root folder (next to server.js) as "altar-photo.jpg" — since
-                // server.js already serves static files from that folder, it
-                // will automatically be reachable at /altar-photo.jpg.
-                const altarPhotoTexture = new THREE.TextureLoader().load(
-                    '/altar-photo.jpg',
-                    undefined,
-                    undefined,
-                    () => console.warn('Chapel: altar-photo.jpg not found — upload it to the project root on Render.')
-                );
-                if ('colorSpace' in altarPhotoTexture) altarPhotoTexture.colorSpace = THREE.SRGBColorSpace;
-                const altarPhoto = new THREE.Mesh(
-                    new THREE.PlaneGeometry(photoWidth, photoHeight),
-                    new THREE.MeshBasicMaterial({ map: altarPhotoTexture })
-                );
-                altarPhoto.position.set(0, photoCenterY, -3.5);
-                scene.add(altarPhoto);
-
-                // --- A small ambo (lectern) with a red cloth, off to the side ---
-                const ambo = new THREE.Mesh(
-                    new THREE.BoxGeometry(0.45, 1.05, 0.35),
-                    new THREE.MeshStandardMaterial({ map: pedestalWoodTex, roughness: 0.7 })
-                );
-                ambo.position.set(-3.4, 0.52, 1.0);
-                scene.add(ambo);
-                const amboCloth = new THREE.Mesh(
-                    new THREE.PlaneGeometry(0.4, 0.95),
-                    new THREE.MeshStandardMaterial({ color: 0xa8202a, roughness: 0.7 })
-                );
-                amboCloth.position.set(-3.4, 0.55, 1.18);
-                scene.add(amboCloth);
-
-                // --- Proper candlesticks (base, stem, wax, flame) instead of a
-                // bare glow point — two candles, close to the altar photo ---
-                const CANDLE_Z = 1.3;
-                function makeCandle(x) {
-                    const baseY = mensaTopY;
-                    const stickBase = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.12, 0.1, 12), goldMat);
-                    stickBase.position.set(x, baseY + 0.05, CANDLE_Z);
-                    scene.add(stickBase);
-                    const stickStem = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.035, 0.32, 10), goldMat);
-                    stickStem.position.set(x, baseY + 0.1 + 0.16, CANDLE_Z);
-                    scene.add(stickStem);
-                    const wax = new THREE.Mesh(
-                        new THREE.CylinderGeometry(0.045, 0.05, 0.3, 10),
-                        new THREE.MeshStandardMaterial({ color: 0xfaf3e2, roughness: 0.6 })
-                    );
-                    wax.position.set(x, baseY + 0.1 + 0.32 + 0.15, CANDLE_Z);
-                    scene.add(wax);
-                    const flame = new THREE.Mesh(new THREE.SphereGeometry(0.045, 8, 8), new THREE.MeshBasicMaterial({ color: 0xffcf6e }));
-                    flame.position.set(x, wax.position.y + 0.18, CANDLE_Z);
-                    scene.add(flame);
-                    return flame;
-                }
-                candleFlames = [makeCandle(-0.5), makeCandle(0.5)];
-
-                // Focused light on the altar photo for a sanctuary-lit feel
-                const altarSpot = new THREE.SpotLight(0xfff6df, 1.1, 22, Math.PI / 6, 0.5);
-                altarSpot.position.set(0, 7, 5);
-                altarSpot.target.position.set(0, 3, -3.4);
-                scene.add(altarSpot, altarSpot.target);
-
-                // Memorial wall lives in its own group so it can be refreshed
-                // independently every time the chapel is opened (see
-                // refreshMemorialWall) without rebuilding the whole basilica.
-                memorialGroup = new THREE.Group();
-                scene.add(memorialGroup);
-                await refreshMemorialWall();
-
-                // Flying spirits — soft glowing wisps that drift slowly through
-                // the nave, purely original abstract shapes (a glow core with a
-                // faint trailing wing shimmer), not depicting any specific figure.
-                spiritsGroup = new THREE.Group();
-                scene.add(spiritsGroup);
-                const spiritTex = makeSpiritTexture();
-                for (let i = 0; i < 6; i++) {
-                    const mat = new THREE.SpriteMaterial({ map: spiritTex, transparent: true, opacity: 0.8, depthWrite: false });
-                    const sprite = new THREE.Sprite(mat);
-                    sprite.scale.set(1.1, 1.1, 1);
-                    sprite.userData = {
-                        radius: 3 + Math.random() * 4,
-                        height: 2 + Math.random() * 3,
-                        speed: 0.15 + Math.random() * 0.15,
-                        offset: Math.random() * Math.PI * 2,
-                        bob: 0.3 + Math.random() * 0.4
-                    };
-                    spiritsGroup.add(sprite);
-                }
-
-                // Sunbeam dust motes drifting gently in the light shafts —
-                // replaces a night starfield with something that fits daylight.
-                const motesGeo = new THREE.BufferGeometry();
-                const moteCount = 260;
-                const motePos = new Float32Array(moteCount * 3);
-                for (let i = 0; i < moteCount; i++) {
-                    motePos[i * 3] = (Math.random() - 0.5) * 20;
-                    motePos[i * 3 + 1] = Math.random() * 9 + 0.5;
-                    motePos[i * 3 + 2] = (Math.random() - 0.5) * 20 + 1;
-                }
-                motesGeo.setAttribute('position', new THREE.BufferAttribute(motePos, 3));
-                stars = new THREE.Points(motesGeo, new THREE.PointsMaterial({ color: 0xfff6df, size: 0.035, transparent: true, opacity: 0.75 }));
-                scene.add(stars);
-            }
-
-            // Soft radial-glow sprite texture used for the flying spirits —
-            // an abstract luminous wisp, not any specific character or figure.
-            function makeSpiritTexture() {
-                const c = document.createElement('canvas');
-                c.width = 128; c.height = 128;
-                const tctx = c.getContext('2d');
-                const grad = tctx.createRadialGradient(64, 64, 4, 64, 64, 60);
-                grad.addColorStop(0, 'rgba(255,250,235,0.95)');
-                grad.addColorStop(0.35, 'rgba(255,232,180,0.55)');
-                grad.addColorStop(1, 'rgba(255,232,180,0)');
-                tctx.fillStyle = grad;
-                tctx.fillRect(0, 0, 128, 128);
-                return new THREE.CanvasTexture(c);
-            }
-
-            // Fetches the latest memorial names and rebuilds the plaques —
-            // called on first build AND every time the chapel is (re)opened,
-            // so a name added in Admin shows up without a page reload.
-            async function refreshMemorialWall() {
-                if (!memorialGroup) return;
-                while (memorialGroup.children.length) {
-                    const child = memorialGroup.children.pop();
-                    if (child.material && child.material.map) child.material.map.dispose();
-                    if (child.material) child.material.dispose();
-                }
-
-                let names = [];
-                try {
-                    const res = await fetch('/api/youth/directory', { cache: 'no-store' });
-                    const data = await res.json();
-                    if (data.success && Array.isArray(data.memorialNames)) names = data.memorialNames;
-                } catch (e) { /* proceed with an empty wall */ }
-
-                if (names.length === 0) {
-                    names = [{ name: 'Add names in the Admin Memorial Wall', years: '' }];
-                }
-
-                const radius = 6.5;
-                names.slice(0, 24).forEach((entry, i) => {
-                    const angle = (i / names.length) * Math.PI * 1.4 - 0.7;
-                    const label = entry.years ? `${entry.name} (${entry.years})` : entry.name;
-                    const tex = makeNameplateTexture(label);
-                    const mat = new THREE.SpriteMaterial({ map: tex, transparent: true });
-                    const sprite = new THREE.Sprite(mat);
-                    sprite.scale.set(2.4, 0.6, 1);
-                    sprite.position.set(Math.sin(angle) * radius, 1.4 + Math.sin(i) * 0.3, -Math.cos(angle) * radius + 3);
-                    memorialGroup.add(sprite);
-                });
-            }
-
-            function updateCameraFromLook() {
-                camera.rotation.set(pitch, yaw, 0, 'YXZ');
-            }
-
-            let dragging = false, lastX = 0, lastY = 0;
-            function bindLookControls() {
-                canvas.addEventListener('pointerdown', (e) => { dragging = true; lastX = e.clientX; lastY = e.clientY; });
-                window.addEventListener('pointerup', () => { dragging = false; });
-                window.addEventListener('pointermove', (e) => {
-                    if (!dragging || renderer.xr.isPresenting) return;
-                    const dx = e.clientX - lastX, dy = e.clientY - lastY;
-                    yaw -= dx * 0.004;
-                    pitch -= dy * 0.004;
-                    pitch = Math.max(-1.2, Math.min(1.2, pitch));
-                    lastX = e.clientX; lastY = e.clientY;
-                    updateCameraFromLook();
-                });
-            }
-
-            function animate() {
-                clockStart = clockStart || performance.now();
-                renderer.setAnimationLoop((time) => {
-                    const t = time * 0.001;
-                    if (candleLight) {
-                        // Flicker: a slow base wave plus faster jitter, like real candlelight.
-                        candleLight.intensity = 1.1 + Math.sin(t * 2.2) * 0.18 + Math.sin(t * 9.7) * 0.08;
-                    }
-                    if (candleFlames.length) {
-                        candleFlames.forEach((flame, i) => {
-                            const flicker = 1 + Math.sin(t * 8 + i * 2) * 0.12 + Math.sin(t * 17 + i) * 0.05;
-                            flame.scale.setScalar(flicker);
-                        });
-                    }
-                    if (stars) {
-                        // Dust motes drift slowly upward through the light shafts, looping.
-                        const pos = stars.geometry.attributes.position;
-                        for (let i = 0; i < pos.count; i++) {
-                            let y = pos.getY(i) + 0.006;
-                            if (y > 10) y = 0.3;
-                            pos.setY(i, y);
-                        }
-                        pos.needsUpdate = true;
-                        stars.material.opacity = 0.6 + Math.sin(t * 0.6) * 0.15;
-                    }
-                    if (spiritsGroup) {
-                        spiritsGroup.children.forEach((sprite) => {
-                            const d = sprite.userData;
-                            const angle = t * d.speed + d.offset;
-                            sprite.position.set(
-                                Math.sin(angle) * d.radius,
-                                d.height + Math.sin(t * 0.7 + d.offset) * d.bob,
-                                1.5 + Math.cos(angle) * d.radius * 0.6
-                            );
-                            sprite.material.opacity = 0.55 + Math.sin(t * 1.3 + d.offset) * 0.25;
-                        });
-                    }
-                    renderer.render(scene, camera);
-                });
-            }
-
-            /* =====================================================
-               Original ambient soundscape — synthesized entirely with
-               the Web Audio API (soft detuned pad + occasional random
-               bell tones on a pentatonic scale). No audio files, no
-               existing recordings — just generated tones, so there's
-               no copyright question here.
-            ===================================================== */
-            let audioCtx = null, masterGain = null, padNodes = [], chimeTimer = null, muted = false;
-
-            function startAmbience() {
-                if (audioCtx) return; // already running
-                try {
-                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-                    masterGain = audioCtx.createGain();
-                    masterGain.gain.value = muted ? 0 : 0.16;
-                    masterGain.connect(audioCtx.destination);
-
-                    const filter = audioCtx.createBiquadFilter();
-                    filter.type = 'lowpass';
-                    filter.frequency.value = 900;
-                    filter.connect(masterGain);
-
-                    // "Choir" layer: detuned tones through a narrow bandpass
-                    // filter to suggest a distant humming choir — wordless,
-                    // fully synthesized (no vocal recordings or lyrics).
-                    const choirFilter = audioCtx.createBiquadFilter();
-                    choirFilter.type = 'bandpass';
-                    choirFilter.frequency.value = 700;
-                    choirFilter.Q.value = 3.2;
-                    const choirGain = audioCtx.createGain();
-                    choirGain.gain.value = 0.09;
-                    choirFilter.connect(choirGain).connect(masterGain);
-                    const choirFreqs = [261.63, 329.63, 392.0]; // C4, E4, G4 — soft octave-up voicing
-                    choirFreqs.forEach((freq, i) => {
-                        const osc = audioCtx.createOscillator();
-                        osc.type = 'sawtooth';
-                        osc.frequency.value = freq;
-                        osc.detune.value = (i - 1) * 6;
-                        const vibrato = audioCtx.createOscillator();
-                        vibrato.frequency.value = 4.5 + i * 0.3;
-                        const vibratoGain = audioCtx.createGain();
-                        vibratoGain.gain.value = 3;
-                        vibrato.connect(vibratoGain).connect(osc.detune);
-                        vibrato.start();
-                        osc.connect(choirFilter);
-                        osc.start();
-                        padNodes.push(osc, vibrato);
-                    });
-
-                    // Soft evolving pad: a few detuned oscillators with slow LFOs.
-                    const padFreqs = [130.81, 164.81, 196.0]; // C3, E3, G3 — a calm major triad
-                    padFreqs.forEach((freq, i) => {
-                        const osc = audioCtx.createOscillator();
-                        osc.type = 'sine';
-                        osc.frequency.value = freq;
-                        const gain = audioCtx.createGain();
-                        gain.gain.value = 0.0;
-                        osc.connect(gain).connect(filter);
-                        osc.start();
-
-                        // Slow fade-in, then a gentle breathing volume.
-                        const now = audioCtx.currentTime;
-                        gain.gain.linearRampToValueAtTime(0.22, now + 3 + i * 0.5);
-                        const lfo = audioCtx.createOscillator();
-                        lfo.frequency.value = 0.05 + i * 0.02;
-                        const lfoGain = audioCtx.createGain();
-                        lfoGain.gain.value = 0.05;
-                        lfo.connect(lfoGain).connect(gain.gain);
-                        lfo.start();
-
-                        padNodes.push(osc, lfo);
-                    });
-
-                    // Occasional soft bell tones, pentatonic, at random intervals —
-                    // gives the space a "lively", not static, feel.
-                    const bellScale = [523.25, 587.33, 659.25, 783.99, 880.0]; // C5 pentatonic-ish
-                    function playBell() {
-                        if (!audioCtx) return;
-                        const freq = bellScale[Math.floor(Math.random() * bellScale.length)];
-                        const osc = audioCtx.createOscillator();
-                        const gain = audioCtx.createGain();
-                        osc.type = 'sine';
-                        osc.frequency.value = freq;
-                        gain.gain.setValueAtTime(0.0001, audioCtx.currentTime);
-                        gain.gain.exponentialRampToValueAtTime(0.09, audioCtx.currentTime + 0.05);
-                        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 3.5);
-                        osc.connect(gain).connect(filter);
-                        osc.start();
-                        osc.stop(audioCtx.currentTime + 4);
-                        chimeTimer = setTimeout(playBell, 4000 + Math.random() * 5000);
-                    }
-                    chimeTimer = setTimeout(playBell, 2500);
-                } catch (e) { /* Web Audio unavailable; chapel still works silently */ }
-            }
-
-            function stopAmbience() {
-                if (chimeTimer) { clearTimeout(chimeTimer); chimeTimer = null; }
-                padNodes.forEach(n => { try { n.stop(); } catch (e) {} });
-                padNodes = [];
-                if (audioCtx) { audioCtx.close().catch(() => {}); audioCtx = null; masterGain = null; }
-            }
-
-            muteBtn.addEventListener('click', () => {
-                muted = !muted;
-                if (masterGain) masterGain.gain.linearRampToValueAtTime(muted ? 0 : 0.16, audioCtx.currentTime + 0.3);
-                muteBtn.textContent = muted ? '🔇 Music' : '🔊 Music';
-            });
-
-            // Real human vocals via YouTube's own embedded player — this
-            // plays the video from YouTube's platform directly; nothing is
-            // downloaded, copied, or re-hosted here.
-            function startChapelSong() {
-                if (!ytMount || ytMount.childElementCount) return; // already playing
-                const iframe = document.createElement('iframe');
-                iframe.src = `https://www.youtube.com/embed/${CHAPEL_YOUTUBE_ID}?autoplay=1&loop=1&playlist=${CHAPEL_YOUTUBE_ID}&rel=0`;
-                iframe.title = 'Chapel music';
-                iframe.allow = 'autoplay; encrypted-media';
-                iframe.referrerPolicy = 'strict-origin-when-cross-origin';
-                ytMount.appendChild(iframe);
-                ytWrap.style.display = 'block';
-            }
-
-            function stopChapelSong() {
-                if (ytMount) ytMount.innerHTML = ''; // removing the iframe stops playback
-                if (ytWrap) ytWrap.style.display = 'none';
-            }
-
-            async function openChapel() {
-                // Open instantly — the overlay (and a loading cue if the scene
-                // is still being built) shows right away, before any await.
-                overlay.classList.add('open');
-                let autoplayMusic = true;
-                try {
-                    const stored = localStorage.getItem('chapel_autoplay_music');
-                    autoplayMusic = stored === null ? true : stored === '1';
-                } catch (e) { /* default to autoplay on */ }
-                if (autoplayMusic) {
-                    startAmbience();
-                    startChapelSong();
-                }
-                muteBtn.style.display = 'inline-block';
-                if (!started) {
-                    loadingEl.style.display = 'flex';
-                    started = true;
-                    await buildScene();
-                    bindLookControls();
-                    animate();
-                    loadingEl.style.display = 'none';
-                    window.addEventListener('resize', () => {
-                        if (!overlay.classList.contains('open')) return;
-                        renderer.setSize(window.innerWidth, window.innerHeight);
-                        camera.aspect = window.innerWidth / window.innerHeight;
-                        camera.updateProjectionMatrix();
-                    });
-                } else {
-                    // Chapel already built from an earlier visit this session —
-                    // just refresh the memorial wall so newly added names appear.
-                    await refreshMemorialWall();
-                }
-                // Offer WebXR "Enter VR" only if the browser/headset supports it.
-                if (navigator.xr && navigator.xr.isSessionSupported) {
-                    try {
-                        const supported = await navigator.xr.isSessionSupported('immersive-vr');
-                        vrBtn.style.display = supported ? 'inline-block' : 'none';
-                    } catch (e) { vrBtn.style.display = 'none'; }
-                } else {
-                    vrBtn.style.display = 'none';
-                }
-            }
-
-            function closeChapel() {
-                overlay.classList.remove('open');
-                stopAmbience();
-                stopChapelSong();
-                if (xrSession) { xrSession.end().catch(() => {}); }
-            }
-
-            vrBtn.addEventListener('click', async () => {
-                try {
-                    xrSession = await navigator.xr.requestSession('immersive-vr');
-                    await renderer.xr.setSession(xrSession);
-                    xrSession.addEventListener('end', () => { xrSession = null; });
-                } catch (e) {
-                    alert('Could not start the VR session on this device.');
-                }
-            });
-
-            enterBtn.addEventListener('click', openChapel);
-            closeBtn.addEventListener('click', closeChapel);
-        })();
     </script>
 </body>
 </html>
