@@ -335,6 +335,9 @@
             <div id="eventsList" class="row g-3">Loading upcoming events...</div>
         </div>
 
+        <!-- Contribution Status Banner -->
+        <div id="contributionStatusBanner" class="alert d-none mb-4" role="alert"></div>
+
         <!-- Analytics Graph Section (Generalized across all Jumuiyas) -->
         <div class="card shadow-sm p-4 mb-4">
             <h4 class="text-primary mb-3" data-i18n="contributions_chart_heading">📊 Contributions Overview by Jumuiya</h4>
@@ -545,6 +548,17 @@
                         });
                     }
                     document.getElementById('messageBoard').innerHTML = mHtml;
+
+                    // Contribution status banner
+                    const statusBanner = document.getElementById('contributionStatusBanner');
+                    if (statusBanner) {
+                        if (data.contributionStatus === 'closed') {
+                            statusBanner.className = 'alert alert-secondary mb-4';
+                            statusBanner.innerHTML = '🔒 <strong>This contribution period is closed.</strong> The figures below are from before it closed. A new contribution period will appear here once the admin starts one.';
+                        } else {
+                            statusBanner.className = 'alert d-none mb-4';
+                        }
+                    }
 
                     // Overview stat cards
                     const totalContributions = (data.masterContributions || []).reduce((sum, c) => sum + Number(c.amount || 0), 0);
