@@ -92,6 +92,8 @@ let fallbackData = {
     archives: [],
     targetAmount: 500000,
     jumuiyaTargets: {},
+    contributionStatus: 'open',
+    contributionHistory: [],
     events: [{ id: '1', title: 'Sunday Holy Mass & Youth Fellowship', date: 'Next Sunday at 10:00 AM', description: 'Main service at St. Michael Kasaini Church.', type: 'upcoming' }],
     messages: [],
     readings: [{ id: '1', title: "Sunday Holy Mass Readings", firstReading: "1 Kings 3:5...", psalm: "Psalm 119...", secondReading: "Romans 8...", gospel: "Matthew 13..." }],
@@ -127,6 +129,8 @@ async function readData() {
             archives: doc.archives || fallbackData.archives,
             targetAmount: doc.targetAmount !== undefined ? doc.targetAmount : fallbackData.targetAmount,
             jumuiyaTargets: doc.jumuiyaTargets || fallbackData.jumuiyaTargets,
+            contributionStatus: doc.contributionStatus || fallbackData.contributionStatus,
+            contributionHistory: doc.contributionHistory || fallbackData.contributionHistory,
             events: doc.events || fallbackData.events,
             messages: doc.messages || fallbackData.messages,
             readings: doc.readings || fallbackData.readings,
@@ -328,6 +332,7 @@ app.get('/api/liturgical/season', (req, res) => {
 function injectAppShell(html) {
     const linkTag = '<link rel="stylesheet" href="/app-shell.css">';
     const i18nScriptTag = '<script defer src="/i18n.js"></script>';
+    const themeScriptTag = '<script src="/theme.js"></script>';
     const liturgical = getLiturgicalInfo(new Date());
     const themeStyle = `<style>
         :root {
@@ -342,12 +347,13 @@ function injectAppShell(html) {
             <option value="en">EN</option>
             <option value="sw">SW</option>
         </select>
+        <button id="themeToggleBtn" type="button" aria-label="Toggle light or dark theme">🌙</button>
     </div>`;
 
     let out = html;
     out = /<\/head>/i.test(out)
-        ? out.replace(/<\/head>/i, `    ${linkTag}\n    ${i18nScriptTag}\n    ${themeStyle}\n</head>`)
-        : linkTag + i18nScriptTag + themeStyle + out;
+        ? out.replace(/<\/head>/i, `    ${linkTag}\n    ${themeScriptTag}\n    ${i18nScriptTag}\n    ${themeStyle}\n</head>`)
+        : linkTag + themeScriptTag + i18nScriptTag + themeStyle + out;
     out = out.replace(/(<body[^>]*>)/i, `$1\n<div class="app-shell">\n${bannerHtml}`);
     out = out.replace(/(<\/body>)/i, `</div><!-- /.app-shell -->\n$1`);
     return out;
@@ -720,6 +726,7 @@ app.get('/api/jumuiya/data', async (req, res) => {
         members,
         jumuiyaTotal,
         jumuiyaTarget: (data.jumuiyaTargets && jumuiyaName) ? (data.jumuiyaTargets[jumuiyaName] || 0) : 0,
+        contributionStatus: data.contributionStatus || 'open',
         validPurposes: VALID_PURPOSES 
     });
 });
@@ -728,6 +735,9 @@ app.post('/api/jumuiya/submit-record', async (req, res) => {
     const { jumuiyaName, name, amount, purpose } = req.body;
     if (!name || !jumuiyaName) return res.json({ success: false, message: 'Missing fields.' });
     const data = await readData();
+    if (data.contributionStatus === 'closed') {
+        return res.json({ success: false, message: 'This contribution period is closed. Please check back once a new one has started.' });
+    }
     const submissions = [...(data.jumuiyaSubmissions || []), {
         id: Date.now().toString(),
         jumuiyaName,
@@ -784,6 +794,7 @@ app.get('/api/youth/directory', async (req, res) => {
         candles: data.candles || [],
         memorialNames: data.memorialNames || [],
         mentors: data.mentors || [],
+        contributionStatus: data.contributionStatus || 'open',
         reflection,
         patronSaint,
         validPurposes: VALID_PURPOSES
@@ -936,8 +947,10 @@ app.get('/api/admin/data', async (req, res) => {
         jumuiyaSubmissions: data.jumuiyaSubmissions || [],
         polls: data.polls || [],
         archives: data.archives || [],
+        contributionHistory: data.contributionHistory || [],
         targetAmount: data.targetAmount !== undefined ? data.targetAmount : 500000,
         jumuiyaTargets: data.jumuiyaTargets || {},
+        contributionStatus: data.contributionStatus || 'open',
         contributionsMap,
         readings: data.readings || [], 
         events: data.events || [], 
@@ -957,7 +970,7 @@ app.get('/api/admin/data', async (req, res) => {
 app.post('/api/admin/set-target', async (req, res) => {
     try {
         const { targetAmount, jumuiyaTargets } = req.body;
-        let updatePayload = {};
+        let updatePayload = { contributionStatus: 'open' };
         
         if (targetAmount !== undefined) {
             const newTarget = parseFloat(targetAmount);
@@ -969,10 +982,66 @@ app.post('/api/admin/set-target', async (req, res) => {
         }
 
         await writeData(updatePayload);
-        res.json({ success: true, targetAmount: fallbackData.targetAmount, jumuiyaTargets: fallbackData.jumuiyaTargets });
+        res.json({ success: true, targetAmount: fallbackData.targetAmount, jumuiyaTargets: fallbackData.jumuiyaTargets, contributionStatus: fallbackData.contributionStatus });
     } catch (err) {
         res.status(500).json({ success: false, message: 'Server error updating target amounts.' });
     }
+});
+
+// Closes out the current contribution period: snapshots everything into
+// history (so it can be reviewed/downloaded later), then clears the live
+// submissions and targets so a brand new period can start clean. Setting
+// a new target afterward (POST /api/admin/set-target) automatically
+// reopens the status — that's the "start a new contribution" signal.
+app.post('/api/admin/close-contribution', async (req, res) => {
+    try {
+        const data = await readData();
+        if (data.contributionStatus === 'closed') {
+            return res.status(400).json({ success: false, message: 'The contribution period is already closed.' });
+        }
+
+        let totalCollected = 0;
+        const contributionsMap = {};
+        JUMUIYAS_LIST.forEach(j => { contributionsMap[j.name] = 0; });
+        (data.jumuiyaSubmissions || []).forEach(r => {
+            if (r.published) {
+                const amt = Number(r.amount || 0);
+                totalCollected += amt;
+                const matched = JUMUIYAS_LIST.find(j => normalize(j.name) === normalize(r.jumuiyaName));
+                if (matched) contributionsMap[matched.name] += amt;
+            }
+        });
+
+        const record = {
+            id: Date.now().toString(),
+            closedAt: new Date().toISOString(),
+            closedAtDisplay: new Date().toLocaleString(),
+            targetAmount: data.targetAmount || 0,
+            jumuiyaTargets: data.jumuiyaTargets || {},
+            contributionsMap,
+            totalCollected,
+            submissions: data.jumuiyaSubmissions || []
+        };
+
+        const contributionHistory = [...(data.contributionHistory || []), record];
+
+        await writeData({
+            contributionHistory,
+            contributionStatus: 'closed',
+            jumuiyaSubmissions: [],
+            targetAmount: 0,
+            jumuiyaTargets: {}
+        });
+
+        res.json({ success: true, record, contributionHistory });
+    } catch (err) {
+        res.status(500).json({ success: false, message: 'Server error closing the contribution period.' });
+    }
+});
+
+app.get('/api/admin/contribution-history', async (req, res) => {
+    const data = await readData();
+    res.json({ success: true, history: data.contributionHistory || [] });
 });
 
 app.post('/api/admin/save-event', async (req, res) => {
