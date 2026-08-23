@@ -96,13 +96,19 @@
 
             <!-- Top Bar Header -->
             <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-                <h1 class="h2" data-i18n="admin_dashboard_overview">Dashboard Overview</h1>
+                <div class="d-flex align-items-center gap-2">
+                    <h1 class="h2 mb-0" data-i18n="admin_dashboard_overview">Dashboard Overview</h1>
+                    <span id="contributionStatusBadge" class="badge bg-success">Open</span>
+                </div>
                 <div class="btn-toolbar mb-2 mb-md-0 gap-2">
                     <button class="btn btn-sm btn-outline-success" onclick="openDownloadModal('pdf')">
                         <i class="fas fa-download me-1"></i> <span data-i18n="admin_download_report">Download Report</span>
                     </button>
                     <button class="btn btn-sm btn-outline-primary" onclick="openTargetModal()">
                         <i class="fas fa-bullseye me-1"></i> <span data-i18n="admin_set_targets">Set Targets</span>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" id="closeContributionBtn">
+                        <i class="fas fa-lock me-1"></i> Close Contribution
                     </button>
                     <button class="btn btn-sm btn-outline-secondary" onclick="loadMasterData()">
                         <i class="fas fa-rotate me-1"></i> <span data-i18n="admin_refresh">Refresh</span>
@@ -419,6 +425,13 @@
                 <div id="privateThreadsAdmin"></div>
             </div>
 
+            <!-- Contribution History: past closed contribution periods -->
+            <div class="card p-4 mb-4" id="contribution-history">
+                <h4 class="mb-3"><i class="fas fa-box-archive me-2"></i> Contribution History</h4>
+                <p class="text-muted small mb-3">Every time you close a contribution period, a snapshot is saved here — view or download it any time. Closing a period clears the live totals everywhere (Admin, Member Dashboard, Jumuiya Portal) so a fresh one can start.</p>
+                <div id="contributionHistoryList" class="list-group"></div>
+            </div>
+
         </main>
     </div>
 
@@ -578,6 +591,8 @@
                 },
                 jumuiyaTargets: {},
                 targetAmount: 500000,
+                contributionStatus: 'open',
+                contributionHistory: [],
                 jumuiyaSubmissions: [],
                 pending: [],
                 members: [],
@@ -691,6 +706,13 @@
             const contributionsMap = data.contributionsMap || {};
             const jumuiyaTargetsObj = data.jumuiyaTargets || {};
             const generalTargetVal = data.targetAmount !== undefined ? Number(data.targetAmount) : 500000;
+
+            const statusBadge = document.getElementById('contributionStatusBadge');
+            const isClosed = data.contributionStatus === 'closed';
+            statusBadge.textContent = isClosed ? 'Closed' : 'Open';
+            statusBadge.className = 'badge ' + (isClosed ? 'bg-secondary' : 'bg-success');
+            const closeBtn = document.getElementById('closeContributionBtn');
+            if (closeBtn) closeBtn.disabled = isClosed;
 
             document.getElementById('generalTargetInput').value = generalTargetVal;
 
@@ -910,9 +932,9 @@
                     const thread = threadsByMember[name];
                     const bubbles = thread.map(m => `
                         <div class="d-flex ${m.sender === 'Admin' || m.sender === 'Parish Admin' ? 'justify-content-end' : ''} mb-1">
-                            <div class="p-2 rounded ${m.sender === 'Admin' || m.sender === 'Portal Admin' ? 'bg-primary text-white' : 'bg-light'}" style="max-width: 80%;">
+                            <div class="p-2 rounded ${m.sender === 'Admin' || m.sender === 'Parish Admin' ? 'bg-primary text-white' : 'bg-light'}" style="max-width: 80%;">
                                 <div class="small">${esc(m.text)}</div>
-                                <div class="small ${m.sender === 'Admin' || m.sender === 'Portal Admin' ? 'text-white-50' : 'text-muted'}">${esc(m.sender)} · ${esc(m.time || '')}</div>
+                                <div class="small ${m.sender === 'Admin' || m.sender === 'Parish Admin' ? 'text-white-50' : 'text-muted'}">${esc(m.sender)} · ${esc(m.time || '')}</div>
                             </div>
                         </div>
                     `).join('');
@@ -929,6 +951,28 @@
                 });
             }
             document.getElementById('privateThreadsAdmin').innerHTML = privateHtml;
+
+            // Contribution History
+            const historyList = document.getElementById('contributionHistoryList');
+            const history = data.contributionHistory || [];
+            if (history.length === 0) {
+                historyList.innerHTML = '<div class="list-group-item text-muted">No closed contribution periods yet.</div>';
+            } else {
+                historyList.innerHTML = [...history].reverse().map(record => `
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                            <div>
+                                <strong>Closed ${esc(record.closedAtDisplay || '')}</strong>
+                                <div class="small text-muted">Total collected: KES ${Number(record.totalCollected || 0).toLocaleString()} · Target was KES ${Number(record.targetAmount || 0).toLocaleString()}</div>
+                            </div>
+                            <div class="action-btns">
+                                <button class="btn btn-outline-success btn-sm" data-action="download-history-pdf" data-id="${esc(record.id)}">PDF</button>
+                                <button class="btn btn-outline-success btn-sm" data-action="download-history-excel" data-id="${esc(record.id)}">Excel</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
             document.querySelectorAll('.private-reply-form').forEach(form => {
                 form.addEventListener('submit', async (e) => {
                     e.preventDefault();
@@ -938,7 +982,7 @@
                     try {
                         await apiCall('/api/messages/private/send', {
                             method: 'POST',
-                            body: JSON.stringify({ member: form.dataset.member, sender: 'Portal Admin', text })
+                            body: JSON.stringify({ member: form.dataset.member, sender: 'Parish Admin', text })
                         });
                         input.value = '';
                         await loadMasterData();
@@ -1056,6 +1100,20 @@
                 if (inputField) { inputField.focus(); inputField.select(); }
             }, 300);
         };
+
+        document.getElementById('closeContributionBtn').addEventListener('click', async () => {
+            if (!confirm('Close the current contribution period? This will archive everything collected so far into history and clear the board so you can start a brand new contribution. This cannot be undone.')) return;
+            const btn = document.getElementById('closeContributionBtn');
+            btn.disabled = true;
+            try {
+                await apiCall('/api/admin/close-contribution', { method: 'POST' });
+                await loadMasterData();
+                showGlobalStatus('Contribution period closed and archived to history.', 'success');
+            } catch (err) {
+                showGlobalStatus('Failed to close contribution: ' + err.message, 'danger');
+                btn.disabled = false;
+            }
+        });
 
         document.getElementById('targetForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -1187,6 +1245,55 @@
             }
 
             XLSX.writeFile(wb, `St_Michael_Report_${scope}_${Date.now()}.xlsx`);
+        }
+
+        function downloadHistoryPDF(record) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            let y = 14;
+            doc.setFontSize(15);
+            doc.text('St. Michael Kasaini Youth Portal', 14, y); y += 6;
+            doc.setFontSize(11);
+            doc.text('Closed Contribution Period', 14, y); y += 6;
+            doc.setFontSize(9);
+            doc.setTextColor(100);
+            doc.text('Closed: ' + (record.closedAtDisplay || ''), 14, y); y += 7;
+            doc.setTextColor(0);
+
+            const finRows = Object.entries(record.contributionsMap || {}).map(([name, amt]) => {
+                const target = (record.jumuiyaTargets || {})[name] || 0;
+                const pct = target > 0 ? Math.min(Math.round((Number(amt) / target) * 100), 100) : 0;
+                return [name, Number(amt).toLocaleString(), Number(target).toLocaleString(), pct + '%'];
+            });
+            doc.autoTable({ startY: y, head: [['Jumuiya', 'Collected (KES)', 'Target (KES)', 'Progress']], body: finRows, styles: { fontSize: 9 } });
+            y = doc.lastAutoTable.finalY + 6;
+            doc.setFontSize(10);
+            doc.text(`Total Collected: KES ${Number(record.totalCollected || 0).toLocaleString()}  |  Overall Target: KES ${Number(record.targetAmount || 0).toLocaleString()}`, 14, y);
+            y += 10;
+
+            const subRows = (record.submissions || []).map(s => [s.jumuiyaName || '', s.name || '', 'KES ' + (s.amount || 0), s.purpose || '', s.published ? 'Published' : 'Draft']);
+            if (subRows.length) {
+                doc.setFontSize(12);
+                doc.text('Jumuiya Submissions', 14, y); y += 2;
+                doc.autoTable({ startY: y, head: [['Jumuiya', 'Name', 'Amount', 'Purpose', 'Status']], body: subRows, styles: { fontSize: 9 } });
+            }
+            doc.save(`St_Michael_Contribution_History_${record.id}.pdf`);
+        }
+
+        function downloadHistoryExcel(record) {
+            const wb = XLSX.utils.book_new();
+            const finRows = Object.entries(record.contributionsMap || {}).map(([name, amt]) => ({
+                Jumuiya: name,
+                'Collected (KES)': amt,
+                'Target (KES)': (record.jumuiyaTargets || {})[name] || 0
+            }));
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(finRows), 'Financial Summary');
+
+            const subRows = (record.submissions || []).map(s => ({
+                Jumuiya: s.jumuiyaName || '', Name: s.name || '', Amount: s.amount || 0, Purpose: s.purpose || '', Status: s.published ? 'Published' : 'Draft'
+            }));
+            if (subRows.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(subRows), 'Submissions');
+            XLSX.writeFile(wb, `St_Michael_Contribution_History_${record.id}.xlsx`);
         }
 
         document.getElementById('downloadForm').addEventListener('submit', (e) => {
@@ -1431,6 +1538,16 @@
                 switch (action) {
                     case 'edit-target': {
                         openTargetModalForJumuiya(btn.getAttribute('data-jumuiya'));
+                        break;
+                    }
+                    case 'download-history-pdf': {
+                        const record = (cachedMasterData.contributionHistory || []).find(r => r.id === id);
+                        if (record) downloadHistoryPDF(record);
+                        break;
+                    }
+                    case 'download-history-excel': {
+                        const record = (cachedMasterData.contributionHistory || []).find(r => r.id === id);
+                        if (record) downloadHistoryExcel(record);
                         break;
                     }
                     case 'delete-event': {
