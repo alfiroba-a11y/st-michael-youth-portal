@@ -10,6 +10,9 @@
     <!-- GSAP for polished entrance/hover animations -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- Three.js for the Prayer Globe -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
     <style>
@@ -968,6 +971,66 @@
                 messagesEl.scrollTop = messagesEl.scrollHeight;
             }
 
+            function addReportDownloadOption(report) {
+                const wrap = document.createElement('div');
+                wrap.className = 'companion-msg companion-msg-bot';
+                wrap.innerHTML = `<div class="mb-2 fw-bold">${escHtml(report.label)}</div>`;
+                const btnRow = document.createElement('div');
+                btnRow.className = 'd-flex gap-2';
+
+                const pdfBtn = document.createElement('button');
+                pdfBtn.className = 'btn btn-sm btn-outline-primary';
+                pdfBtn.textContent = 'Download PDF';
+                pdfBtn.addEventListener('click', () => downloadReportPDF(report));
+
+                const xlsBtn = document.createElement('button');
+                xlsBtn.className = 'btn btn-sm btn-outline-success';
+                xlsBtn.textContent = 'Download Excel';
+                xlsBtn.addEventListener('click', () => downloadReportExcel(report));
+
+                btnRow.appendChild(pdfBtn);
+                btnRow.appendChild(xlsBtn);
+                wrap.appendChild(btnRow);
+                messagesEl.appendChild(wrap);
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+            }
+
+            function escHtml(v) {
+                return String(v === undefined || v === null ? '' : v)
+                    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            }
+
+            function downloadReportPDF(report) {
+                if (typeof window.jspdf === 'undefined') { alert('PDF library not loaded — please refresh and try again.'); return; }
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                let y = 14;
+                doc.setFontSize(14);
+                doc.text('St. Michael Kasaini Youth Portal', 14, y); y += 6;
+                doc.setFontSize(11);
+                doc.text(report.label, 14, y); y += 8;
+                const rows = Object.entries(report.contributionsMap || {}).map(([name, amt]) => {
+                    const target = (report.jumuiyaTargets || {})[name] || 0;
+                    const pct = target > 0 ? Math.min(Math.round((Number(amt) / target) * 100), 100) : 0;
+                    return [name, Number(amt).toLocaleString(), Number(target).toLocaleString(), pct + '%'];
+                });
+                doc.autoTable({ startY: y, head: [['Jumuiya', 'Collected (KES)', 'Target (KES)', 'Progress']], body: rows, styles: { fontSize: 9 } });
+                let y2 = doc.lastAutoTable.finalY + 6;
+                doc.setFontSize(10);
+                doc.text(`Total Collected: KES ${Number(report.totalCollected || 0).toLocaleString()}  |  Target: KES ${Number(report.targetAmount || 0).toLocaleString()}`, 14, y2);
+                doc.save(`St_Michael_Contribution_Report_${Date.now()}.pdf`);
+            }
+
+            function downloadReportExcel(report) {
+                if (typeof XLSX === 'undefined') { alert('Excel library not loaded — please refresh and try again.'); return; }
+                const wb = XLSX.utils.book_new();
+                const rows = Object.entries(report.contributionsMap || {}).map(([name, amt]) => ({
+                    Jumuiya: name, 'Collected (KES)': amt, 'Target (KES)': (report.jumuiyaTargets || {})[name] || 0
+                }));
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'Contribution Report');
+                XLSX.writeFile(wb, `St_Michael_Contribution_Report_${Date.now()}.xlsx`);
+            }
+
             fab.addEventListener('click', () => {
                 panel.classList.toggle('d-none');
                 if (!panel.classList.contains('d-none')) input.focus();
@@ -1001,6 +1064,7 @@
                     thinkingEl.remove();
                     if (data.success) {
                         addMessage(data.answer, 'companion-msg-bot');
+                        if (data.report) addReportDownloadOption(data.report);
                         if (data.escalate) addEscalateOption(question);
                     } else {
                         addMessage(data.message || "I couldn't process that — please try again.", 'companion-msg-bot');
