@@ -1009,6 +1009,7 @@
                 doc.text('St. Michael Kasaini Youth Portal', 14, y); y += 6;
                 doc.setFontSize(11);
                 doc.text(report.label, 14, y); y += 8;
+
                 const rows = Object.entries(report.contributionsMap || {}).map(([name, amt]) => {
                     const target = (report.jumuiyaTargets || {})[name] || 0;
                     const pct = target > 0 ? Math.min(Math.round((Number(amt) / target) * 100), 100) : 0;
@@ -1018,6 +1019,16 @@
                 let y2 = doc.lastAutoTable.finalY + 6;
                 doc.setFontSize(10);
                 doc.text(`Total Collected: KES ${Number(report.totalCollected || 0).toLocaleString()}  |  Target: KES ${Number(report.targetAmount || 0).toLocaleString()}`, 14, y2);
+                y2 += 10;
+
+                const subRows = (report.submissions || []).map(s => [
+                    s.jumuiyaName || '', s.name || '', 'KES ' + Number(s.amount || 0).toLocaleString(), s.purpose || '', s.published ? 'Published' : 'Draft'
+                ]);
+                if (subRows.length) {
+                    doc.setFontSize(12);
+                    doc.text('Contributors', 14, y2); y2 += 2;
+                    doc.autoTable({ startY: y2, head: [['Jumuiya', 'Name', 'Amount', 'Purpose', 'Status']], body: subRows, styles: { fontSize: 9 } });
+                }
                 doc.save(`St_Michael_Contribution_Report_${Date.now()}.pdf`);
             }
 
@@ -1027,7 +1038,12 @@
                 const rows = Object.entries(report.contributionsMap || {}).map(([name, amt]) => ({
                     Jumuiya: name, 'Collected (KES)': amt, 'Target (KES)': (report.jumuiyaTargets || {})[name] || 0
                 }));
-                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'Contribution Report');
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(rows), 'Contribution Summary');
+
+                const subRows = (report.submissions || []).map(s => ({
+                    Jumuiya: s.jumuiyaName || '', Name: s.name || '', Amount: s.amount || 0, Purpose: s.purpose || '', Status: s.published ? 'Published' : 'Draft'
+                }));
+                if (subRows.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(subRows), 'Contributors');
                 XLSX.writeFile(wb, `St_Michael_Contribution_Report_${Date.now()}.xlsx`);
             }
 
