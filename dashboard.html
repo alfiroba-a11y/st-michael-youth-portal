@@ -504,12 +504,14 @@
                         }
                     }
 
-                    // 2. Render Upcoming Events
+                    // 2. Render Upcoming Events (past-dated events drop off automatically)
+                    const todayStr = new Date().toISOString().slice(0, 10);
+                    const upcomingOnly = (data.events || []).filter(ev => !ev.date || ev.date >= todayStr);
                     let eHtml = '';
-                    if (!data.events || data.events.length === 0) {
+                    if (upcomingOnly.length === 0) {
                         eHtml = '<div class="col-12 text-muted small">No upcoming events scheduled at the moment.</div>';
                     } else {
-                        data.events.forEach(ev => {
+                        upcomingOnly.forEach(ev => {
                             eHtml += `<div class="col-md-4"><div class="p-3 border rounded bg-white shadow-sm h-100"><h5 class="text-success">${ev.title}</h5><p class="small text-muted mb-1"><strong>Time:</strong> ${ev.date || 'TBA'}</p><p class="small mb-0">${ev.description || ''}</p></div></div>`;
                         });
                     }
@@ -565,7 +567,7 @@
 
                     // Overview stat cards
                     const totalContributions = (data.masterContributions || []).reduce((sum, c) => sum + Number(c.amount || 0), 0);
-                    const eventCount = (data.events || []).length;
+                    const eventCount = upcomingOnly.length;
                     const memberCount = (data.members || []).length;
                     const candles = data.candles || [];
                     const candlesLit = candles.filter(c => c.lit).length;
