@@ -255,7 +255,10 @@
                             <button type="submit" class="btn btn-primary btn-sm w-100">Publish Event</button>
                         </form>
                         <hr class="my-3">
+                        <h6 class="text-secondary small fw-bold">Upcoming Events</h6>
                         <div id="eventsListAdmin"></div>
+                        <h6 class="text-secondary small fw-bold mt-3">Past Events <span class="text-muted fw-normal">(moved here automatically once the date passes)</span></h6>
+                        <div id="pastEventsListAdmin"></div>
                     </div>
 
                     <div class="col-md-6 mb-3">
@@ -791,19 +794,29 @@
             progressBar.setAttribute('aria-valuenow', overallPercentage);
             progressBar.textContent = `${overallPercentage}%`;
 
-            // Events Admin List
-            let eHtml = '<ul class="list-group">';
-            if (data.events && data.events.length > 0) {
-                data.events.forEach(ev => {
-                    eHtml += `<li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
-                        <div><strong>${esc(ev.title || 'Untitled Event')}</strong> (${esc(ev.date || '')})<br><small>${esc(ev.description || '')}</small></div>
-                        <button class="btn btn-outline-danger btn-sm" data-action="delete-event" data-id="${recordId(ev)}">Delete</button>
-                    </li>`;
-                });
-            } else {
-                eHtml += '<li class="list-group-item text-muted">No active events posted.</li>';
+            // Events Admin List — automatically split into Upcoming vs Past
+            // by comparing each event's date to today. Nothing needs to be
+            // manually moved; it just re-sorts on every load.
+            const todayStr = new Date().toISOString().slice(0, 10);
+            const upcomingEvents = (data.events || []).filter(ev => !ev.date || ev.date >= todayStr);
+            const pastEvents = (data.events || []).filter(ev => ev.date && ev.date < todayStr);
+
+            function renderEventList(list, emptyText) {
+                let html = '<ul class="list-group">';
+                if (list.length > 0) {
+                    list.forEach(ev => {
+                        html += `<li class="list-group-item d-flex justify-content-between align-items-center flex-wrap gap-2">
+                            <div><strong>${esc(ev.title || 'Untitled Event')}</strong> (${esc(ev.date || '')})<br><small>${esc(ev.description || '')}</small></div>
+                            <button class="btn btn-outline-danger btn-sm" data-action="delete-event" data-id="${recordId(ev)}">Delete</button>
+                        </li>`;
+                    });
+                } else {
+                    html += `<li class="list-group-item text-muted">${emptyText}</li>`;
+                }
+                return html + '</ul>';
             }
-            document.getElementById('eventsListAdmin').innerHTML = eHtml + '</ul>';
+            document.getElementById('eventsListAdmin').innerHTML = renderEventList(upcomingEvents, 'No upcoming events posted.');
+            document.getElementById('pastEventsListAdmin').innerHTML = renderEventList(pastEvents, 'No past events yet.');
 
             // Readings Admin List
             let rHtml = '<ul class="list-group">';
