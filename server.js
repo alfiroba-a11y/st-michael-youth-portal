@@ -203,6 +203,29 @@ initDB();
 const normalize = (str) => (str || '').toLowerCase().replace(/[\.\s]/g, '');
 const maskPhone = (phone) => (!phone || phone.length < 6) ? '****' : phone.slice(0, 3) + '****' + phone.slice(-3);
 
+// An event automatically becomes "past" once its date's day has fully
+// elapsed. Events with an unparseable date (e.g. old free-text entries
+// like "Next Sunday at 10:00 AM") are treated as upcoming rather than
+// guessed at, since we can't safely tell.
+function isEventPast(dateStr) {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return false;
+    const endOfEventDay = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 23, 59, 59, 999);
+    return endOfEventDay.getTime() < Date.now();
+}
+
+function splitEvents(events) {
+    const upcoming = [];
+    const past = [];
+    (events || []).forEach(ev => {
+        if (isEventPast(ev.date)) past.push(ev); else upcoming.push(ev);
+    });
+    upcoming.sort((a, b) => new Date(a.date) - new Date(b.date));
+    past.sort((a, b) => new Date(b.date) - new Date(a.date));
+    return { upcoming, past };
+}
+
 // =============================================================
 // GLOBAL "APP SHELL" LAYOUT
 // Every HTML page on this site (index, login, dashboard, admin,
@@ -555,8 +578,8 @@ app.post('/api/assistant/ask', async (req, res) => {
         // ---- Contribution report request: answer AND hand back a real,
         // downloadable data package (current live totals, or the last
         // closed period if that's what's being asked for) ----
-        if (/contribution|report|collection/.test(q) && /(report|download|last|history|summary|figures)/.test(q)) {
-            const wantsLastClosed = /(last|previous|closed|past)/.test(q) && lastClosedReport;
+        if (/contribut\w*|giving|donation|offering|collection/i.test(q) && /report|download|last|history|summary|figures|list|breakdown|export|file|excel|pdf|past|previous|closed|record|who (gave|paid|contributed)/i.test(q)) {
+            const wantsLastClosed = /last|previous|closed|past/i.test(q) && lastClosedReport;
             const reportPayload = wantsLastClosed
                 ? {
                     label: `Closed contribution period (${lastClosedReport.closedAtDisplay || 'archived'})`,
