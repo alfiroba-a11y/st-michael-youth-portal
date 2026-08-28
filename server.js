@@ -575,32 +575,24 @@ app.post('/api/assistant/ask', async (req, res) => {
         const totalCollected = Object.values(contributionsMap).reduce((a, b) => a + b, 0);
         const lastClosedReport = (data.contributionHistory || [])[(data.contributionHistory || []).length - 1] || null;
 
-        // ---- Contribution report request: answer AND hand back a real,
-        // downloadable data package (current live totals, or the last
-        // closed period if that's what's being asked for) ----
+        // ---- Contribution report request: offer a real CHOICE between the
+        // current period and any past (closed) periods, instead of guessing
+        // which one the question meant. The front-end fetches full detail
+        // for whichever one is picked via /api/youth/contribution-report. ----
         if (/contribut\w*|giving|donation|offering|collection/i.test(q) && /report|download|last|history|summary|figures|list|breakdown|export|file|excel|pdf|past|previous|closed|record|who (gave|paid|contributed)/i.test(q)) {
-            const wantsLastClosed = /last|previous|closed|past/i.test(q) && lastClosedReport;
-            const reportPayload = wantsLastClosed
-                ? {
-                    label: `Closed contribution period (${lastClosedReport.closedAtDisplay || 'archived'})`,
-                    contributionsMap: lastClosedReport.contributionsMap || {},
-                    jumuiyaTargets: lastClosedReport.jumuiyaTargets || {},
-                    targetAmount: lastClosedReport.targetAmount || 0,
-                    totalCollected: lastClosedReport.totalCollected || 0,
-                    submissions: lastClosedReport.submissions || []
-                }
-                : {
-                    label: data.contributionStatus === 'closed' ? 'Current contribution period (closed)' : 'Current contribution period (open)',
-                    contributionsMap,
-                    jumuiyaTargets: data.jumuiyaTargets || {},
-                    targetAmount: data.targetAmount || 0,
-                    totalCollected,
-                    submissions: (data.jumuiyaSubmissions || []).filter(s => s.published)
-                };
-            const answer = wantsLastClosed
-                ? `Here's the last closed contribution period: KES ${Number(reportPayload.totalCollected).toLocaleString()} collected against a target of KES ${Number(reportPayload.targetAmount).toLocaleString()}. You can download the full breakdown below.`
-                : `Here's the current contribution summary: KES ${Number(totalCollected).toLocaleString()} collected so far${data.targetAmount ? ` against a target of KES ${Number(data.targetAmount).toLocaleString()}` : ''}. You can download the full breakdown below.`;
-            return res.json({ success: true, answer, escalate: false, mode: 'report', report: reportPayload });
+            const options = [
+                { key: 'current', label: `Current period — KES ${Number(totalCollected).toLocaleString()} collected so far` }
+            ];
+            (data.contributionHistory || []).slice().reverse().forEach(r => {
+                options.push({ key: r.id, label: `Closed ${r.closedAtDisplay || ''} — KES ${Number(r.totalCollected || 0).toLocaleString()} collected` });
+            });
+            return res.json({
+                success: true,
+                answer: 'Which contribution report would you like to download?',
+                escalate: false,
+                mode: 'report-choice',
+                reportOptions: options
+            });
         }
 
         // ---- Parish/portal-specific questions answered from real portal
@@ -610,24 +602,46 @@ app.post('/api/assistant/ask', async (req, res) => {
                 if (mentorForMember) return `Your mentor for ${mentorForMember.month || 'this period'} is ${mentorForMember.mentorName}${mentorForMember.mentorContact ? ` (${mentorForMember.mentorContact})` : ''}.`;
                 return "I don't have a mentor on file for your group yet — I'll connect you to an admin.";
             }
-            if (/\b(camp|event|upcoming|schedule)\b/.test(q)) {
+            if (/camp|event|upcoming|schedule/.test(q)) {
                 if (nextEvent) return `The next event is "${nextEvent.title}" — ${nextEvent.date}. ${nextEvent.description || ''}`.trim();
                 return "There's nothing on the events calendar yet.";
             }
-            if (/reading|gospel|\bmass\b|psalm|scripture/.test(q)) {
-                if (currentReading) return `This week's readings are posted under "${currentReading.title}" — check the Mass Readings section on the homepage for the full text.`;
-                return "Readings haven't been posted yet.";
+            if (/gospel|\bmass\b|psalm|scripture|daily reading/.test(q)) {
+                if (currentReading) return `This week's readings are posted under "${currentReading.title}" — check the Mass Readings section on the homepage for the full text. For the full daily readings calendar, USCCB.org has the complete official version.`;
+                return "Readings haven't been posted yet. For the full daily readings calendar, USCCB.org has the complete official version.";
             }
-            if (/contact|admin|\bleader\b|moderator|phone|reach|call/.test(q)) {
+            if (/contact|admin\b|leader|moderator|phone|reach|call/.test(q)) {
                 return 'You can reach the youth board directly: ' + YOUTH_BOARD_CONTACTS.map(c => `${c.role} ${c.name} (${c.phone})`).join(', ') + '.';
             }
-            if (/hymn|\bsong\b|music/.test(q)) {
+            if (/hymn|song|music/.test(q)) {
                 const titles = (data.hymns || []).slice(0, 6).map(h => h.title);
                 if (titles.length) return `A few songs in our hymnal: ${titles.join(', ')}. Check the homepage Hymnal section for the full list.`;
-                return 'No songs have been added to the hymnal yet.';
+                return 'No songs have been added to the hymnal yet — check the homepage Hymnal section.';
             }
-            if (/candle|\bpray\b|intention/.test(q)) {
-                return 'You can light a virtual prayer candle or a Global Prayer Globe intention from the homepage and dashboard — look for the Prayer Sanctuary and Prayer Globe sections.';
+            if (/candle/.test(q)) {
+                return 'You can light a virtual prayer candle from the Prayer Sanctuary section on the homepage, or a Global Prayer Globe intention from the dashboard.';
+            }
+            if (/^pray|[^a-z]pray/.test(q)) {
+                return 'You can find traditional Catholic prayers, light a virtual prayer candle, or add an intention to the Global Prayer Globe. See the Prayer Sanctuary section on the homepage, or visit the Prayer Resources card for the full USCCB prayer collection.';
+            }
+            if (/sacrament/.test(q)) {
+                return 'An overview of the seven sacraments — Baptism, Confirmation, Eucharist, Penance, Anointing of the Sick, Holy Orders, and Matrimony — is in the Catholic Resources & Guides section on the homepage, with a link to the full USCCB guide.';
+            }
+            if (/\bthe mass\b|liturgy of the mass|order of mass/.test(q)) {
+                return 'What each part of the Mass means, from the Introductory Rites through the Liturgy of the Word and Eucharist to the Concluding Rites, is covered in the Catholic Resources & Guides section on the homepage, with a link to the full USCCB guide.';
+            }
+            if (/liturgy of the hours|breviary|divine office/.test(q)) {
+                return "The Church's daily cycle of prayer — psalms, readings, and canticles — is covered in the Catholic Resources & Guides section on the homepage, with a link to the full USCCB guide.";
+            }
+            if (/liturgical year|liturgical calendar|advent|lent|easter|christmas|ordinary time|season/.test(q)) {
+                const lit = getLiturgicalInfo(new Date());
+                return `We're currently in ${lit.seasonName} (${lit.colorName}). ${lit.note} See the Liturgical Year & Calendar card on the homepage for the full guide.`;
+            }
+            if (/rosary/.test(q)) {
+                return "The full Holy Rosary guide — all four sets of Mysteries — is on the homepage under 'The Holy Rosary'.";
+            }
+            if (/stations of the cross|way of the cross/.test(q)) {
+                return 'All 14 Stations of the Cross, with meditations, are on the homepage under "The Way of the Cross".';
             }
             if (/memorial/.test(q)) {
                 const names = (data.memorialNames || []).length;
@@ -637,15 +651,29 @@ app.post('/api/assistant/ask', async (req, res) => {
                 const saint = getSaintOfDay(new Date());
                 return `Today's featured saint is ${saint.name} (feast day: ${saint.feastDay}). ${saint.blurb}`;
             }
-            if (/season|liturgical|advent|lent|easter|christmas|ordinary time/.test(q)) {
-                const lit = getLiturgicalInfo(new Date());
-                return `We're currently in ${lit.seasonName} (${lit.colorName}). ${lit.note}`;
+            if (/globe/.test(q)) {
+                return 'The Global Prayer Globe lets you drop a prayer intention pin from wherever you are — find it on your dashboard.';
             }
             if (/register|sign ?up|join|how do i (join|register)/.test(q)) {
                 return 'New members can register from the Sign Up button on the homepage — an admin approves new registrations before you can log in.';
             }
             if (/password|forgot|reset/.test(q)) {
                 return 'If you forgot your password, use the password reset option on the login page — an admin will need to approve the reset before your new password works.';
+            }
+            if (/setting|preference|theme|dark mode|light mode|language|kiswahili|profile/.test(q)) {
+                return 'Open your Profile from the top of the dashboard to edit your details, and to change theme (light/dark), language (English/Kiswahili), and other preferences.';
+            }
+            if (/community board|message board|post a message/.test(q)) {
+                return 'The Community Board on your dashboard is where members post messages and questions publicly — anyone can post there.';
+            }
+            if (/private message|message admin|contact admin directly/.test(q)) {
+                return "You have a private message thread with the admin on your dashboard — anything you send there, or that I escalate for you, only the admin can see.";
+            }
+            if (/jumuiya portal/.test(q)) {
+                return "The Jumuiya Portal is where each Jumuiya's group admin submits that group's contributions — it's a separate login from the member dashboard.";
+            }
+            if (/what can you (do|help)|help me|who are you|what are you/.test(q)) {
+                return "I'm the St. Michael Companion — the portal's support assistant. Ask me about events, readings, the Mass, sacraments, prayers, the Rosary, hymns, mentors, contacts, the Memorial Wall, prayer candles, or contribution reports, and I'll pull it straight from the portal for you.";
             }
             return null;
         }
@@ -798,6 +826,75 @@ app.post('/api/candles/toggle', async (req, res) => {
     } catch (e) {
         res.status(500).json({ success: false, message: 'Error toggling candle.' });
     }
+});
+
+// Lightweight list of contribution periods (current + past) so members
+// and the Companion assistant can offer a real choice instead of guessing
+// which one someone means.
+app.get('/api/youth/contribution-periods', async (req, res) => {
+    const data = await readData();
+    let totalCollected = 0;
+    (data.jumuiyaSubmissions || []).forEach(r => { if (r.published) totalCollected += Number(r.amount || 0); });
+    const current = {
+        key: 'current',
+        label: data.contributionStatus === 'closed' ? 'Current period (closed, not yet archived)' : 'Current contribution period',
+        totalCollected,
+        targetAmount: data.targetAmount || 0,
+        status: data.contributionStatus || 'open'
+    };
+    const past = (data.contributionHistory || []).slice().reverse().map(r => ({
+        key: r.id,
+        label: `Closed ${r.closedAtDisplay || ''}`,
+        totalCollected: r.totalCollected || 0,
+        targetAmount: r.targetAmount || 0,
+        status: 'closed'
+    }));
+    res.json({ success: true, current, past });
+});
+
+// Full detail for one period — 'current' for the live period, or a
+// contributionHistory id for a past one. Same shape either way, so the
+// front-end can generate the PDF/Excel identically for both.
+app.get('/api/youth/contribution-report', async (req, res) => {
+    const data = await readData();
+    const period = req.query.period || 'current';
+
+    if (period === 'current') {
+        const contributionsMap = {};
+        JUMUIYAS_LIST.forEach(j => { contributionsMap[j.name] = 0; });
+        (data.jumuiyaSubmissions || []).forEach(r => {
+            if (r.published) {
+                const matched = JUMUIYAS_LIST.find(j => normalize(j.name) === normalize(r.jumuiyaName));
+                if (matched) contributionsMap[matched.name] += Number(r.amount || 0);
+            }
+        });
+        const totalCollected = Object.values(contributionsMap).reduce((a, b) => a + b, 0);
+        return res.json({
+            success: true,
+            report: {
+                label: data.contributionStatus === 'closed' ? 'Current contribution period (closed)' : 'Current contribution period (open)',
+                contributionsMap,
+                jumuiyaTargets: data.jumuiyaTargets || {},
+                targetAmount: data.targetAmount || 0,
+                totalCollected,
+                submissions: (data.jumuiyaSubmissions || []).filter(s => s.published)
+            }
+        });
+    }
+
+    const record = (data.contributionHistory || []).find(r => r.id === period);
+    if (!record) return res.status(404).json({ success: false, message: 'That contribution period was not found.' });
+    res.json({
+        success: true,
+        report: {
+            label: `Closed contribution period (${record.closedAtDisplay || 'archived'})`,
+            contributionsMap: record.contributionsMap || {},
+            jumuiyaTargets: record.jumuiyaTargets || {},
+            targetAmount: record.targetAmount || 0,
+            totalCollected: record.totalCollected || 0,
+            submissions: record.submissions || []
+        }
+    });
 });
 
 app.get('/api/youth/directory', async (req, res) => {
