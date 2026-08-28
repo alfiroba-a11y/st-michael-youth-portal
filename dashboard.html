@@ -150,6 +150,13 @@
     </nav>
 
     <div class="container my-4 flex-grow-1">
+        <!-- Contribution Report Download Tab -->
+        <div class="d-flex justify-content-end mb-3">
+            <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="modal" data-bs-target="#contributionReportModal">
+                📄 Past/Current Contributions Report
+            </button>
+        </div>
+
         <!-- Overview stat cards -->
         <div class="row g-3 mb-4" id="statCardsRow">
             <div class="col-6 col-lg-3">
@@ -265,6 +272,23 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Past/Current Contributions Report -->
+        <div class="modal fade" id="contributionReportModal" tabindex="-1" aria-labelledby="contributionReportModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-scrollable">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title text-primary" id="contributionReportModalLabel">📄 Past/Current Contributions Report</h4>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="text-muted small">Choose which contribution period to download. Each report includes both the Jumuiya totals and the individual members who contributed.</p>
+                        <div id="contributionReportPeriodsList">Loading periods...</div>
+                        <div id="contributionReportDownloadArea" class="mt-3"></div>
                     </div>
                 </div>
             </div>
@@ -922,6 +946,70 @@
         })();
 
         /* =========================================================
+           PAST/CURRENT CONTRIBUTIONS REPORT (dedicated dashboard tab)
+        ========================================================= */
+        (function initContributionReportTab() {
+            const modalEl = document.getElementById('contributionReportModal');
+            const listEl = document.getElementById('contributionReportPeriodsList');
+            const downloadAreaEl = document.getElementById('contributionReportDownloadArea');
+            if (!modalEl) return;
+
+            function escHtml2(v) {
+                return String(v === undefined || v === null ? '' : v)
+                    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            }
+
+            async function loadPeriods() {
+                listEl.innerHTML = 'Loading periods...';
+                downloadAreaEl.innerHTML = '';
+                try {
+                    const res = await fetch('/api/youth/contribution-periods', { cache: 'no-store' });
+                    const data = await res.json();
+                    if (!data.success) { listEl.innerHTML = '<p class="text-danger small">Could not load contribution periods.</p>'; return; }
+                    const all = [data.current, ...(data.past || [])];
+                    listEl.innerHTML = '';
+                    const group = document.createElement('div');
+                    group.className = 'list-group';
+                    all.forEach(period => {
+                        const btn = document.createElement('button');
+                        btn.type = 'button';
+                        btn.className = 'list-group-item list-group-item-action d-flex justify-content-between align-items-center';
+                        btn.innerHTML = `<span>${escHtml2(period.label)}</span><span class="badge bg-secondary">KES ${Number(period.totalCollected || 0).toLocaleString()}</span>`;
+                        btn.addEventListener('click', () => selectPeriod(period.key, period.label));
+                        group.appendChild(btn);
+                    });
+                    listEl.appendChild(group);
+                } catch (e) {
+                    listEl.innerHTML = '<p class="text-danger small">Could not load contribution periods.</p>';
+                }
+            }
+
+            async function selectPeriod(key) {
+                downloadAreaEl.innerHTML = 'Loading report...';
+                try {
+                    const res = await fetch(`/api/youth/contribution-report?period=${encodeURIComponent(key)}`, { cache: 'no-store' });
+                    const data = await res.json();
+                    if (!data.success) { downloadAreaEl.innerHTML = '<p class="text-danger small">Could not load that report.</p>'; return; }
+                    const report = data.report;
+                    downloadAreaEl.innerHTML = `<div class="p-3 border rounded bg-light">
+                        <div class="fw-bold mb-2">${escHtml2(report.label)}</div>
+                        <div class="small text-muted mb-2">Total: KES ${Number(report.totalCollected || 0).toLocaleString()} of KES ${Number(report.targetAmount || 0).toLocaleString()} target · includes Jumuiya totals and every contributing member</div>
+                        <div class="d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="reportTabDownloadPdf">Download PDF</button>
+                            <button type="button" class="btn btn-sm btn-outline-success" id="reportTabDownloadExcel">Download Excel</button>
+                        </div>
+                    </div>`;
+                    document.getElementById('reportTabDownloadPdf').addEventListener('click', () => window.downloadContributionReportPDF(report));
+                    document.getElementById('reportTabDownloadExcel').addEventListener('click', () => window.downloadContributionReportExcel(report));
+                } catch (e) {
+                    downloadAreaEl.innerHTML = '<p class="text-danger small">Could not load that report.</p>';
+                }
+            }
+
+            modalEl.addEventListener('show.bs.modal', loadPeriods);
+        })();
+
+        /* =========================================================
            ST. MICHAEL COMPANION — assistant widget
         ========================================================= */
         (function initCompanion() {
@@ -969,6 +1057,30 @@
                     }
                 });
                 wrap.appendChild(btn);
+                messagesEl.appendChild(wrap);
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+            }
+
+            function addReportChoiceOptions(options) {
+                const wrap = document.createElement('div');
+                wrap.className = 'companion-msg companion-msg-bot';
+                const btnRow = document.createElement('div');
+                btnRow.className = 'd-flex flex-column gap-2 mt-1';
+                (options || []).forEach(opt => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn btn-sm btn-outline-secondary text-start';
+                    btn.textContent = opt.label;
+                    btn.addEventListener('click', async () => {
+                        btn.disabled = true;
+                        try {
+                            const res = await fetch(`/api/youth/contribution-report?period=${encodeURIComponent(opt.key)}`, { cache: 'no-store' });
+                            const data = await res.json();
+                            if (data.success) addReportDownloadOption(data.report);
+                        } catch (e) { /* leave button disabled state as the only feedback */ }
+                    });
+                    btnRow.appendChild(btn);
+                });
+                wrap.appendChild(btnRow);
                 messagesEl.appendChild(wrap);
                 messagesEl.scrollTop = messagesEl.scrollHeight;
             }
@@ -1048,6 +1160,8 @@
                 if (subRows.length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(subRows), 'Contributors');
                 XLSX.writeFile(wb, `St_Michael_Contribution_Report_${Date.now()}.xlsx`);
             }
+            window.downloadContributionReportPDF = downloadReportPDF;
+            window.downloadContributionReportExcel = downloadReportExcel;
 
             fab.addEventListener('click', () => {
                 panel.classList.toggle('d-none');
@@ -1082,7 +1196,7 @@
                     thinkingEl.remove();
                     if (data.success) {
                         addMessage(data.answer, 'companion-msg-bot');
-                        if (data.report) addReportDownloadOption(data.report);
+                        if (data.mode === 'report-choice') addReportChoiceOptions(data.reportOptions);
                         if (data.escalate) addEscalateOption(question);
                     } else {
                         addMessage(data.message || "I couldn't process that — please try again.", 'companion-msg-bot');
