@@ -106,6 +106,18 @@
         }
         .activity-item > div:last-child { min-width: 0; flex: 1; }
         .activity-item .small { font-size: 0.86rem; line-height: 1.4; white-space: normal; word-break: break-word; }
+
+        /* Rosary mystery cards */
+        .rosary-mystery-card {
+            display: flex; gap: 14px; align-items: flex-start;
+            padding: 12px 4px; border-bottom: 1px solid rgba(0,0,0,0.08);
+        }
+        .rosary-mystery-card:last-child { border-bottom: none; }
+        .rosary-mystery-icon {
+            width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(47, 111, 78, 0.10); font-size: 1.3rem;
+        }
         .companion-msg-thinking { color: rgba(0,0,0,0.55); font-style: italic; }
         .thinking-dots span {
             display: inline-block;
@@ -384,6 +396,186 @@
         <div class="card shadow-sm p-4 mb-4">
             <h4 class="text-primary mb-3" data-i18n="directory_heading">Official Youth Directory & Members</h4>
             <div id="directoryList" class="table-responsive">Loading directory...</div>
+        </div>
+
+        <!-- The Holy Rosary: Complete Mysteries -->
+        <div class="card shadow-sm p-4 mb-4">
+            <h4 class="text-primary mb-1">📿 The Holy Rosary: Complete Mysteries</h4>
+            <p class="text-muted small mb-3">All twenty mysteries, with a scripture reference, a short reflection, and the traditional fruit of each mystery.</p>
+            <div class="btn-group w-100 mb-3 flex-wrap" role="group">
+                <button type="button" class="btn btn-outline-primary m-1" onclick="toggleDashMystery('joyful')">Joyful (Mon &amp; Sat)</button>
+                <button type="button" class="btn btn-outline-primary m-1" onclick="toggleDashMystery('sorrowful')">Sorrowful (Tue &amp; Fri)</button>
+                <button type="button" class="btn btn-outline-primary m-1" onclick="toggleDashMystery('glorious')">Glorious (Wed &amp; Sun)</button>
+                <button type="button" class="btn btn-outline-primary m-1" onclick="toggleDashMystery('luminous')">Luminous (Thu)</button>
+            </div>
+            <div id="dashJoyfulContent" class="rosary-mystery-set">
+                <div class="rosary-mystery-card">
+                    <div class="rosary-mystery-icon">🕊️</div>
+                    <div>
+                        <h6 class="mb-1">1. The Annunciation <span class="text-muted small fw-normal">— Luke 1:26-38</span></h6>
+                        <p class="small mb-1">The angel Gabriel greets Mary and asks her to become the mother of the Savior. Her humble "yes" changes the course of history.</p>
+                        <p class="small mb-0"><strong>Fruit:</strong> Humility</p>
+                    </div>
+                </div>
+                <div class="rosary-mystery-card">
+                    <div class="rosary-mystery-icon">🤝</div>
+                    <div>
+                        <h6 class="mb-1">2. The Visitation <span class="text-muted small fw-normal">— Luke 1:39-56</span></h6>
+                        <p class="small mb-1">Mary hurries to help her cousin Elizabeth, carrying Christ to another household even before He is born.</p>
+                        <p class="small mb-0"><strong>Fruit:</strong> Love of Neighbor</p>
+                    </div>
+                </div>
+                <div class="rosary-mystery-card">
+                    <div class="rosary-mystery-icon">🌟</div>
+                    <div>
+                        <h6 class="mb-1">3. The Nativity <span class="text-muted small fw-normal">— Luke 2:1-7</span></h6>
+                        <p class="small mb-1">Jesus is born in poverty in a stable in Bethlehem, showing that God enters the world in humility rather than power.</p>
+                        <p class="small mb-0"><strong>Fruit:</strong> Poverty of Spirit</p>
+                    </div>
+                </div>
+                <div class="rosary-mystery-card">
+                    <div class="rosary-mystery-icon">🕯️</div>
+                    <div>
+                        <h6 class="mb-1">4. The Presentation in the Temple <span class="text-muted small fw-normal">— Luke 2:22-38</span></h6>
+                        <p class="small mb-1">Mary and Joseph bring the infant Jesus to the Temple to consecrate Him to God, fulfilling the Law of Moses.</p>
+                        <p class="small mb-0"><strong>Fruit:</strong> Purity and Obedience</p>
+                    </div>
+                </div>
+                <div class="rosary-mystery-card">
+                    <div class="rosary-mystery-icon">📖</div>
+                    <div>
+                        <h6 class="mb-1">5. The Finding in the Temple <span class="text-muted small fw-normal">— Luke 2:41-52</span></h6>
+                        <p class="small mb-1">After three anxious days of searching, Mary and Joseph find the twelve-year-old Jesus teaching among the elders in the Temple.</p>
+                        <p class="small mb-0"><strong>Fruit:</strong> Piety / Joy in Finding Jesus</p>
+                    </div>
+                </div>
+            </div>
+            <div id="dashSorrowfulContent" class="rosary-mystery-set" style="display:none;">
+                <div class="rosary-mystery-card">
+                    <div class="rosary-mystery-icon">🌿</div>
+                    <div>
+                        <h6 class="mb-1">1. The Agony in the Garden <span class="text-muted small fw-normal">— Matthew 26:36-46</span></h6>
+                        <p class="small mb-1">In Gethsemane, Jesus prays in anguish, accepting the Father's will even as sorrow presses on Him.</p>
+                        <p class="small mb-0"><strong>Fruit:</strong> Sorrow for Sin / Conformity to God's Will</p>
+                    </div>
+                </div>
+                <div class="rosary-mystery-card">
+                    <div class="rosary-mystery-icon">⛓️</div>
+                    <div>
+                        <h6 class="mb-1">2. The Scourging at the Pillar <span class="text-muted small fw-normal">— Matthew 27:26; John 19:1</span></h6>
+                        <p class="small mb-1">Jesus is bound and cruelly whipped by Roman soldiers before His crucifixion.</p>
+                        <p class="small mb-0"><strong>Fruit:</strong> Purity / Mortification of the Senses</p>
+                    </div>
+                </div>
+                <div class="rosary-mystery-card">
+                    <div class="rosary-mystery-icon">👑</div>
+                    <div>
+                        <h6 class="mb-1">3. The Crowning with Thorns <span class="text-muted small fw-normal">— Matthew 27:27-31</span></h6>
+                        <p class="small mb-1">Soldiers mock Jesus as king, pressing a crown of thorns into His head and striking Him.</p>
+                        <p class="small mb-0"><strong>Fruit:</strong> Courage / Moral Strength</p>
+                    </div>
+                </div>
+                <div class="rosary-mystery-card">
+                    <div class="rosary-mystery-icon">✝️</div>
+                    <div>
+                        <h6 class="mb-1">4. The Carrying of the Cross <span class="text-muted small fw-normal">— Luke 23:26-32</span></h6>
+                        <p class="small mb-1">Weakened and bleeding, Jesus carries His own cross to Calvary, helped along the way by Simon of Cyrene.</p>
+                        <p class="small mb-0"><strong>Fruit:</strong> Patience</p>
+                    </div>
+                </div>
+                <div class="rosary-mystery-card">
+                    <div class="rosary-mystery-icon">🩸</div>
+                    <div>
+                        <h6 class="mb-1">5. The Crucifixion and Death <span class="text-muted small fw-normal">— Luke 23:33-46</span></h6>
+                        <p class="small mb-1">Jesus is nailed to the cross and dies for the salvation of humanity, forgiving even those who crucify Him.</p>
+                        <p class="small mb-0"><strong>Fruit:</strong> Salvation / Perseverance</p>
+                    </div>
+                </div>
+            </div>
+            <div id="dashGloriousContent" class="rosary-mystery-set" style="display:none;">
+                <div class="rosary-mystery-card">
+                    <div class="rosary-mystery-icon">🌅</div>
+                    <div>
+                        <h6 class="mb-1">1. The Resurrection <span class="text-muted small fw-normal">— Matthew 28:1-10</span></h6>
+                        <p class="small mb-1">On the third day, Jesus rises from the dead, conquering sin and death forever.</p>
+                        <p class="small mb-0"><strong>Fruit:</strong> Faith</p>
+                    </div>
+                </div>
+                <div class="rosary-mystery-card">
+                    <div class="rosary-mystery-icon">☁️</div>
+                    <div>
+                        <h6 class="mb-1">2. The Ascension <span class="text-muted small fw-normal">— Luke 24:50-53; Acts 1:6-11</span></h6>
+                        <p class="small mb-1">Forty days after rising, Jesus ascends into heaven before His disciples, promising to send the Holy Spirit.</p>
+                        <p class="small mb-0"><strong>Fruit:</strong> Hope and Desire for Heaven</p>
+                    </div>
+                </div>
+                <div class="rosary-mystery-card">
+                    <div class="rosary-mystery-icon">🔥</div>
+                    <div>
+                        <h6 class="mb-1">3. The Descent of the Holy Spirit <span class="text-muted small fw-normal">— Acts 2:1-4</span></h6>
+                        <p class="small mb-1">On Pentecost, the Holy Spirit descends on Mary and the apostles, filling them with courage to preach the Gospel.</p>
+                        <p class="small mb-0"><strong>Fruit:</strong> Wisdom and Love of God</p>
+                    </div>
+                </div>
+                <div class="rosary-mystery-card">
+                    <div class="rosary-mystery-icon">👑</div>
+                    <div>
+                        <h6 class="mb-1">4. The Assumption of Mary <span class="text-muted small fw-normal">— traditional teaching, cf. Revelation 12</span></h6>
+                        <p class="small mb-1">At the end of her earthly life, Mary is taken up body and soul into heavenly glory.</p>
+                        <p class="small mb-0"><strong>Fruit:</strong> Grace of a Happy Death; Devotion to Mary</p>
+                    </div>
+                </div>
+                <div class="rosary-mystery-card">
+                    <div class="rosary-mystery-icon">✨</div>
+                    <div>
+                        <h6 class="mb-1">5. The Coronation of Mary <span class="text-muted small fw-normal">— traditional teaching, cf. Revelation 12:1</span></h6>
+                        <p class="small mb-1">Mary is crowned Queen of Heaven and Earth by her Son.</p>
+                        <p class="small mb-0"><strong>Fruit:</strong> Trust in Mary's Intercession; Perseverance</p>
+                    </div>
+                </div>
+            </div>
+            <div id="dashLuminousContent" class="rosary-mystery-set" style="display:none;">
+                <div class="rosary-mystery-card">
+                    <div class="rosary-mystery-icon">💧</div>
+                    <div>
+                        <h6 class="mb-1">1. The Baptism in the Jordan <span class="text-muted small fw-normal">— Matthew 3:13-17</span></h6>
+                        <p class="small mb-1">Jesus is baptized by John, and the Father's voice proclaims Him His beloved Son as the Spirit descends like a dove.</p>
+                        <p class="small mb-0"><strong>Fruit:</strong> Openness to the Holy Spirit</p>
+                    </div>
+                </div>
+                <div class="rosary-mystery-card">
+                    <div class="rosary-mystery-icon">🍷</div>
+                    <div>
+                        <h6 class="mb-1">2. The Wedding at Cana <span class="text-muted small fw-normal">— John 2:1-11</span></h6>
+                        <p class="small mb-1">At His mother's request, Jesus performs His first public miracle, turning water into wine.</p>
+                        <p class="small mb-0"><strong>Fruit:</strong> To Jesus Through Mary; Trust in His Providence</p>
+                    </div>
+                </div>
+                <div class="rosary-mystery-card">
+                    <div class="rosary-mystery-icon">📯</div>
+                    <div>
+                        <h6 class="mb-1">3. The Proclamation of the Kingdom <span class="text-muted small fw-normal">— Mark 1:14-15</span></h6>
+                        <p class="small mb-1">Jesus begins His public ministry, calling all people to repentance and faith in the Gospel.</p>
+                        <p class="small mb-0"><strong>Fruit:</strong> Repentance and Trust in God</p>
+                    </div>
+                </div>
+                <div class="rosary-mystery-card">
+                    <div class="rosary-mystery-icon">⛰️</div>
+                    <div>
+                        <h6 class="mb-1">4. The Transfiguration <span class="text-muted small fw-normal">— Matthew 17:1-8</span></h6>
+                        <p class="small mb-1">On Mount Tabor, Jesus is transfigured in glory before Peter, James, and John, revealing His divine nature.</p>
+                        <p class="small mb-0"><strong>Fruit:</strong> Desire for Holiness</p>
+                    </div>
+                </div>
+                <div class="rosary-mystery-card">
+                    <div class="rosary-mystery-icon">🍞</div>
+                    <div>
+                        <h6 class="mb-1">5. The Institution of the Eucharist <span class="text-muted small fw-normal">— Matthew 26:26-28; Luke 22:19-20</span></h6>
+                        <p class="small mb-1">At the Last Supper, Jesus gives His Body and Blood under the appearance of bread and wine, instituting the Eucharist.</p>
+                        <p class="small mb-0"><strong>Fruit:</strong> Adoration and Love of the Eucharist</p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Community Chat / Message Board -->
@@ -1210,6 +1402,16 @@
                 }
             });
         })();
+
+        function toggleDashMystery(type) {
+            const sets = ['dashJoyfulContent', 'dashSorrowfulContent', 'dashGloriousContent', 'dashLuminousContent'];
+            sets.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.style.display = 'none';
+            });
+            const target = document.getElementById('dash' + type.charAt(0).toUpperCase() + type.slice(1) + 'Content');
+            if (target) target.style.display = 'block';
+        }
 
         function logout() {
             localStorage.removeItem('youth_user');
