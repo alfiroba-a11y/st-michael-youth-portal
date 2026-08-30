@@ -152,7 +152,59 @@
                 </div>
             </div>
 
-            <!-- Contributions Summary Table -->
+            <!-- Admin Analytics & User Tracking Dashboard -->
+            <div class="card p-4 mb-4" id="analytics">
+                <h4 class="mb-3 text-dark"><i class="fas fa-user-clock me-2"></i> Admin Analytics &amp; User Tracking</h4>
+                <p class="text-muted small mb-3">Member login frequency, device types, and engagement trends — never shown to members, admin-only.</p>
+
+                <div class="row row-cols-1 row-cols-md-2 g-3 mb-4">
+                    <div class="col">
+                        <div class="card p-3 border-start border-primary border-4">
+                            <h6 class="text-muted">Total Logins (all time)</h6>
+                            <h3 id="analyticsTotalLogins" class="text-primary fw-bold">—</h3>
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="card p-3 border-start border-success border-4">
+                            <h6 class="text-muted">Active Members (last 7 days)</h6>
+                            <h3 id="analyticsActive7d" class="text-success fw-bold">—</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-4 mb-4">
+                    <div class="col-lg-7">
+                        <h6 class="text-secondary">Login Trend — Last 14 Days</h6>
+                        <div style="position: relative; height: 260px; width: 100%;">
+                            <canvas id="loginTrendChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-lg-5">
+                        <h6 class="text-secondary">Device Types</h6>
+                        <div style="position: relative; height: 260px; width: 100%;">
+                            <canvas id="deviceTypeChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <h6 class="text-secondary">Member Engagement (most active first)</h6>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Member</th>
+                                <th>Total Logins</th>
+                                <th>Last Login</th>
+                                <th>Primary Device</th>
+                            </tr>
+                        </thead>
+                        <tbody id="memberEngagementTable">
+                            <tr><td colspan="4" class="text-muted text-center">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
             <div class="card p-4 mb-4">
                 <h4 class="mb-3">Jumuiya Breakdown &amp; Targets</h4>
                 <div class="table-responsive">
@@ -279,6 +331,10 @@
                             <div class="mb-2">
                                 <label class="form-label small">2nd Reading</label>
                                 <input type="text" id="secondReading" class="form-control form-control-sm">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small">Alleluia (Gospel Acclamation)</label>
+                                <input type="text" id="alleluia" class="form-control form-control-sm" placeholder="e.g. Alleluia, alleluia. ... R. Alleluia.">
                             </div>
                             <div class="mb-2">
                                 <label class="form-label small">Gospel</label>
@@ -703,6 +759,78 @@
                 showGlobalStatus('Could not load fresh data from the server (' + e.message + '). Showing last known data.', 'warning');
             }
             renderDashboard(cachedMasterData);
+            loadAnalytics();
+        }
+
+        let loginTrendChartInstance = null;
+        let deviceTypeChartInstance = null;
+        async function loadAnalytics() {
+            let analytics;
+            try {
+                analytics = await apiCall('/api/admin/analytics');
+            } catch (e) {
+                document.getElementById('memberEngagementTable').innerHTML = `<tr><td colspan="4" class="text-danger text-center">Could not load analytics: ${esc(e.message)}</td></tr>`;
+                return;
+            }
+
+            document.getElementById('analyticsTotalLogins').textContent = analytics.totalLogins.toLocaleString();
+            document.getElementById('analyticsActive7d').textContent = analytics.activeLast7Days.toLocaleString();
+
+            // Login trend line chart
+            const trendCtx = document.getElementById('loginTrendChart').getContext('2d');
+            if (loginTrendChartInstance) loginTrendChartInstance.destroy();
+            loginTrendChartInstance = new Chart(trendCtx, {
+                type: 'line',
+                data: {
+                    labels: analytics.loginsPerDay.map(d => d.date.slice(5)),
+                    datasets: [{
+                        label: 'Logins',
+                        data: analytics.loginsPerDay.map(d => d.count),
+                        borderColor: 'rgba(13, 110, 253, 1)',
+                        backgroundColor: 'rgba(13, 110, 253, 0.12)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, ticks: { precision: 0 } } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+
+            // Device type doughnut chart
+            const deviceCtx = document.getElementById('deviceTypeChart').getContext('2d');
+            if (deviceTypeChartInstance) deviceTypeChartInstance.destroy();
+            const dt = analytics.deviceTotals || {};
+            deviceTypeChartInstance = new Chart(deviceCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Mobile', 'Tablet', 'Desktop'],
+                    datasets: [{
+                        data: [dt.mobile || 0, dt.tablet || 0, dt.desktop || 0],
+                        backgroundColor: ['#0d6efd', '#ffc107', '#198754']
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+            });
+
+            // Member engagement table
+            const tbody = document.getElementById('memberEngagementTable');
+            if (!analytics.memberEngagement || analytics.memberEngagement.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-muted text-center">No logins recorded yet.</td></tr>';
+            } else {
+                tbody.innerHTML = analytics.memberEngagement.map(m => {
+                    const lastLoginText = m.lastLogin ? new Date(m.lastLogin).toLocaleString() : 'Never';
+                    const deviceBadge = { mobile: 'primary', tablet: 'warning', desktop: 'success' }[m.primaryDevice] || 'secondary';
+                    return `<tr>
+                        <td>${esc(m.name)}</td>
+                        <td>${m.loginCount}</td>
+                        <td>${esc(lastLoginText)}</td>
+                        <td><span class="badge bg-${deviceBadge}">${esc(m.primaryDevice)}</span></td>
+                    </tr>`;
+                }).join('');
+            }
         }
 
         function renderDashboard(data) {
@@ -828,6 +956,7 @@
                             <small><strong>1st:</strong> ${esc(rd.firstReading || '-')}</small><br>
                             <small><strong>Psalm:</strong> ${esc(rd.psalm || '-')}</small><br>
                             <small><strong>2nd:</strong> ${esc(rd.secondReading || '-')}</small><br>
+                            <small><strong>Alleluia:</strong> ${esc(rd.alleluia || '-')}</small><br>
                             <small><strong>Gospel:</strong> ${esc(rd.gospel || '-')}</small>
                         </div>
                         <button class="btn btn-outline-danger btn-sm" data-action="delete-reading" data-id="${recordId(rd)}">Delete</button>
@@ -1350,6 +1479,7 @@
                 firstReading: document.getElementById('firstReading').value,
                 psalm: document.getElementById('psalm').value,
                 secondReading: document.getElementById('secondReading').value,
+                alleluia: document.getElementById('alleluia').value,
                 gospel: document.getElementById('gospel').value
             };
             try {
