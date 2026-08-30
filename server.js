@@ -110,7 +110,8 @@ let fallbackData = {
     memorialNames: [],
     prayerPoints: [],
     mentors: [],
-    privateMessages: []
+    privateMessages: [],
+    loginLogs: []
 };
 
 async function readData() {
@@ -140,7 +141,8 @@ async function readData() {
             memorialNames: doc.memorialNames || fallbackData.memorialNames,
             prayerPoints: doc.prayerPoints || fallbackData.prayerPoints,
             mentors: doc.mentors || fallbackData.mentors,
-            privateMessages: doc.privateMessages || fallbackData.privateMessages
+            privateMessages: doc.privateMessages || fallbackData.privateMessages,
+            loginLogs: doc.loginLogs || fallbackData.loginLogs
         };
     } catch (e) {
         return fallbackData;
@@ -202,6 +204,17 @@ initDB();
 
 const normalize = (str) => (str || '').toLowerCase().replace(/[\.\s]/g, '');
 const maskPhone = (phone) => (!phone || phone.length < 6) ? '****' : phone.slice(0, 3) + '****' + phone.slice(-3);
+
+// Coarse device category only (mobile / tablet / desktop) from the
+// browser's own User-Agent string — the same information any web server
+// already sees on every request. No fingerprinting, no precise device
+// model, no location.
+function categorizeDevice(userAgent) {
+    const ua = (userAgent || '').toLowerCase();
+    if (/ipad|tablet|playbook|silk/.test(ua) && !/mobile/.test(ua)) return 'tablet';
+    if (/mobi|android|iphone|ipod|blackberry|windows phone/.test(ua)) return 'mobile';
+    return 'desktop';
+}
 
 // An event automatically becomes "past" once its date's day has fully
 // elapsed. Events with an unparseable date (e.g. old free-text entries
@@ -947,7 +960,15 @@ app.post('/api/youth/login', async (req, res) => {
     const cleanName = name.trim().toLowerCase();
     const member = (data.members || []).find(m => m.name.toLowerCase() === cleanName);
     if (member) {
-        if (member.pass === pass) return res.json({ success: true, name: member.name, jumuiya: member.jumuiya });
+        if (member.pass === pass) {
+            const loginLogs = [...(data.loginLogs || []), {
+                member: member.name,
+                timestamp: Date.now(),
+                device: categorizeDevice(req.headers['user-agent'])
+            }].slice(-2000); // keep the most recent 2000 entries so this never grows unbounded
+            await writeData({ loginLogs });
+            return res.json({ success: true, name: member.name, jumuiya: member.jumuiya });
+        }
         return res.json({ success: false, message: 'Incorrect password.' });
     }
     res.json({ success: false, message: 'Member not found or pending approval.' });
@@ -1050,6 +1071,56 @@ app.post('/api/youth/update-profile', async (req, res) => {
 app.post('/api/admin/login', (req, res) => {
     const { username, password } = req.body;
     res.json({ success: (username === 'Admin' && password === 'Admin0247') });
+});
+
+// Admin Analytics & User Engagement — login frequency, coarse device
+// type breakdown, and per-member activity, aggregated server-side so the
+// admin dashboard just renders numbers rather than raw logs.
+app.get('/api/admin/analytics', async (req, res) => {
+    const data = await readData();
+    const logs = data.loginLogs || [];
+
+    const now = Date.now();
+    const DAY = 24 * 60 * 60 * 1000;
+    const last14Days = [];
+    for (let i = 13; i >= 0; i--) {
+        const dayStart = now - i * DAY;
+        const label = new Date(dayStart).toISOString().slice(0, 10);
+        const count = logs.filter(l => new Date(l.timestamp).toISOString().slice(0, 10) === label).length;
+        last14Days.push({ date: label, count });
+    }
+
+    const deviceTotals = { mobile: 0, tablet: 0, desktop: 0 };
+    logs.forEach(l => { if (deviceTotals[l.device] !== undefined) deviceTotals[l.device]++; });
+
+    const perMember = {};
+    logs.forEach(l => {
+        if (!perMember[l.member]) perMember[l.member] = { name: l.member, loginCount: 0, lastLogin: 0, devices: {} };
+        perMember[l.member].loginCount++;
+        perMember[l.member].lastLogin = Math.max(perMember[l.member].lastLogin, l.timestamp);
+        perMember[l.member].devices[l.device] = (perMember[l.member].devices[l.device] || 0) + 1;
+    });
+    const memberEngagement = Object.values(perMember)
+        .map(m => ({
+            name: m.name,
+            loginCount: m.loginCount,
+            lastLogin: m.lastLogin,
+            primaryDevice: Object.entries(m.devices).sort((a, b) => b[1] - a[1])[0]?.[0] || 'unknown'
+        }))
+        .sort((a, b) => b.loginCount - a.loginCount);
+
+    const activeLast7Days = new Set(
+        logs.filter(l => now - l.timestamp <= 7 * DAY).map(l => l.member)
+    ).size;
+
+    res.json({
+        success: true,
+        totalLogins: logs.length,
+        activeLast7Days,
+        deviceTotals,
+        loginsPerDay: last14Days,
+        memberEngagement
+    });
 });
 
 app.get('/api/admin/data', async (req, res) => {
@@ -1190,13 +1261,13 @@ app.post('/api/admin/save-event', async (req, res) => {
 
 app.post('/api/admin/save-reading', async (req, res) => {
     try {
-        const { id, title, firstReading, psalm, secondReading, gospel } = req.body;
+        const { id, title, firstReading, psalm, secondReading, alleluia, gospel } = req.body;
         const data = await readData();
         let readings = data.readings || [];
         if (id) {
-            readings = readings.map(r => r.id === id ? { ...r, title, firstReading, psalm, secondReading, gospel } : r);
+            readings = readings.map(r => r.id === id ? { ...r, title, firstReading, psalm, secondReading, alleluia, gospel } : r);
         } else {
-            readings.push({ id: Date.now().toString(), title, firstReading, psalm, secondReading, gospel });
+            readings.push({ id: Date.now().toString(), title, firstReading, psalm, secondReading, alleluia, gospel });
         }
         await writeData({ readings });
         res.json({ success: true, readings });
