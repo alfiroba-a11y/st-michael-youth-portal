@@ -541,7 +541,7 @@ const YOUTH_BOARD_CONTACTS = [
 
 // "St. Michael Companion" — the youth assistant. Always answers from the
 // portal's own live data (events, readings, mentor assignments, contacts).
-// If OPENAI_API_KEY is configured, it upgrades to a real conversational
+// If GEMINI_API_KEY is configured, it upgrades to a real conversational
 // model grounded in that same data; without a key it uses straightforward
 // keyword matching so it still gives real, accurate answers rather than
 // nothing. Either way, when it can't help, it says so and offers to
@@ -696,10 +696,10 @@ app.post('/api/assistant/ask', async (req, res) => {
             return res.json({ success: true, answer: directAnswer, escalate, mode: 'rules' });
         }
 
-        // ---- If an OpenAI key is configured, use it — but strictly scoped
+        // ---- If a Gemini key is configured, use it — but strictly scoped
         // to the portal itself, not general knowledge. This is the parish's
         // support assistant, not a general-purpose chatbot. ----
-        if (process.env.OPENAI_API_KEY) {
+        if (process.env.GEMINI_API_KEY) {
             try {
                 const contextLines = [
                     `Next event: ${nextEvent ? `${nextEvent.title} — ${nextEvent.date}. ${nextEvent.description || ''}` : 'None scheduled yet.'}`,
@@ -715,24 +715,25 @@ app.post('/api/assistant/ask', async (req, res) => {
 
                 const systemPrompt = `You are the "St. Michael Companion", the SUPPORT ASSISTANT for the St. Michael Kasaini Youth Portal ONLY. You must ONLY answer questions about this portal, its features, and this parish (events, readings, mentors, contacts, hymnal, contributions, memorial wall, prayer candles, saints, liturgical season, how to use the site). Do NOT answer general-knowledge questions, current events, or anything unrelated to this portal or parish — if asked something off-topic, politely say that's outside what you can help with here and that you're the portal's support assistant, then offer to connect them to an admin if it's parish-related. Keep answers concise (2-4 sentences). Use the portal information below; never invent facts not listed here.\n\nPortal information:\n${contextLines}`;
 
-                const apiRes = await fetch('https://api.openai.com/v1/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-                    },
-                    body: JSON.stringify({
-                        model: 'gpt-4o-mini',
-                        messages: [
-                            { role: 'system', content: systemPrompt },
-                            { role: 'user', content: question }
-                        ],
-                        max_tokens: 220,
-                        temperature: 0.4
-                    })
-                });
+                const apiRes = await fetch(
+                    'https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent',
+                    {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'x-goog-api-key': process.env.GEMINI_API_KEY
+                        },
+                        body: JSON.stringify({
+                            systemInstruction: { parts: [{ text: systemPrompt }] },
+                            contents: [{ role: 'user', parts: [{ text: question }] }],
+                            generationConfig: { maxOutputTokens: 220, temperature: 0.4 }
+                        })
+                    }
+                );
                 const json = await apiRes.json();
-                const answer = json && json.choices && json.choices[0] && json.choices[0].message && json.choices[0].message.content;
+                const answer = json && json.candidates && json.candidates[0]
+                    && json.candidates[0].content && json.candidates[0].content.parts
+                    && json.candidates[0].content.parts[0] && json.candidates[0].content.parts[0].text;
                 if (answer) {
                     const escalate = /don'?t (know|have)|not sure|connect you|no information|not confident/i.test(answer);
                     return res.json({ success: true, answer: answer.trim(), escalate, mode: 'ai' });
