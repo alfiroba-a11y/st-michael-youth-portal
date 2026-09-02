@@ -417,6 +417,63 @@
                 </div>
             </div>
 
+            <!-- Youth Contributions / Pledges: separate per-person pledge tracker,
+                 distinct from the Jumuiya-group contribution system above -->
+            <div class="card p-4 mb-4" id="pledges">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
+                    <h4 class="mb-0"><i class="fas fa-hand-holding-heart me-2"></i> Youth Contributions / Pledges</h4>
+                    <div>
+                        <span id="pledgeStatusBadge" class="badge bg-success me-2">Open</span>
+                        <button type="button" class="btn btn-sm btn-outline-danger" id="closePledgesBtn">Close Pledges</button>
+                        <button type="button" class="btn btn-sm btn-outline-success d-none" id="reopenPledgesBtn">Start New Pledge Round</button>
+                    </div>
+                </div>
+                <p class="text-muted small mb-3">This list is shown to members (names, amount pledged, amount redeemed) but is completely separate from the members directory and registration — adding, editing, or removing someone here never affects their login or membership.</p>
+
+                <form id="pledgeForm" class="row g-2 align-items-end mb-3">
+                    <input type="hidden" id="pledgeId">
+                    <div class="col-md-4">
+                        <label class="form-label small">Name</label>
+                        <input type="text" id="pledgeName" class="form-control form-control-sm" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Amount Pledged (KES)</label>
+                        <input type="number" id="pledgePledgedAmount" class="form-control form-control-sm" min="0" step="1">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small">Amount Redeemed (KES)</label>
+                        <input type="number" id="pledgeRedeemedAmount" class="form-control form-control-sm" min="0" step="1">
+                    </div>
+                    <div class="col-md-2 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary btn-sm flex-grow-1">Save</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="pledgeFormResetBtn">Clear</button>
+                    </div>
+                    <div id="pledgeFormErrorAlert" class="alert alert-danger d-none py-2 mb-0 col-12" role="alert"></div>
+                </form>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Pledged (KES)</th>
+                                <th>Redeemed (KES)</th>
+                                <th>Balance</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="pledgesTableAdmin">
+                            <tr><td colspan="6" class="text-muted text-center">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <hr class="my-3">
+                <h6 class="text-secondary">Pledge History</h6>
+                <div id="pledgeHistoryListAdmin" class="list-group"></div>
+            </div>
+
             <!-- Mentor Assignments: powers the "who is my mentor" answers from the St. Michael Companion assistant -->
             <div class="card p-4 mb-4" id="mentors">
                 <h4 class="mb-3"><i class="fas fa-user-graduate me-2"></i> Manage Mentor Assignments</h4>
