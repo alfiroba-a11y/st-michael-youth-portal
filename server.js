@@ -113,6 +113,25 @@ let fallbackData = {
         'Dennis wambua','Cecilia Mulinge','Innocent muthusi','Dennis kasivu','Rechael ndolo','Cynthia munyao',
         'Agie kasiva','Erick peter','Ostin kilonzo','Samantha wangai','Agape Nzomo'
     ].map((name, i) => ({ id: 'seed_' + (i + 1), name, pledgedAmount: 0, redeemedAmount: 0 })),
+    pledgeStatus: 'open',
+    pledgeHistory: [],
+    pledges: [
+        'Diana katile','Dennis sammy','Joanne Nduku','Matilda ann','Patric Mutiso','Joseph mulei','Sam art kid',
+        'Charity ndunge','Dancun mutuku','Samuel Ndola','Robert Wambua','Francis mutoni','Lydia ndunge','Dennis kaseke',
+        'Urbanus sammy','Ruth Kioko','Esther nthenya','Steve kiilu','Brian musau','Alice mutave','Maureen kioko',
+        'Kaloki sammy','Urbanus mutisya','Maryann Koki','Faith munyiva','Mary kiilu','Diana nwende','Caro mutio',
+        'Emily mbatha','Joseph ndiku','Antony kioko','Mitchell Muema','Leonard mwiso','Janet Ngelele','Faith ndunge',
+        'Vivian ndunge','Jayden wambua','Judith ndila','marceline ndinda','Catherine kaluki','Dennis makato',
+        'Mercy muthoki','Kavesu Nzuki','Ann kamene','Maureen Muema','Kennedy kioko','Janet Wanza','Gloria Mwende',
+        'Bridgit Wavinya','Magdalene musau','Cellina mukulu','Jane ndinda','Janet munyiva','Purity nthambi',
+        'Susan Katunge','Maureen kalekye','Dennis muema','Catherine mbatha','Diana musyawa','Agnes ngina',
+        'Alphonse muteti','Mary musyoki','simon muya','sharleen kioko','Claudia kennedy','Diana kennedy',
+        'Dennus kiswii','Jacintah muema','Simon kasivu','Cynthia syokau','Peter mwangangi','Gloria kim',
+        'Jackline muthoki','Joseph mutinda','Betty mutindi','Allan muli','Vincent muthama','Steven muutu',
+        'Bonface william','Fidelis kimani','Annafemmi','Caroline muema','James kilele','John mutinda',
+        'Dennis wambua','Cecilia Mulinge','Innocent muthusi','Dennis kasivu','Rechael ndolo','Cynthia munyao',
+        'Agie kasiva','Erick peter','Ostin kilonzo','Samantha wangai','Agape Nzomo'
+    ].map((name, i) => ({ id: 'seed_' + (i + 1), name, pledgedAmount: 0, redeemedAmount: 0 })),
     events: [{ id: '1', title: 'Sunday Holy Mass & Youth Fellowship', date: 'Next Sunday at 10:00 AM', description: 'Main service at St. Michael Kasaini Church.', type: 'upcoming' }],
     messages: [],
     readings: [{ id: '1', title: "Sunday Holy Mass Readings", firstReading: "1 Kings 3:5...", psalm: "Psalm 119...", secondReading: "Romans 8...", gospel: "Matthew 13..." }],
@@ -130,30 +149,7 @@ let fallbackData = {
     prayerPoints: [],
     mentors: [],
     privateMessages: [],
-    loginLogs: [],
-    pledgeStatus: 'open',
-    pledgeHistory: [],
-    pledges: [
-        'Diana katile', 'Dennis sammy', 'Joanne Nduku', 'Matilda ann', 'Patric Mutiso',
-        'Joseph mulei', 'Sam art kid', 'Charity ndunge', 'Dancun mutuku', 'Samuel Ndola',
-        'Robert Wambua', 'Francis mutoni', 'Lydia ndunge', 'Dennis kaseke', 'Urbanus sammy',
-        'Ruth Kioko', 'Esther nthenya', 'Steve kiilu', 'Brian musau', 'Alice mutave',
-        'Maureen kioko', 'Kaloki sammy', 'Urbanus mutisya', 'Maryann Koki', 'Faith munyiva',
-        'Mary kiilu', 'Diana nwende', 'Caro mutio', 'Emily mbatha', 'Joseph ndiku',
-        'Antony kioko', 'Mitchell Muema', 'Leonard mwiso', 'Janet Ngelele', 'Faith ndunge',
-        'Vivian ndunge', 'Jayden wambua', 'Judith ndila', 'marceline ndinda', 'Catherine kaluki',
-        'Dennis makato', 'Mercy muthoki', 'Kavesu Nzuki', 'Ann kamene', 'Maureen Muema',
-        'Kennedy kioko', 'Janet Wanza', 'Gloria Mwende', 'Bridgit Wavinya', 'Magdalene musau',
-        'Cellina mukulu', 'Jane ndinda', 'Janet munyiva', 'Purity nthambi', 'Susan Katunge',
-        'Maureen kalekye', 'Dennis muema', 'Catherine mbatha', 'Diana musyawa', 'Agnes ngina',
-        'Alphonse muteti', 'Mary musyoki', 'simon muya', 'sharleen kioko', 'Claudia kennedy',
-        'Diana kennedy', 'Dennus kiswii', 'Jacintah muema', 'Simon kasivu', 'Cynthia syokau',
-        'Peter mwangangi', 'Gloria kim', 'Jackline muthoki', 'Joseph mutinda', 'Betty mutindi',
-        'Allan muli', 'Vincent muthama', 'Steven muutu', 'Bonface william', 'Fidelis kimani',
-        'Annafemmi', 'Caroline muema', 'James kilele', 'John mutinda', 'Dennis wambua',
-        'Cecilia Mulinge', 'Innocent muthusi', 'Dennis kasivu', 'Rechael ndolo', 'Cynthia munyao',
-        'Agie kasiva', 'Erick peter', 'Ostin kilonzo', 'Samantha wangai', 'Agape Nzomo'
-    ].map((name, i) => ({ id: 'pledge_' + (i + 1), name, pledgedAmount: 0, redeemedAmount: 0 }))
+    loginLogs: []
 };
 
 async function readData() {
@@ -187,10 +183,7 @@ async function readData() {
             prayerPoints: doc.prayerPoints || fallbackData.prayerPoints,
             mentors: doc.mentors || fallbackData.mentors,
             privateMessages: doc.privateMessages || fallbackData.privateMessages,
-            loginLogs: doc.loginLogs || fallbackData.loginLogs,
-            pledgeStatus: doc.pledgeStatus || fallbackData.pledgeStatus,
-            pledgeHistory: doc.pledgeHistory || fallbackData.pledgeHistory,
-            pledges: doc.pledges || fallbackData.pledges
+            loginLogs: doc.loginLogs || fallbackData.loginLogs
         };
     } catch (e) {
         return fallbackData;
@@ -984,8 +977,6 @@ app.get('/api/youth/directory', async (req, res) => {
         memorialNames: data.memorialNames || [],
         mentors: data.mentors || [],
         contributionStatus: data.contributionStatus || 'open',
-        pledges: data.pledges || [],
-        pledgeStatus: data.pledgeStatus || 'open',
         reflection,
         patronSaint,
         validPurposes: VALID_PURPOSES
@@ -1210,9 +1201,6 @@ app.get('/api/admin/data', async (req, res) => {
         mentors: data.mentors || [],
         privateMessages: data.privateMessages || [],
         passwordRequests: data.passwordRequests || [],
-        pledges: data.pledges || [],
-        pledgeStatus: data.pledgeStatus || 'open',
-        pledgeHistory: data.pledgeHistory || [],
         reflection,
         patronSaint,
         validPurposes: VALID_PURPOSES
@@ -1294,109 +1282,6 @@ app.post('/api/admin/close-contribution', async (req, res) => {
 app.get('/api/admin/contribution-history', async (req, res) => {
     const data = await readData();
     res.json({ success: true, history: data.contributionHistory || [] });
-});
-
-// =============================================================
-// YOUTH CONTRIBUTIONS / PLEDGES — a separate, per-person pledge
-// tracker (name, amount pledged, amount redeemed/paid). Distinct
-// from the Jumuiya-group contribution system above. Closing a
-// pledge period keeps every name on the list but zeroes the
-// amounts, ready for a new round, while the old figures live on
-// in pledgeHistory for admin download.
-// =============================================================
-app.post('/api/admin/save-pledge', async (req, res) => {
-    try {
-        const { id, name, pledgedAmount, redeemedAmount } = req.body;
-        if (!name || !name.trim()) return res.status(400).json({ success: false, message: 'Name is required.' });
-        const data = await readData();
-        let pledges = data.pledges || [];
-        if (id) {
-            let found = false;
-            pledges = pledges.map(p => {
-                if (p.id === id) {
-                    found = true;
-                    return {
-                        ...p,
-                        name: name.trim(),
-                        pledgedAmount: pledgedAmount !== undefined ? Number(pledgedAmount) || 0 : p.pledgedAmount,
-                        redeemedAmount: redeemedAmount !== undefined ? Number(redeemedAmount) || 0 : p.redeemedAmount
-                    };
-                }
-                return p;
-            });
-            if (!found) return res.status(404).json({ success: false, message: 'Pledge entry not found.' });
-        } else {
-            pledges.push({
-                id: Date.now().toString(),
-                name: name.trim(),
-                pledgedAmount: Number(pledgedAmount) || 0,
-                redeemedAmount: Number(redeemedAmount) || 0
-            });
-        }
-        await writeData({ pledges });
-        res.json({ success: true, pledges });
-    } catch (e) {
-        res.status(500).json({ success: false, message: 'Error saving pledge entry.' });
-    }
-});
-
-app.post('/api/admin/delete-pledge', async (req, res) => {
-    try {
-        const { id } = req.body;
-        if (!id) return res.status(400).json({ success: false, message: 'Missing id.' });
-        const data = await readData();
-        const before = (data.pledges || []).length;
-        const pledges = (data.pledges || []).filter(p => p.id !== id);
-        if (pledges.length === before) return res.status(404).json({ success: false, message: 'Pledge entry not found.' });
-        await writeData({ pledges });
-        res.json({ success: true, pledges });
-    } catch (e) {
-        res.status(500).json({ success: false, message: 'Error deleting pledge entry.' });
-    }
-});
-
-app.post('/api/admin/close-pledges', async (req, res) => {
-    try {
-        const data = await readData();
-        if (data.pledgeStatus === 'closed') {
-            return res.status(400).json({ success: false, message: 'The pledge period is already closed.' });
-        }
-        const pledges = data.pledges || [];
-        const totalPledged = pledges.reduce((sum, p) => sum + Number(p.pledgedAmount || 0), 0);
-        const totalRedeemed = pledges.reduce((sum, p) => sum + Number(p.redeemedAmount || 0), 0);
-
-        const record = {
-            id: Date.now().toString(),
-            closedAt: new Date().toISOString(),
-            closedAtDisplay: new Date().toLocaleString(),
-            totalPledged,
-            totalRedeemed,
-            pledges: pledges.map(p => ({ ...p })) // snapshot with amounts intact
-        };
-
-        const pledgeHistory = [...(data.pledgeHistory || []), record];
-        // Names stay on the list; amounts reset to zero for the new period.
-        const clearedPledges = pledges.map(p => ({ ...p, pledgedAmount: 0, redeemedAmount: 0 }));
-
-        await writeData({ pledgeHistory, pledgeStatus: 'closed', pledges: clearedPledges });
-        res.json({ success: true, record, pledgeHistory, pledges: clearedPledges });
-    } catch (e) {
-        res.status(500).json({ success: false, message: 'Server error closing the pledge period.' });
-    }
-});
-
-app.post('/api/admin/reopen-pledges', async (req, res) => {
-    try {
-        await writeData({ pledgeStatus: 'open' });
-        res.json({ success: true });
-    } catch (e) {
-        res.status(500).json({ success: false, message: 'Server error reopening pledges.' });
-    }
-});
-
-app.get('/api/admin/pledge-history', async (req, res) => {
-    const data = await readData();
-    res.json({ success: true, history: data.pledgeHistory || [] });
 });
 
 app.post('/api/admin/save-event', async (req, res) => {
