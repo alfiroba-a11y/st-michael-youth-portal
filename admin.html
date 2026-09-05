@@ -428,7 +428,7 @@
                         <button type="button" class="btn btn-sm btn-outline-success d-none" id="reopenPledgesBtn">Start New Pledge Round</button>
                     </div>
                 </div>
-                <p class="text-muted small mb-3">This list is shown to members (names, amount pledged, amount redeemed) but is completely separate from the members directory and registration — adding, editing, or removing someone here never affects their login or membership.</p>
+                <p class="text-muted small mb-3">Add a new person by entering their name and choosing <strong>Add Name</strong>. Use Edit to change an existing person. This list never affects registration, login, or the official directory.</p>
 
                 <form id="pledgeForm" class="row g-2 align-items-end mb-3">
                     <input type="hidden" id="pledgeId">
@@ -445,7 +445,7 @@
                         <input type="number" id="pledgeRedeemedAmount" class="form-control form-control-sm" min="0" step="1">
                     </div>
                     <div class="col-md-2 d-flex gap-2">
-                        <button type="submit" class="btn btn-primary btn-sm flex-grow-1">Save</button>
+                        <button type="submit" class="btn btn-primary btn-sm flex-grow-1" id="savePledgeBtn">Add Name</button>
                         <button type="button" class="btn btn-outline-secondary btn-sm" id="pledgeFormResetBtn">Clear</button>
                     </div>
                     <div id="pledgeFormErrorAlert" class="alert alert-danger d-none py-2 mb-0 col-12" role="alert"></div>
@@ -1291,10 +1291,10 @@
             document.getElementById('closePledgesBtn').classList.toggle('d-none', pledgeClosed);
             document.getElementById('reopenPledgesBtn').classList.toggle('d-none', !pledgeClosed);
             let pledgeRows = '';
-            (data.pledges || []).forEach(p => {
-                pledgeRows += `<tr><td>${esc(p.name)}</td><td>${pledgeClosed ? '—' : 'KES ' + Number(p.pledgedAmount || 0).toLocaleString()}</td><td>${pledgeClosed ? '—' : 'KES ' + Number(p.redeemedAmount || 0).toLocaleString()}</td><td>${pledgeClosed ? '—' : 'KES ' + (Number(p.pledgedAmount || 0) - Number(p.redeemedAmount || 0)).toLocaleString()}</td><td>${pledgeClosed ? '' : `<button class="btn btn-outline-primary btn-sm me-1" data-pledge-action="edit" data-id="${esc(p.id)}">Edit</button><button class="btn btn-outline-danger btn-sm" data-pledge-action="delete" data-id="${esc(p.id)}">Delete</button>`}</td></tr>`;
+            (data.pledges || []).forEach((p, index) => {
+                pledgeRows += `<tr><td>${index + 1}</td><td>${esc(p.name)}</td><td>${pledgeClosed ? '—' : 'KES ' + Number(p.pledgedAmount || 0).toLocaleString()}</td><td>${pledgeClosed ? '—' : 'KES ' + Number(p.redeemedAmount || 0).toLocaleString()}</td><td>${pledgeClosed ? '—' : 'KES ' + (Number(p.pledgedAmount || 0) - Number(p.redeemedAmount || 0)).toLocaleString()}</td><td>${pledgeClosed ? '' : `<button class="btn btn-outline-primary btn-sm me-1" data-pledge-action="edit" data-id="${esc(p.id)}">Edit</button><button class="btn btn-outline-danger btn-sm" data-pledge-action="delete" data-id="${esc(p.id)}">Delete</button>`}</td></tr>`;
             });
-            document.getElementById('pledgesTableAdmin').innerHTML = pledgeRows || '<tr><td colspan="5" class="text-muted text-center">No pledge names yet.</td></tr>';
+            document.getElementById('pledgesTableAdmin').innerHTML = pledgeRows || '<tr><td colspan="6" class="text-muted text-center">No pledge names yet.</td></tr>';
             document.getElementById('pledgeHistoryListAdmin').innerHTML = (data.pledgeHistory || []).slice().reverse().map(h => `<div class="list-group-item">Closed ${esc(h.closedAtDisplay || '')} <span class="text-muted">· ${(h.pledges || []).length} names</span></div>`).join('') || '<div class="text-muted small">No past pledge rounds.</div>';
         }
 
@@ -1306,10 +1306,12 @@
             document.getElementById('pledgeName').value = '';
             document.getElementById('pledgePledgedAmount').value = '';
             document.getElementById('pledgeRedeemedAmount').value = '';
+            document.getElementById('savePledgeBtn').textContent = 'Add Name';
         }
 
         document.getElementById('pledgeForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            document.getElementById('pledgeFormErrorAlert').classList.add('d-none');
             try {
                 await apiCall('/api/admin/save-pledge', { method: 'POST', body: JSON.stringify({
                     id: document.getElementById('pledgeId').value,
@@ -1331,6 +1333,7 @@
                 document.getElementById('pledgeName').value = pledge.name;
                 document.getElementById('pledgePledgedAmount').value = pledge.pledgedAmount || 0;
                 document.getElementById('pledgeRedeemedAmount').value = pledge.redeemedAmount || 0;
+                document.getElementById('savePledgeBtn').textContent = 'Save Changes';
             } else if (confirm(`Delete ${pledge.name} from this pledge list?`)) {
                 await apiCall('/api/admin/delete-pledge', { method: 'POST', body: JSON.stringify({ id: pledge.id }) }); await loadMasterData();
             }
