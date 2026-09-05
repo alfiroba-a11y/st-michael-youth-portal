@@ -188,7 +188,7 @@
             <div class="col-6 col-lg-3">
                 <div class="stat-card">
                     <div class="stat-card-icon">👥</div>
-                    <div class="stat-card-label">Registered Members</div>
+                    <div class="stat-card-label">Pledge Participants</div>
                     <div class="stat-card-value" id="statMembers" data-count-to="0">0</div>
                 </div>
             </div>
@@ -392,10 +392,13 @@
             <div id="masterContributionsList" class="table-responsive">Loading contributions...</div>
         </div>
 
-        <!-- Youth Directory Table -->
+        <!-- Youth pledges are a separate contribution list. The official
+             directory is deliberately available only in the admin portal. -->
         <div class="card shadow-sm p-4 mb-4">
-            <h4 class="text-primary mb-3" data-i18n="directory_heading">Official Youth Directory & Members</h4>
-            <div id="directoryList" class="table-responsive">Loading directory...</div>
+            <h4 class="text-primary mb-2">🤝 Youth Contributions / Pledges</h4>
+            <p id="pledgeMemberNotice" class="text-muted small">Loading current pledge round...</p>
+            <div id="pledgeMemberList" class="table-responsive"></div>
+            <div id="pledgeMemberHistory" class="mt-3"></div>
         </div>
 
         <!-- The Holy Rosary: Complete Mysteries -->
@@ -694,6 +697,39 @@
             document.getElementById('welcomeUser').textContent = `Signed in as: ${currentUser}`;
         }
 
+        function pledgeEsc(value) {
+            return String(value === undefined || value === null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
+        async function loadPledgeList() {
+            const list = document.getElementById('pledgeMemberList');
+            const notice = document.getElementById('pledgeMemberNotice');
+            try {
+                const res = await fetch('/api/youth/pledges', { cache: 'no-store' });
+                const data = await res.json();
+                if (!data.success) throw new Error();
+                const closed = data.status === 'closed';
+                animateCounter('statMembers', (data.pledges || []).length);
+                notice.textContent = closed
+                    ? 'This pledge round is closed. Names remain listed; figures are available in the past-round record below.'
+                    : 'This contribution list is separate from the official youth directory and registration.';
+                let html = `<table class="table table-bordered table-striped"><thead><tr><th>Name</th><th>${closed ? 'Pledged' : 'Amount pledged (KES)'}</th><th>${closed ? 'Redeemed' : 'Amount redeemed (KES)'}</th></tr></thead><tbody>`;
+                (data.pledges || []).forEach(p => { html += `<tr><td>${pledgeEsc(p.name)}</td><td>${closed ? '—' : 'KES ' + Number(p.pledgedAmount || 0).toLocaleString()}</td><td>${closed ? '—' : 'KES ' + Number(p.redeemedAmount || 0).toLocaleString()}</td></tr>`; });
+                list.innerHTML = html + '</tbody></table>';
+                document.getElementById('pledgeMemberHistory').innerHTML = (data.history || []).length
+                    ? '<h6>Past pledge rounds</h6>' + data.history.map(h => `<button class="btn btn-sm btn-outline-secondary me-2 mb-2" data-pledge-history="${pledgeEsc(h.id)}">${pledgeEsc(h.closedAtDisplay || 'Closed round')} (${h.count} names)</button>`).join('')
+                    : '';
+            } catch (e) { notice.textContent = 'Could not load the pledge list right now.'; }
+        }
+
+        document.addEventListener('click', async (e) => {
+            const btn = e.target.closest('[data-pledge-history]'); if (!btn) return;
+            const res = await fetch(`/api/youth/pledges/history/${encodeURIComponent(btn.dataset.pledgeHistory)}`, { cache: 'no-store' });
+            const data = await res.json(); if (!data.success) return;
+            const rows = (data.record.pledges || []).map(p => `<tr><td>${pledgeEsc(p.name)}</td><td>KES ${Number(p.pledgedAmount || 0).toLocaleString()}</td><td>KES ${Number(p.redeemedAmount || 0).toLocaleString()}</td></tr>`).join('');
+            document.getElementById('pledgeMemberHistory').innerHTML = `<h6>Past pledge round: ${pledgeEsc(data.record.closedAtDisplay || '')}</h6><div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>Name</th><th>Pledged</th><th>Redeemed</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+        });
+
         async function loadDashboardData() {
             try {
                 const res = await fetch('/api/youth/directory', { cache: 'no-store' });
@@ -747,17 +783,9 @@
                     document.getElementById('masterContributionsList').innerHTML = cHtml;
                     renderMemberChart(contributionsList);
 
-                    // 4. Render Registered Members Directory
-                    let html = '<table class="table table-bordered table-striped"><thead><tr><th>ID</th><th>Name</th><th>Jumuiya</th><th>Group</th><th>Phone</th></tr></thead><tbody>';
-                    if (!data.members || data.members.length === 0) {
-                        html += '<tr><td colspan="5" class="text-muted text-center">No approved members listed yet.</td></tr>';
-                    } else {
-                        data.members.forEach(m => {
-                            html += `<tr><td><strong class="text-primary">${m.customId || ''}</strong></td><td>${m.name}</td><td>${m.jumuiya || '-'}</td><td>${m.group || '-'}</td><td>${m.phone || '-'}</td></tr>`;
-                        });
-                    }
-                    html += '</tbody></table>';
-                    document.getElementById('directoryList').innerHTML = html;
+                    // The official directory is admin-only. Pledges are loaded
+                    // separately and never affect registration.
+                    loadPledgeList();
 
                     // 5. Render Community Messages Board
                     let mHtml = '';
@@ -784,13 +812,11 @@
                     // Overview stat cards
                     const totalContributions = (data.masterContributions || []).reduce((sum, c) => sum + Number(c.amount || 0), 0);
                     const eventCount = upcomingOnly.length;
-                    const memberCount = (data.members || []).length;
                     const candles = data.candles || [];
                     const candlesLit = candles.filter(c => c.lit).length;
 
                     animateCounter('statContributions', totalContributions, v => 'KES ' + Math.round(v).toLocaleString());
                     animateCounter('statEvents', eventCount);
-                    animateCounter('statMembers', memberCount);
                     animateCounter('statCandles', candlesLit);
 
                     // Prayer Sanctuary Engagement donut (candles lit vs resting)
