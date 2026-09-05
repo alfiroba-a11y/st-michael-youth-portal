@@ -697,6 +697,7 @@
         ========================================================= */
         let cachedMasterData = defaultData();
         let myJumuiyaChart = null;
+        let adminToken = '';
 
         function defaultData() {
             return {
@@ -709,6 +710,9 @@
                 targetAmount: 500000,
                 contributionStatus: 'open',
                 contributionHistory: [],
+                pledgeStatus: 'open',
+                pledgeHistory: [],
+                pledges: [],
                 jumuiyaSubmissions: [],
                 pending: [],
                 members: [],
@@ -733,6 +737,7 @@
         async function apiCall(url, options) {
             options = options || {};
             options.headers = Object.assign({ 'Content-Type': 'application/json' }, options.headers || {});
+            if (adminToken) options.headers['X-Admin-Token'] = adminToken;
             options.cache = options.cache || 'no-store';
             let res;
             try {
@@ -784,7 +789,8 @@
             document.getElementById('adminLoginBtnText').textContent = 'Signing in...';
 
             try {
-                await apiCall('/api/admin/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+                const login = await apiCall('/api/admin/login', { method: 'POST', body: JSON.stringify({ username, password }) });
+                adminToken = login.token || '';
                 document.getElementById('loginWrapper').classList.add('d-none');
                 document.getElementById('dashboardSection').classList.remove('d-none');
                 await loadMasterData();
@@ -1275,11 +1281,69 @@
                 });
             }
             document.getElementById('memberList').innerHTML = mHtml + '</tbody></table>';
+
+            // Pledge register: a separate list, never connected to the member
+            // directory or to new member registration.
+            const pledgeClosed = data.pledgeStatus === 'closed';
+            const pledgeBadge = document.getElementById('pledgeStatusBadge');
+            pledgeBadge.textContent = pledgeClosed ? 'Closed' : 'Open';
+            pledgeBadge.className = 'badge ' + (pledgeClosed ? 'bg-secondary me-2' : 'bg-success me-2');
+            document.getElementById('closePledgesBtn').classList.toggle('d-none', pledgeClosed);
+            document.getElementById('reopenPledgesBtn').classList.toggle('d-none', !pledgeClosed);
+            let pledgeRows = '';
+            (data.pledges || []).forEach(p => {
+                pledgeRows += `<tr><td>${esc(p.name)}</td><td>${pledgeClosed ? '—' : 'KES ' + Number(p.pledgedAmount || 0).toLocaleString()}</td><td>${pledgeClosed ? '—' : 'KES ' + Number(p.redeemedAmount || 0).toLocaleString()}</td><td>${pledgeClosed ? '—' : 'KES ' + (Number(p.pledgedAmount || 0) - Number(p.redeemedAmount || 0)).toLocaleString()}</td><td>${pledgeClosed ? '' : `<button class="btn btn-outline-primary btn-sm me-1" data-pledge-action="edit" data-id="${esc(p.id)}">Edit</button><button class="btn btn-outline-danger btn-sm" data-pledge-action="delete" data-id="${esc(p.id)}">Delete</button>`}</td></tr>`;
+            });
+            document.getElementById('pledgesTableAdmin').innerHTML = pledgeRows || '<tr><td colspan="5" class="text-muted text-center">No pledge names yet.</td></tr>';
+            document.getElementById('pledgeHistoryListAdmin').innerHTML = (data.pledgeHistory || []).slice().reverse().map(h => `<div class="list-group-item">Closed ${esc(h.closedAtDisplay || '')} <span class="text-muted">· ${(h.pledges || []).length} names</span></div>`).join('') || '<div class="text-muted small">No past pledge rounds.</div>';
         }
 
         /* =========================================================
            TARGET MODAL
         ========================================================= */
+        function clearPledgeForm() {
+            document.getElementById('pledgeId').value = '';
+            document.getElementById('pledgeName').value = '';
+            document.getElementById('pledgePledgedAmount').value = '';
+            document.getElementById('pledgeRedeemedAmount').value = '';
+        }
+
+        document.getElementById('pledgeForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                await apiCall('/api/admin/save-pledge', { method: 'POST', body: JSON.stringify({
+                    id: document.getElementById('pledgeId').value,
+                    name: document.getElementById('pledgeName').value,
+                    pledgedAmount: document.getElementById('pledgePledgedAmount').value,
+                    redeemedAmount: document.getElementById('pledgeRedeemedAmount').value
+                }) });
+                clearPledgeForm();
+                await loadMasterData();
+                showGlobalStatus('Pledge saved.', 'success');
+            } catch (err) { document.getElementById('pledgeFormErrorAlert').textContent = err.message; document.getElementById('pledgeFormErrorAlert').classList.remove('d-none'); }
+        });
+        document.getElementById('pledgeFormResetBtn').addEventListener('click', clearPledgeForm);
+        document.getElementById('pledgesTableAdmin').addEventListener('click', async (e) => {
+            const button = e.target.closest('[data-pledge-action]'); if (!button) return;
+            const pledge = (cachedMasterData.pledges || []).find(p => String(p.id) === button.dataset.id); if (!pledge) return;
+            if (button.dataset.pledgeAction === 'edit') {
+                document.getElementById('pledgeId').value = pledge.id;
+                document.getElementById('pledgeName').value = pledge.name;
+                document.getElementById('pledgePledgedAmount').value = pledge.pledgedAmount || 0;
+                document.getElementById('pledgeRedeemedAmount').value = pledge.redeemedAmount || 0;
+            } else if (confirm(`Delete ${pledge.name} from this pledge list?`)) {
+                await apiCall('/api/admin/delete-pledge', { method: 'POST', body: JSON.stringify({ id: pledge.id }) }); await loadMasterData();
+            }
+        });
+        document.getElementById('closePledgesBtn').addEventListener('click', async () => {
+            if (!confirm('Close this pledge round? Names stay visible and the figures will be saved in history.')) return;
+            await apiCall('/api/admin/close-pledges', { method: 'POST' }); await loadMasterData();
+        });
+        document.getElementById('reopenPledgesBtn').addEventListener('click', async () => {
+            if (!confirm('Start a new pledge round? This keeps names but clears the new round amounts.')) return;
+            await apiCall('/api/admin/start-pledges', { method: 'POST' }); await loadMasterData();
+        });
+
         window.__recalcTarget = function () {
             let sum = 0;
             document.querySelectorAll('.jumuiya-target-field').forEach(input => { sum += Number(input.value) || 0; });
