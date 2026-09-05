@@ -4,9 +4,19 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const fs = require('fs');
 const { MongoClient } = require('mongodb');
+const crypto = require('crypto');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const adminSessions = new Set();
+
+function requireAdmin(req, res, next) {
+    const token = String(req.get('X-Admin-Token') || '');
+    if (!token || !adminSessions.has(token)) {
+        return res.status(401).json({ success: false, message: 'Admin sign-in is required.' });
+    }
+    next();
+}
 
 app.use((req, res, next) => {
     res.header('Access-Control-Allow-Origin', '*');
@@ -68,7 +78,7 @@ function getSaintOfDay(date) {
     return { ...saint, dayOfYear };
 }
 
-const VALID_PURPOSES = ['Christmas collection', 'Easter collection', 'Diocesan collection', 'Youth harambee', 'PMC contribution', 'Other'];
+const VALID_PURPOSES = ['Christmas collection', 'Easter collection', 'Diocesan collection', 'Youth harambee', 'Youth pledge', 'PMC contribution', 'Other'];
 
 const JUMUIYAS_LIST = [
     { id: 'st_catherine', name: 'St. Catherine', username: 'catherine_admin', pass: 'Cath2026!' },
@@ -113,25 +123,6 @@ let fallbackData = {
         'Dennis wambua','Cecilia Mulinge','Innocent muthusi','Dennis kasivu','Rechael ndolo','Cynthia munyao',
         'Agie kasiva','Erick peter','Ostin kilonzo','Samantha wangai','Agape Nzomo'
     ].map((name, i) => ({ id: 'seed_' + (i + 1), name, pledgedAmount: 0, redeemedAmount: 0 })),
-    pledgeStatus: 'open',
-    pledgeHistory: [],
-    pledges: [
-        'Diana katile','Dennis sammy','Joanne Nduku','Matilda ann','Patric Mutiso','Joseph mulei','Sam art kid',
-        'Charity ndunge','Dancun mutuku','Samuel Ndola','Robert Wambua','Francis mutoni','Lydia ndunge','Dennis kaseke',
-        'Urbanus sammy','Ruth Kioko','Esther nthenya','Steve kiilu','Brian musau','Alice mutave','Maureen kioko',
-        'Kaloki sammy','Urbanus mutisya','Maryann Koki','Faith munyiva','Mary kiilu','Diana nwende','Caro mutio',
-        'Emily mbatha','Joseph ndiku','Antony kioko','Mitchell Muema','Leonard mwiso','Janet Ngelele','Faith ndunge',
-        'Vivian ndunge','Jayden wambua','Judith ndila','marceline ndinda','Catherine kaluki','Dennis makato',
-        'Mercy muthoki','Kavesu Nzuki','Ann kamene','Maureen Muema','Kennedy kioko','Janet Wanza','Gloria Mwende',
-        'Bridgit Wavinya','Magdalene musau','Cellina mukulu','Jane ndinda','Janet munyiva','Purity nthambi',
-        'Susan Katunge','Maureen kalekye','Dennis muema','Catherine mbatha','Diana musyawa','Agnes ngina',
-        'Alphonse muteti','Mary musyoki','simon muya','sharleen kioko','Claudia kennedy','Diana kennedy',
-        'Dennus kiswii','Jacintah muema','Simon kasivu','Cynthia syokau','Peter mwangangi','Gloria kim',
-        'Jackline muthoki','Joseph mutinda','Betty mutindi','Allan muli','Vincent muthama','Steven muutu',
-        'Bonface william','Fidelis kimani','Annafemmi','Caroline muema','James kilele','John mutinda',
-        'Dennis wambua','Cecilia Mulinge','Innocent muthusi','Dennis kasivu','Rechael ndolo','Cynthia munyao',
-        'Agie kasiva','Erick peter','Ostin kilonzo','Samantha wangai','Agape Nzomo'
-    ].map((name, i) => ({ id: 'seed_' + (i + 1), name, pledgedAmount: 0, redeemedAmount: 0 })),
     events: [{ id: '1', title: 'Sunday Holy Mass & Youth Fellowship', date: 'Next Sunday at 10:00 AM', description: 'Main service at St. Michael Kasaini Church.', type: 'upcoming' }],
     messages: [],
     readings: [{ id: '1', title: "Sunday Holy Mass Readings", firstReading: "1 Kings 3:5...", psalm: "Psalm 119...", secondReading: "Romans 8...", gospel: "Matthew 13..." }],
@@ -151,6 +142,22 @@ let fallbackData = {
     privateMessages: [],
     loginLogs: []
 };
+
+function normalizedName(value) {
+    return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function creditPledgePayment(pledges, name, amount) {
+    const received = Number(amount || 0);
+    if (!received) return { pledges, matched: false };
+    let matched = false;
+    const updated = (pledges || []).map(p => {
+        if (normalizedName(p.name) !== normalizedName(name)) return p;
+        matched = true;
+        return { ...p, redeemedAmount: Number(p.redeemedAmount || 0) + received };
+    });
+    return { pledges: updated, matched };
+}
 
 async function readData() {
     if (!db) return fallbackData;
@@ -437,7 +444,7 @@ function injectAppShell(html) {
 }
 
 function sendShelledPage(res, filename) {
-    const filePath = path.join(__dirname, filename);
+    const filePath = path.join(__dirname, 'public', filename);
     fs.readFile(filePath, 'utf8', (err, html) => {
         if (err) return res.status(404).send('Page not found.');
         res.set('Content-Type', 'text/html; charset=utf-8');
@@ -462,7 +469,7 @@ app.use((req, res, next) => {
 // Serves everything else — CSS, JS, images, app-shell.css itself, etc.
 // (Deliberately placed after the shell middleware above so .html
 // requests are always intercepted for shell injection first.)
-app.use(express.static(path.join(__dirname)));
+app.use(express.static(path.join(__dirname, 'public')));
 
 
 // Spiritual & Content API Endpoints
@@ -851,16 +858,23 @@ app.post('/api/jumuiya/submit-record', async (req, res) => {
     if (data.contributionStatus === 'closed') {
         return res.json({ success: false, message: 'This contribution period is closed. Please check back once a new one has started.' });
     }
+    const cleanPurpose = VALID_PURPOSES.includes(purpose) ? purpose : 'Other';
+    const cleanAmount = parseFloat(amount) || 0;
     const submissions = [...(data.jumuiyaSubmissions || []), {
         id: Date.now().toString(),
         jumuiyaName,
         name: name.trim(),
-        amount: parseFloat(amount) || 0,
-        purpose: VALID_PURPOSES.includes(purpose) ? purpose : 'Other',
+        amount: cleanAmount,
+        purpose: cleanPurpose,
         published: false
     }];
-    await writeData({ jumuiyaSubmissions: submissions });
-    res.json({ success: true, message: 'Submitted successfully!' });
+    // A payment submitted specifically as a Youth pledge is credited to the
+    // matching pledge name immediately; registration records are untouched.
+    const credit = cleanPurpose === 'Youth pledge' && data.pledgeStatus !== 'closed'
+        ? creditPledgePayment(data.pledges || [], name, cleanAmount)
+        : { pledges: data.pledges || [], matched: false };
+    await writeData({ jumuiyaSubmissions: submissions, pledges: credit.pledges });
+    res.json({ success: true, message: credit.matched ? 'Payment submitted and pledge balance updated.' : 'Submitted successfully!' });
 });
 
 // Virtual prayer candles — a shared, persistent board every visitor sees
@@ -952,6 +966,27 @@ app.get('/api/youth/contribution-report', async (req, res) => {
     });
 });
 
+// Public pledge view. The member directory is deliberately not returned here.
+app.get('/api/youth/pledges', async (req, res) => {
+    const data = await readData();
+    const closed = data.pledgeStatus === 'closed';
+    res.json({
+        success: true,
+        status: closed ? 'closed' : 'open',
+        pledges: (data.pledges || []).map(p => closed
+            ? { id: p.id, name: p.name }
+            : { id: p.id, name: p.name, pledgedAmount: Number(p.pledgedAmount || 0), redeemedAmount: Number(p.redeemedAmount || 0) }),
+        history: (data.pledgeHistory || []).map(h => ({ id: h.id, closedAtDisplay: h.closedAtDisplay, count: (h.pledges || []).length }))
+    });
+});
+
+app.get('/api/youth/pledges/history/:id', async (req, res) => {
+    const data = await readData();
+    const record = (data.pledgeHistory || []).find(h => h.id === req.params.id);
+    if (!record) return res.status(404).json({ success: false, message: 'Pledge history was not found.' });
+    res.json({ success: true, record: { id: record.id, closedAtDisplay: record.closedAtDisplay, pledges: record.pledges || [] } });
+});
+
 app.get('/api/youth/directory', async (req, res) => {
     const data = await readData();
     const { reflection, patronSaint } = await getSpiritualContent();
@@ -965,7 +1000,6 @@ app.get('/api/youth/directory', async (req, res) => {
     });
     res.json({ 
         success: true, 
-        members: (data.members || []).map(m => ({ ...m, phone: maskPhone(m.phone) })), 
         masterContributions: (data.jumuiyaSubmissions || []).filter(s => s.published), 
         contributionsMap,
         jumuiyaTargets: data.jumuiyaTargets || {},
@@ -1112,8 +1146,13 @@ app.post('/api/youth/update-profile', async (req, res) => {
 // Master Admin APIs
 app.post('/api/admin/login', (req, res) => {
     const { username, password } = req.body;
-    res.json({ success: (username === 'Admin' && password === 'Admin0247') });
+    const success = username === 'Admin' && password === 'Admin0247';
+    const token = success ? crypto.randomBytes(32).toString('hex') : null;
+    if (token) adminSessions.add(token);
+    res.json({ success, token });
 });
+
+app.use('/api/admin', requireAdmin);
 
 // Admin Analytics & User Engagement — login frequency, coarse device
 // type breakdown, and per-member activity, aggregated server-side so the
@@ -1188,6 +1227,9 @@ app.get('/api/admin/data', async (req, res) => {
         polls: data.polls || [],
         archives: data.archives || [],
         contributionHistory: data.contributionHistory || [],
+        pledgeStatus: data.pledgeStatus || 'open',
+        pledgeHistory: data.pledgeHistory || [],
+        pledges: data.pledges || [],
         targetAmount: data.targetAmount !== undefined ? data.targetAmount : 500000,
         jumuiyaTargets: data.jumuiyaTargets || {},
         contributionStatus: data.contributionStatus || 'open',
@@ -1691,4 +1733,49 @@ app.post('/api/admin/reject', async (req, res) => {
 
 app.listen(PORT, () => {
     console.log(`St. Michael Kasaini Server running on http://localhost:${PORT}`);
+});
+
+app.post('/api/admin/save-pledge', async (req, res) => {
+    try {
+        const { id, name, pledgedAmount, redeemedAmount } = req.body;
+        const cleanName = String(name || '').trim();
+        if (!cleanName) return res.status(400).json({ success: false, message: 'A name is required.' });
+        const data = await readData();
+        if (data.pledgeStatus === 'closed') return res.status(400).json({ success: false, message: 'Start a new pledge round before editing it.' });
+        const entry = {
+            id: id || `pledge_${Date.now()}`,
+            name: cleanName,
+            pledgedAmount: Math.max(0, Number(pledgedAmount || 0)),
+            redeemedAmount: Math.max(0, Number(redeemedAmount || 0))
+        };
+        const exists = (data.pledges || []).some(p => p.id === entry.id);
+        const pledges = exists ? data.pledges.map(p => p.id === entry.id ? entry : p) : [...(data.pledges || []), entry];
+        await writeData({ pledges });
+        res.json({ success: true, pledges });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Could not save the pledge.' });
+    }
+});
+
+app.post('/api/admin/delete-pledge', async (req, res) => {
+    const data = await readData();
+    if (data.pledgeStatus === 'closed') return res.status(400).json({ success: false, message: 'Start a new pledge round before editing it.' });
+    await writeData({ pledges: (data.pledges || []).filter(p => p.id !== req.body.id) });
+    res.json({ success: true });
+});
+
+app.post('/api/admin/close-pledges', async (req, res) => {
+    const data = await readData();
+    if (data.pledgeStatus === 'closed') return res.status(400).json({ success: false, message: 'The pledge round is already closed.' });
+    const record = { id: `pledge_${Date.now()}`, closedAt: new Date().toISOString(), closedAtDisplay: new Date().toLocaleString(), pledges: data.pledges || [] };
+    await writeData({ pledgeStatus: 'closed', pledgeHistory: [...(data.pledgeHistory || []), record] });
+    res.json({ success: true, record });
+});
+
+app.post('/api/admin/start-pledges', async (req, res) => {
+    const data = await readData();
+    // Retain every name but deliberately begin a new round with blank amounts.
+    const pledges = (data.pledges || []).map(p => ({ id: p.id, name: p.name, pledgedAmount: 0, redeemedAmount: 0 }));
+    await writeData({ pledgeStatus: 'open', pledges });
+    res.json({ success: true, pledges });
 });
