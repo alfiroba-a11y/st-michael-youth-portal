@@ -444,7 +444,11 @@ function injectAppShell(html) {
 }
 
 function sendShelledPage(res, filename) {
-    const filePath = path.join(__dirname, 'public', filename);
+    // Support the original single-folder deployment as well as an optional
+    // public/ folder. This lets an existing host keep all HTML/CSS/JS files
+    // beside server.js without breaking the named routes.
+    const publicDir = fs.existsSync(path.join(__dirname, 'public')) ? path.join(__dirname, 'public') : __dirname;
+    const filePath = path.join(publicDir, filename);
     fs.readFile(filePath, 'utf8', (err, html) => {
         if (err) return res.status(404).send('Page not found.');
         res.set('Content-Type', 'text/html; charset=utf-8');
@@ -469,7 +473,7 @@ app.use((req, res, next) => {
 // Serves everything else — CSS, JS, images, app-shell.css itself, etc.
 // (Deliberately placed after the shell middleware above so .html
 // requests are always intercepted for shell injection first.)
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(fs.existsSync(path.join(__dirname, 'public')) ? path.join(__dirname, 'public') : __dirname));
 
 
 // Spiritual & Content API Endpoints
