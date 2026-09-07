@@ -38,11 +38,25 @@
             100% { background-position: -20% 0%; opacity: 0; }
         }
 
-        /* Prayer Globe */
-        .globe-card { background: #0b0f2b; color: #fff; border-radius: 0.75rem; overflow: hidden; }
-        #prayerGlobeCanvas { width: 100%; height: 320px; display: block; cursor: grab; }
-        #prayerGlobeCanvas:active { cursor: grabbing; }
-        .globe-count-badge { font-size: 0.75rem; color: rgba(255,255,255,0.7); }
+        /* Spiritual Fire & Doves of Hope */
+        .spiritual-fire-card { background: radial-gradient(circle at 50% 88%, #6b1d09 0, #230c12 36%, #080d27 77%); color: #fff; border-radius: .75rem; overflow: hidden; }
+        .fire-sanctuary { position: relative; height: 330px; overflow: hidden; isolation: isolate; background: linear-gradient(180deg, rgba(21,40,77,.35), transparent 45%); }
+        .fire-sanctuary::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 100%, rgba(255,124,20,.44), transparent 35%), radial-gradient(ellipse at 50% 20%, rgba(190,222,255,.18), transparent 49%); }
+        .fire-core { position: absolute; z-index: 2; left: 50%; bottom: 22px; width: 116px; height: 176px; transform: translateX(-50%); filter: drop-shadow(0 -6px 16px rgba(255,195,64,.8)) drop-shadow(0 0 40px rgba(255,75,13,.7)); }
+        .flame { position: absolute; bottom: 0; left: 50%; transform-origin: bottom center; border-radius: 52% 48% 48% 52% / 67% 69% 31% 33%; animation: flameDance 1.6s ease-in-out infinite alternate; }
+        .flame.outer { width: 106px; height: 165px; margin-left: -53px; background: linear-gradient(#fff1a8 0%, #ffb117 26%, #f04c12 65%, #9e1309 100%); clip-path: polygon(50% 0, 71% 30%, 91% 48%, 80% 78%, 53% 100%, 20% 81%, 7% 54%, 27% 29%); }
+        .flame.mid { width: 65px; height: 118px; margin-left: -33px; background: linear-gradient(#fffde7, #ffd93d 37%, #ff6d10 92%); clip-path: polygon(50% 0, 77% 40%, 88% 67%, 52% 100%, 16% 68%, 27% 33%); animation-delay: -.7s; }
+        .flame.inner { width: 32px; height: 72px; margin-left: -16px; background: linear-gradient(#ffffff, #fffac9 36%, #ffb300); clip-path: polygon(50% 0, 78% 53%, 50% 100%, 20% 55%); animation-duration: 1.1s; }
+        @keyframes flameDance { from { transform: translateX(-50%) scaleX(.92) rotate(-3deg); } to { transform: translateX(-50%) scaleX(1.08) rotate(4deg); } }
+        .ember { position: absolute; z-index: 1; bottom: 82px; left: 50%; width: 5px; height: 5px; border-radius: 50%; background: #ffd76a; box-shadow: 0 0 10px #ff8d1d; animation: emberRise var(--duration) ease-out infinite; animation-delay: var(--delay); }
+        @keyframes emberRise { 0% { transform: translate(var(--x), 0) scale(.5); opacity: 0; } 15% { opacity: 1; } 100% { transform: translate(calc(var(--x) * 2), -250px) scale(0); opacity: 0; } }
+        .dove { position: absolute; z-index: 3; width: 66px; height: 42px; opacity: 0; animation: doveJourney 9s linear infinite; animation-delay: var(--delay); filter: drop-shadow(0 2px 5px rgba(0,0,0,.25)); }
+        .dove path { fill: rgba(255,255,255,.96); stroke: rgba(207,226,255,.8); stroke-width: 1; }
+        .dove .wing { transform-origin: 30px 22px; animation: wingBeat .42s ease-in-out infinite alternate; }
+        @keyframes wingBeat { from { transform: rotate(-16deg); } to { transform: rotate(18deg); } }
+        @keyframes doveJourney { 0% { transform: translate(-110px, 130px) scale(.55) rotate(-8deg); opacity: 0; } 8%, 78% { opacity: 1; } 100% { transform: translate(calc(100vw + 80px), -105px) scale(1.05) rotate(7deg); opacity: 0; } }
+        .fire-caption { position: absolute; z-index: 4; left: 50%; bottom: 9px; transform: translateX(-50%); width: 100%; text-align: center; font-size: .8rem; color: rgba(255,241,204,.9); letter-spacing: .04em; }
+        @media (prefers-reduced-motion: reduce) { .flame, .ember, .dove { animation: none; } .dove { opacity: .9; } }
 
         /* St. Michael Companion widget */
         .companion-fab {
@@ -345,16 +359,19 @@
             </div>
         </div>
 
-        <!-- Real-Time Global Prayer Globe -->
-        <div class="card shadow-sm p-0 mb-4 globe-card">
+        <!-- Spiritual Fire & Doves of Hope -->
+        <div class="card shadow-sm p-0 mb-4 spiritual-fire-card">
             <div class="p-3 pb-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <h4 class="mb-0" data-i18n="globe_heading">🌍 Global Prayer Globe</h4>
-                <span class="globe-count-badge" id="globeCount">0 intentions lit</span>
+                <h4 class="mb-0">🔥 Spiritual Fire &amp; Doves of Hope</h4>
+                <span class="small text-white-50">A living sign of prayer and hope</span>
             </div>
-            <canvas id="prayerGlobeCanvas"></canvas>
-            <div class="p-3 pt-2 d-flex flex-wrap gap-2 align-items-center">
-                <button class="btn btn-sm btn-warning" id="lightGlobeIntentionBtn" data-i18n="light_intention_btn">✨ Light a prayer intention from here</button>
-                <span class="small text-white-50" id="globeStatusText"></span>
+            <div class="fire-sanctuary" aria-label="Animated spiritual fire with doves of hope flying across the sky">
+                <span class="ember" style="--x:-32px;--delay:0s;--duration:3.9s"></span><span class="ember" style="--x:28px;--delay:1.2s;--duration:4.8s"></span><span class="ember" style="--x:-8px;--delay:2.4s;--duration:4.2s"></span><span class="ember" style="--x:44px;--delay:.6s;--duration:3.5s"></span>
+                <svg class="dove" style="top:28%;--delay:0s" viewBox="0 0 100 60" aria-hidden="true"><path class="wing" d="M45 33C26 6 4 6 2 14c16 0 24 10 34 28z"/><path d="M39 36c18-16 37-11 55 0-20 0-29 9-42 17-12-4-19-9-23-16l-18-6 18-5c3 2 6 3 10 4z"/><path d="M91 36l8-6-4 10z"/></svg>
+                <svg class="dove" style="top:13%;--delay:3s" viewBox="0 0 100 60" aria-hidden="true"><path class="wing" d="M45 33C26 6 4 6 2 14c16 0 24 10 34 28z"/><path d="M39 36c18-16 37-11 55 0-20 0-29 9-42 17-12-4-19-9-23-16l-18-6 18-5c3 2 6 3 10 4z"/><path d="M91 36l8-6-4 10z"/></svg>
+                <svg class="dove" style="top:43%;--delay:6s" viewBox="0 0 100 60" aria-hidden="true"><path class="wing" d="M45 33C26 6 4 6 2 14c16 0 24 10 34 28z"/><path d="M39 36c18-16 37-11 55 0-20 0-29 9-42 17-12-4-19-9-23-16l-18-6 18-5c3 2 6 3 10 4z"/><path d="M91 36l8-6-4 10z"/></svg>
+                <div class="fire-core"><span class="flame outer"></span><span class="flame mid"></span><span class="flame inner"></span></div>
+                <div class="fire-caption">“Let your light shine before others.” — Matthew 5:16</div>
             </div>
         </div>
 
