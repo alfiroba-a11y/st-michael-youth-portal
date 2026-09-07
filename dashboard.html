@@ -701,6 +701,32 @@
             return String(value === undefined || value === null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         }
 
+        function downloadPledgePdf(title, pledges) {
+            if (!window.jspdf || !window.jspdf.jsPDF) {
+                alert('The PDF tool is still loading. Please try again in a moment.');
+                return;
+            }
+            const doc = new window.jspdf.jsPDF();
+            doc.setFontSize(16);
+            doc.text('St. Michael Kasaini Youth Portal', 14, 16);
+            doc.setFontSize(12);
+            doc.text(title, 14, 24);
+            doc.setFontSize(9);
+            doc.text(`Downloaded: ${new Date().toLocaleString()}`, 14, 30);
+            doc.autoTable({
+                startY: 36,
+                head: [['#', 'Name', 'Pledged (KES)', 'Redeemed (KES)', 'Balance (KES)']],
+                body: (pledges || []).map((p, index) => {
+                    const pledged = Number(p.pledgedAmount || 0);
+                    const redeemed = Number(p.redeemedAmount || 0);
+                    return [index + 1, p.name || '', pledged.toLocaleString(), redeemed.toLocaleString(), (pledged - redeemed).toLocaleString()];
+                }),
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [13, 110, 253] }
+            });
+            doc.save(`youth-pledges-${new Date().toISOString().slice(0, 10)}.pdf`);
+        }
+
         async function loadPledgeList() {
             const list = document.getElementById('pledgeMemberList');
             const notice = document.getElementById('pledgeMemberNotice');
@@ -713,21 +739,40 @@
                 notice.textContent = closed
                     ? 'This pledge round is closed. Names remain listed; figures are available in the past-round record below.'
                     : 'This contribution list is separate from the official youth directory and registration.';
-                let html = `<table class="table table-bordered table-striped"><thead><tr><th>Name</th><th>${closed ? 'Pledged' : 'Amount pledged (KES)'}</th><th>${closed ? 'Redeemed' : 'Amount redeemed (KES)'}</th></tr></thead><tbody>`;
-                (data.pledges || []).forEach(p => { html += `<tr><td>${pledgeEsc(p.name)}</td><td>${closed ? '—' : 'KES ' + Number(p.pledgedAmount || 0).toLocaleString()}</td><td>${closed ? '—' : 'KES ' + Number(p.redeemedAmount || 0).toLocaleString()}</td></tr>`; });
+                const currentDownload = closed ? '' : '<button type="button" class="btn btn-sm btn-outline-primary mb-2" data-pledge-download="current">Download current pledges PDF</button>';
+                let html = `${currentDownload}<table class="table table-bordered table-striped"><thead><tr><th>#</th><th>Name</th><th>${closed ? 'Pledged' : 'Amount pledged (KES)'}</th><th>${closed ? 'Redeemed' : 'Amount redeemed (KES)'}</th></tr></thead><tbody>`;
+                (data.pledges || []).forEach((p, index) => { html += `<tr><td>${index + 1}</td><td>${pledgeEsc(p.name)}</td><td>${closed ? '—' : 'KES ' + Number(p.pledgedAmount || 0).toLocaleString()}</td><td>${closed ? '—' : 'KES ' + Number(p.redeemedAmount || 0).toLocaleString()}</td></tr>`; });
                 list.innerHTML = html + '</tbody></table>';
                 document.getElementById('pledgeMemberHistory').innerHTML = (data.history || []).length
-                    ? '<h6>Past pledge rounds</h6>' + data.history.map(h => `<button class="btn btn-sm btn-outline-secondary me-2 mb-2" data-pledge-history="${pledgeEsc(h.id)}">${pledgeEsc(h.closedAtDisplay || 'Closed round')} (${h.count} names)</button>`).join('')
+                    ? '<h6>Past pledge rounds</h6>' + data.history.map(h => `<div class="mb-2"><span class="small me-2">${pledgeEsc(h.closedAtDisplay || 'Closed round')} (${h.count} names)</span><button class="btn btn-sm btn-outline-secondary me-1" data-pledge-history="${pledgeEsc(h.id)}">View</button><button class="btn btn-sm btn-outline-primary" data-pledge-download="${pledgeEsc(h.id)}">Download PDF</button></div>`).join('')
                     : '';
             } catch (e) { notice.textContent = 'Could not load the pledge list right now.'; }
         }
 
         document.addEventListener('click', async (e) => {
+            const downloadButton = e.target.closest('[data-pledge-download]');
+            if (downloadButton) {
+                try {
+                    const key = downloadButton.dataset.pledgeDownload;
+                    if (key === 'current') {
+                        const res = await fetch('/api/youth/pledges', { cache: 'no-store' });
+                        const data = await res.json();
+                        if (!data.success || data.status === 'closed') throw new Error('This round is closed; download its saved past round instead.');
+                        downloadPledgePdf('Current Youth Contributions / Pledges', data.pledges);
+                    } else {
+                        const res = await fetch(`/api/youth/pledges/history/${encodeURIComponent(key)}`, { cache: 'no-store' });
+                        const data = await res.json();
+                        if (!data.success) throw new Error('Past pledge round was not found.');
+                        downloadPledgePdf(`Past Youth Pledges — ${data.record.closedAtDisplay || ''}`, data.record.pledges);
+                    }
+                } catch (err) { alert(err.message || 'Could not download the pledge PDF.'); }
+                return;
+            }
             const btn = e.target.closest('[data-pledge-history]'); if (!btn) return;
             const res = await fetch(`/api/youth/pledges/history/${encodeURIComponent(btn.dataset.pledgeHistory)}`, { cache: 'no-store' });
             const data = await res.json(); if (!data.success) return;
-            const rows = (data.record.pledges || []).map(p => `<tr><td>${pledgeEsc(p.name)}</td><td>KES ${Number(p.pledgedAmount || 0).toLocaleString()}</td><td>KES ${Number(p.redeemedAmount || 0).toLocaleString()}</td></tr>`).join('');
-            document.getElementById('pledgeMemberHistory').innerHTML = `<h6>Past pledge round: ${pledgeEsc(data.record.closedAtDisplay || '')}</h6><div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>Name</th><th>Pledged</th><th>Redeemed</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+            const rows = (data.record.pledges || []).map((p, index) => `<tr><td>${index + 1}</td><td>${pledgeEsc(p.name)}</td><td>KES ${Number(p.pledgedAmount || 0).toLocaleString()}</td><td>KES ${Number(p.redeemedAmount || 0).toLocaleString()}</td></tr>`).join('');
+            document.getElementById('pledgeMemberHistory').innerHTML = `<h6>Past pledge round: ${pledgeEsc(data.record.closedAtDisplay || '')}</h6><button class="btn btn-sm btn-outline-primary mb-2" data-pledge-download="${pledgeEsc(data.record.id)}">Download this PDF</button><div class="table-responsive"><table class="table table-sm table-bordered"><thead><tr><th>#</th><th>Name</th><th>Pledged</th><th>Redeemed</th></tr></thead><tbody>${rows}</tbody></table></div>`;
         });
 
         async function loadDashboardData() {
