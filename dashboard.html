@@ -42,9 +42,10 @@
         .spiritual-fire-card { background: radial-gradient(circle at 50% 88%, #6b1d09 0, #230c12 36%, #080d27 77%); color: #fff; border-radius: .75rem; overflow: hidden; }
         .fire-sanctuary { position: relative; height: 330px; overflow: hidden; isolation: isolate; background: linear-gradient(180deg, rgba(21,40,77,.35), transparent 45%); }
         .fire-sanctuary::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 100%, rgba(255,124,20,.44), transparent 35%), radial-gradient(ellipse at 50% 20%, rgba(190,222,255,.18), transparent 49%); }
-        .fire-core { position: absolute; z-index: 2; left: 50%; bottom: 12px; width: 190px; height: 240px; transform: translateX(-50%); filter: drop-shadow(0 -8px 22px rgba(255,151,24,.85)) drop-shadow(0 0 48px rgba(255,75,13,.65)); animation: realFlameBreath 2.7s ease-in-out infinite alternate; }
-        .real-flame { width: 100%; height: 100%; object-fit: contain; mix-blend-mode: multiply; }
-        @keyframes realFlameBreath { from { transform: translateX(-50%) scale(.96) rotate(-.8deg); filter: drop-shadow(0 -8px 18px rgba(255,151,24,.64)); } to { transform: translateX(-50%) scale(1.035) rotate(.8deg); filter: drop-shadow(0 -10px 30px rgba(255,151,24,.95)) drop-shadow(0 0 55px rgba(255,75,13,.65)); } }
+        .fire-core { position: absolute; z-index: 2; left: 50%; bottom: -22px; width: 260px; height: 340px; transform: translateX(-50%); filter: drop-shadow(0 -8px 22px rgba(255,151,24,.85)) drop-shadow(0 0 48px rgba(255,75,13,.65)); animation: realFlameBreath 1.35s ease-in-out infinite alternate; }
+        .real-flame { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; mix-blend-mode:screen; }
+        .real-fire-fallback { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; mix-blend-mode:multiply; }
+        @keyframes realFlameBreath { from { transform: translateX(-50%) scale(.92, .97) rotate(-1.5deg); opacity:.9; filter: drop-shadow(0 -8px 18px rgba(255,151,24,.64)); } to { transform: translateX(-50%) scale(1.06, 1.045) rotate(1.2deg); opacity:1; filter: drop-shadow(0 -10px 32px rgba(255,151,24,.98)) drop-shadow(0 0 62px rgba(255,75,13,.78)); } }
         .flame { position: absolute; bottom: 0; left: 50%; transform-origin: bottom center; border-radius: 52% 48% 48% 52% / 67% 69% 31% 33%; animation: flameDance 1.6s ease-in-out infinite alternate; }
         .flame.outer { width: 106px; height: 165px; margin-left: -53px; background: linear-gradient(#fff1a8 0%, #ffb117 26%, #f04c12 65%, #9e1309 100%); clip-path: polygon(50% 0, 71% 30%, 91% 48%, 80% 78%, 53% 100%, 20% 81%, 7% 54%, 27% 29%); }
         .flame.mid { width: 65px; height: 118px; margin-left: -33px; background: linear-gradient(#fffde7, #ffd93d 37%, #ff6d10 92%); clip-path: polygon(50% 0, 77% 40%, 88% 67%, 52% 100%, 16% 68%, 27% 33%); animation-delay: -.7s; }
@@ -53,7 +54,7 @@
         .ember { position: absolute; z-index: 1; bottom: 82px; left: 50%; width: 5px; height: 5px; border-radius: 50%; background: #ffd76a; box-shadow: 0 0 10px #ff8d1d; animation: emberRise var(--duration) ease-out infinite; animation-delay: var(--delay); }
         @keyframes emberRise { 0% { transform: translate(var(--x), 0) scale(.5); opacity: 0; } 15% { opacity: 1; } 100% { transform: translate(calc(var(--x) * 2), -250px) scale(0); opacity: 0; } }
         .dove-field { position:absolute; inset:0; z-index:3; pointer-events:none; overflow:hidden; }
-        .real-dove { position:absolute; width:82px; height:82px; object-fit:cover; object-position:center; border-radius:50%; mix-blend-mode:multiply; filter: drop-shadow(0 2px 5px rgba(0,0,0,.35)); pointer-events:none; }
+        .real-dove { position:absolute; width:132px; height:86px; filter: drop-shadow(0 2px 5px rgba(0,0,0,.35)); pointer-events:none; }
         .fire-caption { position: absolute; z-index: 4; left: 50%; bottom: 9px; transform: translateX(-50%); width: 100%; text-align: center; font-size: .8rem; color: rgba(255,241,204,.9); letter-spacing: .04em; }
         @media (prefers-reduced-motion: reduce) { .fire-core, .flame, .ember { animation: none; } .real-dove { display:none; } }
 
@@ -367,7 +368,7 @@
             <div class="fire-sanctuary" aria-label="Animated spiritual fire with doves of hope flying across the sky">
                 <span class="ember" style="--x:-32px;--delay:0s;--duration:3.9s"></span><span class="ember" style="--x:28px;--delay:1.2s;--duration:4.8s"></span><span class="ember" style="--x:-8px;--delay:2.4s;--duration:4.2s"></span><span class="ember" style="--x:44px;--delay:.6s;--duration:3.5s"></span>
                 <div class="dove-field" id="doveField" aria-hidden="true"></div>
-                <div class="fire-core"><img class="real-flame" src="/spiritual-fire-real.png" alt="Burning flame"></div>
+                <div class="fire-core"><img class="real-fire-fallback" src="/spiritual-fire-real.png" alt="Burning flame"><video id="realFireVideo" class="real-flame" autoplay muted loop playsinline src="/spiritual-fire.mp4"></video></div>
                 <div class="fire-caption">“Let your light shine before others.” — Matthew 5:16</div>
             </div>
         </div>
@@ -1845,13 +1846,27 @@
             });
         })();
 
-        /* Real dove photographs, sent across a new randomly-selected route
-           one at a time. The source image is CC0; it is a photo, not AI art. */
+        /* Real dove video, keyed in the browser so its green screen becomes
+           fully transparent. Each dove is released on a random route. */
         (function initDovesOfHope() {
             const field = document.getElementById('doveField');
             if (!field || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-            const dovePhoto = 'https://commons.wikimedia.org/wiki/Special:FilePath/WHITEDOVE.jpg?width=400';
+            const doveVideoSource = '/dove-green-screen.mp4';
             const random = (min, max) => min + Math.random() * (max - min);
+            const removeGreen = (context, video, canvas) => {
+                const width = canvas.width = 264, height = canvas.height = 172;
+                context.clearRect(0, 0, width, height);
+                context.drawImage(video, 0, 0, width, height);
+                const frame = context.getImageData(0, 0, width, height);
+                const pixels = frame.data;
+                for (let i = 0; i < pixels.length; i += 4) {
+                    const r = pixels[i], g = pixels[i + 1], b = pixels[i + 2];
+                    // Green-screen key: remove green that is materially stronger
+                    // than red/blue while retaining pale dove feathers.
+                    if (g > 66 && g > r * 1.24 && g > b * 1.16) pixels[i + 3] = 0;
+                }
+                context.putImageData(frame, 0, 0);
+            };
             function edgePoint(width, height) {
                 const edge = Math.floor(Math.random() * 4);
                 if (edge === 0) return { x: -110, y: random(5, height - 55) };
@@ -1865,21 +1880,32 @@
                 const start = edgePoint(box.width, box.height);
                 let end = edgePoint(box.width, box.height);
                 while (Math.abs(end.x - start.x) + Math.abs(end.y - start.y) < box.width * .7) end = edgePoint(box.width, box.height);
-                const bird = document.createElement('img');
+                const bird = document.createElement('canvas');
                 bird.className = 'real-dove';
-                bird.src = dovePhoto;
-                bird.alt = '';
                 bird.style.left = '0'; bird.style.top = '0';
                 field.appendChild(bird);
+                const context = bird.getContext('2d', { willReadFrequently: true });
+                const video = document.createElement('video');
+                video.src = doveVideoSource;
+                video.muted = true; video.loop = true; video.playsInline = true;
                 const duration = random(6500, 10500);
                 const scale = random(.48, .95);
                 const angle = Math.atan2(end.y - start.y, end.x - start.x) * 180 / Math.PI;
-                bird.animate([
-                    { transform: `translate(${start.x}px, ${start.y}px) rotate(${angle}deg) scale(${scale})`, opacity: 0 },
-                    { transform: `translate(${start.x + (end.x - start.x) * .12}px, ${start.y + (end.y - start.y) * .12}px) rotate(${angle + random(-6, 6)}deg) scale(${scale})`, opacity: 1, offset: .12 },
-                    { transform: `translate(${end.x - (end.x - start.x) * .1}px, ${end.y - (end.y - start.y) * .1}px) rotate(${angle + random(-6, 6)}deg) scale(${scale * random(.85, 1.2)})`, opacity: 1, offset: .88 },
-                    { transform: `translate(${end.x}px, ${end.y}px) rotate(${angle}deg) scale(${scale})`, opacity: 0 }
-                ], { duration, easing: 'ease-in-out' }).onfinish = () => bird.remove();
+                const startFlight = () => {
+                    video.play().catch(() => { bird.remove(); });
+                    const animation = bird.animate([
+                        { transform: `translate(${start.x}px, ${start.y}px) rotate(${angle}deg) scale(${scale})`, opacity: 0 },
+                        { transform: `translate(${start.x + (end.x - start.x) * .12}px, ${start.y + (end.y - start.y) * .12}px) rotate(${angle + random(-6, 6)}deg) scale(${scale})`, opacity: 1, offset: .12 },
+                        { transform: `translate(${end.x - (end.x - start.x) * .1}px, ${end.y - (end.y - start.y) * .1}px) rotate(${angle + random(-6, 6)}deg) scale(${scale * random(.85, 1.2)})`, opacity: 1, offset: .88 },
+                        { transform: `translate(${end.x}px, ${end.y}px) rotate(${angle}deg) scale(${scale})`, opacity: 0 }
+                    ], { duration, easing: 'ease-in-out' });
+                    const draw = () => { if (!bird.isConnected) return; if (video.readyState >= 2) removeGreen(context, video, bird); requestAnimationFrame(draw); };
+                    draw();
+                    animation.onfinish = () => { video.pause(); bird.remove(); };
+                };
+                video.addEventListener('loadeddata', startFlight, { once: true });
+                video.addEventListener('error', () => bird.remove(), { once: true });
+                video.load();
             }
             releaseDove();
             window.setInterval(releaseDove, 3200);
