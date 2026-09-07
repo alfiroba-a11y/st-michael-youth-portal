@@ -1869,10 +1869,10 @@
             function releaseDove() {
                 const box = field.getBoundingClientRect();
                 if (!box.width || !box.height) return;
-                // All doves cross naturally from the right edge toward the left.
+                // All doves cross naturally from the left edge toward the right.
                 // Their heights vary gently, but they never rotate or fall.
-                const start = { x: box.width + 145, y: random(18, box.height - 110) };
-                const end = { x: -155, y: Math.max(12, Math.min(box.height - 105, start.y + random(-34, 34))) };
+                const start = { x: -155, y: random(18, box.height - 110) };
+                const end = { x: box.width + 145, y: Math.max(12, Math.min(box.height - 105, start.y + random(-34, 34))) };
                 const bird = document.createElement('canvas');
                 bird.className = 'real-dove';
                 bird.style.left = '0'; bird.style.top = '0';
@@ -1886,10 +1886,10 @@
                 const startFlight = () => {
                     video.play().catch(() => { bird.remove(); });
                     const animation = bird.animate([
-                        { transform: `translate(${start.x}px, ${start.y}px) scale(${-scale}, ${scale})`, opacity: 0 },
-                        { transform: `translate(${start.x + (end.x - start.x) * .12}px, ${start.y + (end.y - start.y) * .12}px) scale(${-scale}, ${scale})`, opacity: 1, offset: .12 },
-                        { transform: `translate(${end.x - (end.x - start.x) * .1}px, ${end.y - (end.y - start.y) * .1}px) scale(${-scale * random(.9, 1.08)}, ${scale * random(.9, 1.08)})`, opacity: 1, offset: .88 },
-                        { transform: `translate(${end.x}px, ${end.y}px) scale(${-scale}, ${scale})`, opacity: 0 }
+                        { transform: `translate(${start.x}px, ${start.y}px) scale(${scale})`, opacity: 0 },
+                        { transform: `translate(${start.x + (end.x - start.x) * .12}px, ${start.y + (end.y - start.y) * .12}px) scale(${scale})`, opacity: 1, offset: .12 },
+                        { transform: `translate(${end.x - (end.x - start.x) * .1}px, ${end.y - (end.y - start.y) * .1}px) scale(${scale * random(.9, 1.08)})`, opacity: 1, offset: .88 },
+                        { transform: `translate(${end.x}px, ${end.y}px) scale(${scale})`, opacity: 0 }
                     ], { duration, easing: 'ease-in-out' });
                     const draw = () => { if (!bird.isConnected) return; if (video.readyState >= 2) removeGreen(context, video, bird); requestAnimationFrame(draw); };
                     draw();
