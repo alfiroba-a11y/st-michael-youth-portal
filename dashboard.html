@@ -88,8 +88,20 @@
         .companion-msg-bot { background: rgba(255,255,255,0.95); border: 1px solid rgba(0,0,0,0.08); }
         .companion-msg-user { background: #2f6f4e; color: #fff; margin-left: auto; }
         .companion-msg-escalate { background: #fff3cd; border: 1px solid #ffe08a; }
+        .companion-suggestions { display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 12px; }
+        .companion-suggestions button { font-size:.77rem; border-radius:999px; text-align:left; }
         .companion-input-row { display: flex; gap: 6px; padding: 10px; background: rgba(255,255,255,0.9); flex-shrink: 0; }
         .companion-input-row .form-control { flex: 1; }
+
+        /* Conversation-style public and private messaging */
+        .message-thread { height:280px; overflow-y:auto; padding:14px; border:1px solid rgba(27,73,101,.13); border-radius:14px; background:linear-gradient(180deg,#f8fbff,#eef5f0); }
+        .message-row { display:flex; margin:8px 0; }
+        .message-row.mine { justify-content:flex-end; }
+        .message-bubble { max-width:78%; padding:9px 12px; border-radius:16px 16px 16px 4px; background:#fff; box-shadow:0 2px 7px rgba(20,30,55,.08); color:#17212b; }
+        .message-row.mine .message-bubble { border-radius:16px 16px 4px 16px; background:#176b52; color:#fff; }
+        .message-author { font-size:.72rem; font-weight:700; margin-bottom:3px; opacity:.86; }
+        .message-time { font-size:.68rem; margin-top:4px; opacity:.66; }
+        .message-empty { height:100%; display:flex; align-items:center; justify-content:center; text-align:center; color:#64748b; font-size:.88rem; }
 
         /* Overview stat cards */
         .stat-card {
@@ -597,27 +609,36 @@
 
         <!-- Community Chat / Message Board -->
         <div class="card shadow-sm p-4 mb-4">
-            <h4 class="text-primary mb-3" data-i18n="board_heading">Youth Community Board & Queries</h4>
-            <div id="messageBoard" class="border p-3 mb-3 bg-white rounded" style="height: 200px; overflow-y: auto;">Loading messages...</div>
-            <form id="messageForm">
-                <div class="input-group">
-                    <input type="text" id="messageInput" class="form-control" placeholder="Type a message or query for leaders..." data-i18n-placeholder="message_placeholder" required>
-                    <button class="btn btn-primary" type="submit" data-i18n="post_message_btn">Post Message</button>
-                </div>
-            </form>
+            <button class="btn btn-link text-decoration-none text-start p-0 w-100 d-flex justify-content-between align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#communityConversation" aria-expanded="false" aria-controls="communityConversation">
+                <span class="h4 text-primary mb-0" data-i18n="board_heading">💬 Youth Community Conversations</span><span class="badge bg-primary">Open</span>
+            </button>
+            <p class="text-muted small mb-0 mt-2">Open to read or join the youth conversation.</p>
+            <div class="collapse mt-3" id="communityConversation">
+                <div id="messageBoard" class="message-thread mb-3">Loading messages...</div>
+                <form id="messageForm">
+                    <div class="input-group">
+                        <input type="text" id="messageInput" class="form-control" placeholder="Write a message to the youth community..." data-i18n-placeholder="message_placeholder" required>
+                        <button class="btn btn-primary" type="submit" data-i18n="post_message_btn">Send</button>
+                    </div>
+                </form>
+            </div>
         </div>
 
         <!-- Private Messages with Admin -->
         <div class="card shadow-sm p-4 mb-4">
-            <h4 class="text-primary mb-3">🔒 My Private Messages</h4>
-            <p class="text-muted small mb-2">A private thread between you and the parish admin — not visible to other members. This is also where St. Michael Companion escalations end up.</p>
-            <div id="privateMessagesBox" class="border p-3 mb-3 bg-white rounded" style="height: 200px; overflow-y: auto;">Loading...</div>
-            <form id="privateMessageForm">
-                <div class="input-group">
-                    <input type="text" id="privateMessageInput" class="form-control" placeholder="Message the admin privately..." required>
-                    <button class="btn btn-primary" type="submit">Send</button>
-                </div>
-            </form>
+            <button class="btn btn-link text-decoration-none text-start p-0 w-100 d-flex justify-content-between align-items-center" type="button" data-bs-toggle="collapse" data-bs-target="#privateConversation" aria-expanded="false" aria-controls="privateConversation">
+                <span class="h4 text-primary mb-0">🔒 My Messages with Portal Admin</span><span class="badge bg-secondary">Open</span>
+            </button>
+            <p class="text-muted small mb-0 mt-2">Private: visible only to you and the Portal Admin.</p>
+            <div class="collapse mt-3" id="privateConversation">
+                <div id="privateMessagesBox" class="message-thread mb-3">Loading...</div>
+                <form id="privateMessageForm">
+                    <div class="input-group">
+                        <input type="text" id="privateMessageInput" class="form-control" placeholder="Message Portal Admin privately..." required>
+                        <button class="btn btn-primary" type="submit">Send</button>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -687,6 +708,12 @@
         </div>
         <div id="companionMessages" class="companion-messages">
             <div class="companion-msg companion-msg-bot">Peace be with you! I'm the St. Michael Companion. Ask me things like "when is the next event?" or "who is my mentor?" — and if I can't help, I'll connect you straight to an admin.</div>
+            <div class="companion-suggestions" id="companionSuggestions">
+                <button type="button" class="btn btn-sm btn-outline-primary" data-companion-question="What is my total contribution and pledge payment?">My giving total</button>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-companion-question="Who is my mentor?">My mentor</button>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-companion-question="When is the next event?">Next event</button>
+                <button type="button" class="btn btn-sm btn-outline-primary" data-companion-question="What can you help me with?">What can you do?</button>
+            </div>
         </div>
         <form id="companionForm" class="companion-input-row">
             <input type="text" id="companionInput" class="form-control form-control-sm" placeholder="Type your question..." data-i18n-placeholder="companion_placeholder" autocomplete="off" required>
@@ -846,16 +873,18 @@
                     // separately and never affect registration.
                     loadPledgeList();
 
-                    // 5. Render Community Messages Board
+                    // 5. Render Community Board as an actual conversation.
                     let mHtml = '';
                     if (!data.messages || data.messages.length === 0) {
-                        mHtml = '<p class="text-muted small">No community messages yet. Be the first to post!</p>';
+                        mHtml = '<div class="message-empty">No community messages yet.<br>Be the first to welcome the youth community.</div>';
                     } else {
                         data.messages.forEach(msg => {
-                            mHtml += `<div class="border-bottom pb-2 mb-2"><small class="text-muted"><strong>${msg.sender}</strong> (${msg.time || ''}):</small><p class="mb-0 text-dark small">${msg.text}</p></div>`;
+                            const mine = String(msg.sender || '').toLowerCase() === String(currentUser || '').toLowerCase();
+                            mHtml += `<div class="message-row ${mine ? 'mine' : ''}"><div class="message-bubble"><div class="message-author">${pledgeEsc(mine ? 'You' : (msg.sender || 'Youth member'))}</div><div class="small">${pledgeEsc(msg.text || '')}</div><div class="message-time">${pledgeEsc(msg.time || '')}</div></div></div>`;
                         });
                     }
                     document.getElementById('messageBoard').innerHTML = mHtml;
+                    document.getElementById('messageBoard').scrollTop = document.getElementById('messageBoard').scrollHeight;
 
                     // Contribution status banner
                     const statusBanner = document.getElementById('contributionStatusBanner');
@@ -1185,17 +1214,12 @@
                     if (!data.success) { box.textContent = 'Could not load your messages.'; return; }
                     const msgs = data.messages || [];
                     if (!msgs.length) {
-                        box.innerHTML = '<p class="text-muted small mb-0">No private messages yet. Anything you send here, or the Companion escalates, goes straight to the admin.</p>';
+                        box.innerHTML = '<div class="message-empty">No private messages yet.<br>Anything sent here goes only to the admin.</div>';
                         return;
                     }
                     box.innerHTML = msgs.map(m => {
-                        const fromAdmin = m.sender === 'Admin' || m.sender === 'Parish Admin';
-                        return `<div class="d-flex ${fromAdmin ? '' : 'justify-content-end'} mb-2">
-                            <div class="p-2 rounded ${fromAdmin ? 'bg-light' : 'bg-primary text-white'}" style="max-width: 85%;">
-                                <div class="small">${esc(m.text)}</div>
-                                <div class="small ${fromAdmin ? 'text-muted' : 'text-white-50'}">${esc(m.sender)} · ${esc(m.time || '')}</div>
-                            </div>
-                        </div>`;
+                        const fromAdmin = m.sender === 'Admin' || m.sender === 'Portal Admin' || m.sender === ['Parish', 'Admin'].join(' ');
+                        return `<div class="message-row ${fromAdmin ? '' : 'mine'}"><div class="message-bubble"><div class="message-author">${esc(fromAdmin ? 'Portal Admin' : 'You')}</div><div class="small">${esc(m.text)}</div><div class="message-time">${esc(m.time || '')}</div></div></div>`;
                     }).join('');
                     box.scrollTop = box.scrollHeight;
                 } catch (e) {
@@ -1455,9 +1479,7 @@
                 return div;
             }
 
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const question = input.value.trim();
+            async function askCompanion(question) {
                 if (!question) return;
                 addMessage(question, 'companion-msg-user');
                 input.value = '';
@@ -1485,6 +1507,17 @@
                     input.disabled = false;
                     input.focus();
                 }
+            }
+
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const question = input.value.trim();
+                await askCompanion(question);
+            });
+            document.getElementById('companionSuggestions').addEventListener('click', async (e) => {
+                const suggestion = e.target.closest('[data-companion-question]');
+                if (!suggestion) return;
+                await askCompanion(suggestion.dataset.companionQuestion);
             });
         })();
 
