@@ -519,7 +519,7 @@
                 <form id="boardPostForm" class="mb-3">
                     <div class="row g-2">
                         <div class="col-md-3">
-                            <input type="text" id="boardPostSender" class="form-control form-control-sm" placeholder="Post as..." value="Parish Admin">
+                            <input type="text" id="boardPostSender" class="form-control form-control-sm" placeholder="Post as..." value="Portal Admin">
                         </div>
                         <div class="col-md-7">
                             <input type="text" id="boardPostText" class="form-control form-control-sm" placeholder="Write a message to the whole community..." required>
@@ -1136,10 +1136,10 @@
                 memberNames.forEach(name => {
                     const thread = threadsByMember[name];
                     const bubbles = thread.map(m => `
-                        <div class="d-flex ${m.sender === 'Admin' || m.sender === 'Parish Admin' ? 'justify-content-end' : ''} mb-1">
-                            <div class="p-2 rounded ${m.sender === 'Admin' || m.sender === 'Parish Admin' ? 'bg-primary text-white' : 'bg-light'}" style="max-width: 80%;">
+                        <div class="d-flex ${m.sender === 'Admin' || m.sender === 'Portal Admin' || m.sender === ['Parish', 'Admin'].join(' ') ? 'justify-content-end' : ''} mb-1">
+                            <div class="p-2 rounded ${m.sender === 'Admin' || m.sender === 'Portal Admin' || m.sender === ['Parish', 'Admin'].join(' ') ? 'bg-primary text-white' : 'bg-light'}" style="max-width: 80%;">
                                 <div class="small">${esc(m.text)}</div>
-                                <div class="small ${m.sender === 'Admin' || m.sender === 'Parish Admin' ? 'text-white-50' : 'text-muted'}">${esc(m.sender)} · ${esc(m.time || '')}</div>
+                                <div class="small ${m.sender === 'Admin' || m.sender === 'Portal Admin' || m.sender === ['Parish', 'Admin'].join(' ') ? 'text-white-50' : 'text-muted'}">${esc(m.sender === ['Parish', 'Admin'].join(' ') ? 'Portal Admin' : m.sender)} · ${esc(m.time || '')}</div>
                             </div>
                         </div>
                     `).join('');
@@ -1187,7 +1187,7 @@
                     try {
                         await apiCall('/api/messages/private/send', {
                             method: 'POST',
-                            body: JSON.stringify({ member: form.dataset.member, sender: 'Parish Admin', text })
+                            body: JSON.stringify({ member: form.dataset.member, sender: 'Portal Admin', text })
                         });
                         input.value = '';
                         await loadMasterData();
@@ -1659,7 +1659,7 @@
             e.preventDefault();
             const senderInput = document.getElementById('boardPostSender');
             const textInput = document.getElementById('boardPostText');
-            const sender = senderInput.value.trim() || 'Parish Admin';
+            const sender = senderInput.value.trim() || 'Portal Admin';
             const text = textInput.value.trim();
             if (!text) return;
             try {
