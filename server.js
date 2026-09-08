@@ -640,6 +640,35 @@ app.post('/api/assistant/ask', async (req, res) => {
         const totalCollected = Object.values(contributionsMap).reduce((a, b) => a + b, 0);
         const lastClosedReport = (data.contributionHistory || [])[(data.contributionHistory || []).length - 1] || null;
 
+        // A member's personal giving summary is calculated on the server from
+        // both the ordinary contribution records and the separate pledge
+        // register. This is deterministic: it works even if an AI provider is
+        // unavailable, and it never exposes another member's figures.
+        const sameMember = entry => normalize(entry && entry.name) === normalize(currentUser);
+        const sumRecords = records => (records || []).filter(r => r.published && sameMember(r)).reduce((sum, r) => sum + Number(r.amount || 0), 0);
+        const currentContributionTotal = sumRecords(data.jumuiyaSubmissions);
+        const pastContributionTotal = (data.contributionHistory || []).reduce((sum, period) => sum + sumRecords(period.submissions), 0);
+        const pledgeRedeemed = pledges => (pledges || []).filter(sameMember).reduce((sum, p) => sum + Number(p.redeemedAmount || 0), 0);
+        const pledgePromised = pledges => (pledges || []).filter(sameMember).reduce((sum, p) => sum + Number(p.pledgedAmount || 0), 0);
+        const pastPledgeRedeemed = (data.pledgeHistory || []).reduce((sum, period) => sum + pledgeRedeemed(period.pledges), 0);
+        const pastPledgePromised = (data.pledgeHistory || []).reduce((sum, period) => sum + pledgePromised(period.pledges), 0);
+        const livePledgeRedeemed = data.pledgeStatus === 'closed' ? 0 : pledgeRedeemed(data.pledges);
+        const livePledgePromised = data.pledgeStatus === 'closed' ? 0 : pledgePromised(data.pledges);
+        const personalContributions = currentContributionTotal + pastContributionTotal;
+        const personalRedeemed = livePledgeRedeemed + pastPledgeRedeemed;
+        const personalPromised = livePledgePromised + pastPledgePromised;
+
+        if (currentUser && /\b(my|mine|i['’]?ve|i have|i gave|i paid|myself)\b/i.test(q) && /contribut|giving|donation|offering|collection|pledge|redeem|paid|total|amount|balance/i.test(q)) {
+            const remaining = Math.max(0, personalPromised - personalRedeemed);
+            return res.json({
+                success: true,
+                answer: `Your recorded giving total is KES ${personalContributions.toLocaleString()} from approved contributions, plus KES ${personalRedeemed.toLocaleString()} redeemed from pledges. Your combined amount given is KES ${(personalContributions + personalRedeemed).toLocaleString()}. Your recorded pledge amount is KES ${personalPromised.toLocaleString()}${personalPromised ? `, leaving KES ${remaining.toLocaleString()} to redeem.` : '.'}`,
+                escalate: false,
+                mode: 'personal-giving',
+                giving: { contributions: personalContributions, redeemed: personalRedeemed, promised: personalPromised, total: personalContributions + personalRedeemed }
+            });
+        }
+
         // ---- Contribution report request: offer a real CHOICE between the
         // current period and any past (closed) periods, instead of guessing
         // which one the question meant. The front-end fetches full detail
@@ -762,7 +791,8 @@ app.post('/api/assistant/ask', async (req, res) => {
                     `Hymnal titles: ${(data.hymns || []).slice(0, 15).map(h => h.title).join(', ') || 'none added yet'}.`,
                     `Memorial Wall: ${(data.memorialNames || []).length} names on file.`,
                     `Contribution status: ${data.contributionStatus || 'open'}. Total collected this period: KES ${Number(totalCollected).toLocaleString()}, target: KES ${Number(data.targetAmount || 0).toLocaleString()}.`,
-                    `Portal features members can be pointed to: Homepage (readings, prayers, rosary, Stations of the Cross, hymnal, prayer candles), Member Dashboard (events, contributions chart, community board, mentor lookup, saint of the day, global prayer globe, private messages with admin), Jumuiya Portal (submitting parish contributions), Admin Portal (staff only).`
+                    member ? `Personal financial summary for this logged-in member only: approved contribution total KES ${personalContributions.toLocaleString()}; pledge redeemed KES ${personalRedeemed.toLocaleString()}; pledged KES ${personalPromised.toLocaleString()}; combined amount given KES ${(personalContributions + personalRedeemed).toLocaleString()}.` : 'No personal financial summary is available because the asker is not matched to a logged-in member.',
+                    `Portal features members can be pointed to: Homepage (readings, prayers, rosary, Stations of the Cross, hymnal, prayer candles), Member Dashboard (events, contributions chart, pledge list, community board, mentor lookup, saint of the day, spiritual fire, private messages with admin), Jumuiya Portal (submitting parish contributions), Admin Portal (staff only).`
                 ].join('\n');
 
                 const systemPrompt = `You are the "St. Michael Companion", the SUPPORT ASSISTANT for the St. Michael Kasaini Youth Portal ONLY. You must ONLY answer questions about this portal, its features, and this parish (events, readings, mentors, contacts, hymnal, contributions, memorial wall, prayer candles, saints, liturgical season, how to use the site). Do NOT answer general-knowledge questions, current events, or anything unrelated to this portal or parish — if asked something off-topic, politely say that's outside what you can help with here and that you're the portal's support assistant, then offer to connect them to an admin if it's parish-related. Keep answers concise (2-4 sentences). Use the portal information below; never invent facts not listed here.\n\nPortal information:\n${contextLines}`;
