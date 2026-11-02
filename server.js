@@ -928,6 +928,27 @@ app.get('/api/jumuiya/data', async (req, res) => {
     const pledgedMembers = [...registeredPledgeMembers, ...linkedPledgeMembers].filter(member => {
         const key = normalizedName(member.name); if (seenPledgeNames.has(key)) return false; seenPledgeNames.add(key); return true;
     });
+    // These two tables are derived from the official approved directory. A
+    // person's selected Jumuiya controls where their named records appear;
+    // no one is added simply because their name is similar in a raw list.
+    const activePledgeEntries = (data.pledgeStatus === 'closed' ? [] : (data.pledges || [])).map(p => ({ ...p, period: (data.pledgeCampaign || HARAMBEE_CAMPAIGN).title, date: (data.pledgeCampaign || HARAMBEE_CAMPAIGN).date }));
+    const historicalPledgeEntries = (data.pledgeHistory || []).flatMap(period => (period.pledges || []).map(p => ({ ...p, period: (period.campaign || {}).title || 'Past pledge round', date: (period.campaign || {}).date || period.closedAtDisplay || '' })));
+    const allPledgeEntries = [...activePledgeEntries, ...historicalPledgeEntries];
+    const registeredMemberPledges = members.map(member => {
+        const entries = allPledgeEntries.filter(entry => normalizedName(entry.name) === normalizedName(member.name));
+        if (!entries.length) return null;
+        const pledged = entries.reduce((sum, entry) => sum + Number(entry.pledgedAmount || 0), 0);
+        const paid = entries.reduce((sum, entry) => sum + Number(entry.redeemedAmount || 0), 0);
+        return { memberId: member.id, name: member.name, pledged, paid, balance: Math.max(0, pledged - paid), entries: entries.map(({ period, date, pledgedAmount, redeemedAmount }) => ({ period, date, pledgedAmount: Number(pledgedAmount || 0), paidAmount: Number(redeemedAmount || 0) })) };
+    }).filter(Boolean);
+    const activeContributionEntries = (data.jumuiyaSubmissions || []).filter(s => s.published).map(s => ({ ...s, period: 'Current contribution period' }));
+    const historicalContributionEntries = (data.contributionHistory || []).flatMap(period => (period.submissions || []).filter(s => s.published).map(s => ({ ...s, period: `Closed ${period.closedAtDisplay || 'contribution period'}` })));
+    const allContributionEntries = [...activeContributionEntries, ...historicalContributionEntries];
+    const registeredMemberContributions = members.map(member => {
+        const entries = allContributionEntries.filter(entry => normalizedName(entry.name) === normalizedName(member.name));
+        if (!entries.length) return null;
+        return { memberId: member.id, name: member.name, amount: entries.reduce((sum, entry) => sum + Number(entry.amount || 0), 0), entries: entries.map(entry => ({ amount: Number(entry.amount || 0), purpose: entry.purpose || 'Other', period: entry.period })) };
+    }).filter(Boolean);
     
     let jumuiyaTotal = 0;
     submissions.forEach(s => {
@@ -945,6 +966,8 @@ app.get('/api/jumuiya/data', async (req, res) => {
         submissions, 
         members,
         pledgedMembers,
+        registeredMemberPledges,
+        registeredMemberContributions,
         contributionHistory,
         jumuiyaTotal,
         jumuiyaTarget: (data.jumuiyaTargets && jumuiyaName) ? (data.jumuiyaTargets[jumuiyaName] || 0) : 0,
