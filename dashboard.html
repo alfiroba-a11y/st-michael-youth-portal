@@ -13,6 +13,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        // Full-page Kiswahili translation. Google Translate also observes
+        // content that this portal loads dynamically after first paint.
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({ pageLanguage: 'en', includedLanguages: 'en,sw', autoDisplay: false }, 'googleTranslateMount');
+        }
+    </script>
+    <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
     <!-- Three.js for the Prayer Globe -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
     <style>
@@ -145,20 +153,20 @@
         }
         .companion-msg-thinking { color: rgba(0,0,0,0.55); font-style: italic; }
         /* Profile side drawer */
-        .profile-drawer { width: min(430px, 100vw) !important; border: 0; box-shadow: -18px 0 45px rgba(10, 25, 42, .22); }
-        .profile-drawer .offcanvas-header { padding: 1.35rem 1.4rem 1rem; background: linear-gradient(135deg, #123f33, #1d735b); color: #fff; }
+        .profile-drawer { width: min(360px, 86vw) !important; border: 0; box-shadow: -18px 0 45px rgba(10, 25, 42, .22); }
+        .profile-drawer .offcanvas-header { padding: 1.35rem 1.4rem 1rem; background: linear-gradient(135deg, #073d92, #1674db); color: #fff; }
         .profile-drawer .btn-close { filter: invert(1) grayscale(1) brightness(3); opacity: .9; }
         .profile-drawer .offcanvas-body { padding: 1.25rem 1.4rem 1.5rem; background: #f6f9f8; }
         .profile-identity { display: flex; gap: 12px; align-items: center; padding: 14px; margin-bottom: 18px; border: 1px solid #dbe8e2; border-radius: 14px; background: #fff; }
-        .profile-avatar, .nav-profile-avatar { display: grid; place-items: center; overflow: hidden; border-radius: 50%; background: #e0f1e9; color: #176b52; font-weight: 800; }
-        .profile-avatar { width: 68px; height: 68px; flex: 0 0 68px; font-size: 1.45rem; box-shadow: 0 0 0 3px #dceee6; }
+        .profile-avatar, .nav-profile-avatar { display: grid; place-items: center; overflow: hidden; border-radius: 50%; background: #e7f0ff; color: #0b5fc2; font-weight: 800; }
+        .profile-avatar { width: 68px; height: 68px; flex: 0 0 68px; font-size: 1.45rem; box-shadow: 0 0 0 3px #d7e6ff; }
         .nav-profile-avatar { width: 34px; height: 34px; flex: 0 0 34px; font-size: .85rem; background: #e7f3ed; box-shadow: 0 0 0 2px rgba(255,255,255,.3); transition: transform .2s ease, box-shadow .2s ease; }
         .profile-trigger { padding: 3px !important; border: 0 !important; border-radius: 50% !important; background: transparent !important; }
         .profile-trigger:hover .nav-profile-avatar { transform: translateY(-1px); box-shadow: 0 0 0 2px #fff, 0 4px 12px rgba(0,0,0,.3); }
         .profile-avatar img, .nav-profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
         .profile-verified { display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; color: #1671d9; font-size: .74rem; font-weight: 700; }
         .profile-verified::before { content: '✓'; display: grid; place-items: center; width: 15px; height: 15px; border-radius: 50%; background: #1877e6; color: #fff; font-size: .63rem; }
-        .profile-photo-action { position: relative; display: inline-flex; align-items: center; gap: 7px; margin-top: 11px; color: #176b52; font-size: .78rem; font-weight: 700; cursor: pointer; }
+        .profile-photo-action { position: relative; display: inline-flex; align-items: center; gap: 7px; margin-top: 11px; color: #0d63ce; font-size: .78rem; font-weight: 700; cursor: pointer; }
         .profile-photo-action input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
         .profile-details { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
         .profile-detail { padding: 10px 11px; border: 1px solid #dbe8e2; border-radius: 10px; background: #fff; min-width: 0; }
@@ -166,12 +174,12 @@
         .profile-detail-value { overflow: hidden; margin-top: 3px; color: #21342c; font-size: .84rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
         .profile-section-label { margin: 21px 0 10px; color: #557168; font-size: .72rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
         .profile-drawer .form-control, .profile-drawer .form-select { border-color: #d6e2dd; padding: .68rem .78rem; }
-        .profile-drawer .form-control:focus, .profile-drawer .form-select:focus { border-color: #268363; box-shadow: 0 0 0 .2rem rgba(38,131,99,.13); }
-        .profile-save { width: 100%; padding: .72rem 1rem; margin-top: 4px; border: 0; background: #176b52; font-weight: 700; }
+        .profile-drawer .form-control:focus, .profile-drawer .form-select:focus { border-color: #176de0; box-shadow: 0 0 0 .2rem rgba(23,109,224,.13); }
+        .profile-save { width: 100%; padding: .72rem 1rem; margin-top: 4px; border: 0; background: #0d6efd; font-weight: 700; }
         .profile-pref { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 14px; margin-top: 9px; border: 1px solid #dbe8e2; border-radius: 12px; background: #fff; }
         .profile-pref p { margin: 2px 0 0; color: #70817b; font-size: .79rem; line-height: 1.35; }
-        .profile-status { display:flex; gap:9px; padding:11px; margin: 10px 0 2px; border-radius: 11px; background: #ebf8f1; color:#216549; font-size:.79rem; }
-        .profile-status-icon { display:grid; place-items:center; width:23px; height:23px; border-radius:50%; flex:0 0 23px; background:#cbeedc; font-weight:800; }
+        .profile-status { display:flex; gap:9px; padding:11px; margin: 10px 0 2px; border-radius: 11px; background: #eaf3ff; color:#1856a1; font-size:.79rem; }
+        .profile-status-icon { display:grid; place-items:center; width:23px; height:23px; border-radius:50%; flex:0 0 23px; background:#cfe3ff; font-weight:800; }
         .profile-action-row { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:10px; }
         .profile-action-row .btn { padding:.6rem .45rem; font-size:.78rem; }
         .thinking-dots span {
@@ -188,6 +196,7 @@
     </style>
 </head>
 <body class="bg-light d-flex flex-column min-vh-100">
+    <div id="googleTranslateMount" class="d-none" aria-hidden="true"></div>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
         <a class="navbar-brand" href="/" data-i18n="nav_brand_dashboard">✝ St. Michael Kasaini Youth Portal</a>
         <div class="ms-auto d-flex align-items-center">
@@ -773,11 +782,34 @@
             });
         }
 
+        function applyProfileDetails(member) {
+            if (!member) return;
+            document.getElementById('profileName').textContent = member.name || '—';
+            document.getElementById('profileGroup').textContent = member.group || '—';
+            document.getElementById('profileJumuiya').textContent = member.jumuiya || '—';
+            document.getElementById('profileMemberId').textContent = member.customId || '—';
+            updateProfileDrawerIdentity(member.name || currentUser, member.profilePhoto || '');
+        }
+
+        async function loadProfileDetails() {
+            if (!currentUser) return;
+            try {
+                const res = await fetch(`/api/youth/profile?member=${encodeURIComponent(currentUser)}`, { cache: 'no-store' });
+                const data = await res.json();
+                if (data.success) applyProfileDetails(data.member);
+                else document.getElementById('profileName').textContent = 'Unavailable';
+            } catch (e) {
+                document.getElementById('profileName').textContent = 'Unavailable';
+            }
+        }
+
         function closeProfileDrawer() {
             const drawer = document.getElementById('profileModal');
             const instance = drawer && bootstrap.Offcanvas.getInstance(drawer);
             if (instance) instance.hide();
         }
+
+        loadProfileDetails();
 
         document.getElementById('profileViewGivingBtn').addEventListener('click', () => {
             closeProfileDrawer();
@@ -1231,11 +1263,13 @@
             if (langSelect) {
                 try { langSelect.value = localStorage.getItem('site_lang') || 'en'; } catch (e) {}
                 langSelect.addEventListener('change', () => {
-                    const realSwitcher = document.getElementById('langSwitcher');
-                    if (realSwitcher) {
-                        realSwitcher.value = langSelect.value;
-                        realSwitcher.dispatchEvent(new Event('change'));
-                    }
+                    const language = langSelect.value === 'sw' ? 'sw' : 'en';
+                    try { localStorage.setItem('site_lang', language); } catch (e) {}
+                    // The Translate widget reads this cookie on page load. A
+                    // reload gives a consistent, whole-portal translation
+                    // rather than leaving previous English text in place.
+                    document.cookie = `googtrans=/en/${language}; path=/; max-age=31536000; SameSite=Lax`;
+                    location.reload();
                 });
             }
 
