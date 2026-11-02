@@ -123,7 +123,7 @@ const HARAMBEE_CAMPAIGN = { id: 'youth-projects-harambee-2026-11-15', title: 'YO
 // Kept separate from the pledge campaign version.  This marks the one-time
 // move of the previous (107-name) pledge register into the names-only church
 // directory, without ever mixing it back into the 48-person Harambee round.
-const YOUTH_DIRECTORY_MIGRATION_VERSION = 'church-youth-directory-v1';
+const YOUTH_DIRECTORY_MIGRATION_VERSION = 'church-youth-directory-v2';
 
 let fallbackData = {
     members: [],
@@ -212,16 +212,15 @@ async function readData() {
             await db.collection('portal_data').insertOne({ _id: 'main_store', ...fallbackData });
             return fallbackData;
         }
-        // One-time-compatible migration for deployments that used the former
-        // pledge list as a names list. Preserve those names as Youth Members,
-        // then replace only the active pledge register with the Harambee list.
+        // The v2 separation deliberately uses the current old pledge rows as
+        // the official church names list exactly once. The screenshoted
+        // 107-row table is therefore moved intact to Youth Members, and the
+        // only live financial register becomes the 48-person Harambee list.
         const isNewHarambeeRegister = doc.pledgeMigrationVersion === HARAMBEE_CAMPAIGN.id;
-        // On an existing site, the former pledge register is the official
-        // Youth Members List. Once copied, it is retained independently of
-        // the live 48-person Harambee pledge round.
-        const oldRegister = (doc.youthMembers && doc.youthMembers.length)
-            ? doc.youthMembers
-            : ((!isNewHarambeeRegister ? (doc.pledges || []) : []) || fallbackData.legacyPledges);
+        const needsListSeparation = doc.youthDirectoryMigrationVersion !== YOUTH_DIRECTORY_MIGRATION_VERSION;
+        const oldRegister = needsListSeparation && (doc.pledges || []).length
+            ? doc.pledges
+            : ((doc.youthMembers && doc.youthMembers.length) ? doc.youthMembers : fallbackData.legacyPledges);
         const migratedYouthMembers = oldRegister
             .map((p, i) => ({ id: (p && p.id) || `youth_member_${i + 1}`, name: typeof p === 'string' ? p : p.name }))
             .filter(p => p.name);
@@ -239,10 +238,10 @@ async function readData() {
             pledgeHistory: doc.pledgeHistory || fallbackData.pledgeHistory,
             youthMembers: migratedYouthMembers.length ? migratedYouthMembers : fallbackData.youthMembers,
             jumuiyaPledgeLinks: doc.jumuiyaPledgeLinks || fallbackData.jumuiyaPledgeLinks,
-            pledgeCampaign: isNewHarambeeRegister ? (doc.pledgeCampaign || HARAMBEE_CAMPAIGN) : HARAMBEE_CAMPAIGN,
+            pledgeCampaign: needsListSeparation ? HARAMBEE_CAMPAIGN : (doc.pledgeCampaign || HARAMBEE_CAMPAIGN),
             pledgeMigrationVersion: HARAMBEE_CAMPAIGN.id,
             youthDirectoryMigrationVersion: YOUTH_DIRECTORY_MIGRATION_VERSION,
-            pledges: isNewHarambeeRegister ? (doc.pledges || HARAMBEE_PLEDGES) : HARAMBEE_PLEDGES,
+            pledges: needsListSeparation ? HARAMBEE_PLEDGES : (doc.pledges || HARAMBEE_PLEDGES),
             events: doc.events || fallbackData.events,
             messages: doc.messages || fallbackData.messages,
             readings: doc.readings || fallbackData.readings,
@@ -258,7 +257,7 @@ async function readData() {
         // Persist the separation the first time the upgraded server reads the
         // old database. This prevents a later edit from reusing old pledge
         // rows as the active campaign.
-        if (doc.youthDirectoryMigrationVersion !== YOUTH_DIRECTORY_MIGRATION_VERSION || !isNewHarambeeRegister) {
+        if (needsListSeparation || !isNewHarambeeRegister) {
             await db.collection('portal_data').updateOne(
                 { _id: 'main_store' },
                 { $set: {
