@@ -1188,6 +1188,21 @@ app.get('/api/youth/directory', async (req, res) => {
     });
 });
 
+// Profile data is intentionally a small dedicated request. It keeps the
+// account drawer usable even if a slow reflection, chart, or other dashboard
+// request fails. Passwords and other members' details are never returned.
+app.get('/api/youth/profile', async (req, res) => {
+    const requested = String(req.query.member || '').trim().toLowerCase();
+    if (!requested) return res.status(400).json({ success: false, message: 'Missing member account.' });
+    const data = await readData();
+    const member = (data.members || []).find(m => String(m.name || '').trim().toLowerCase() === requested || String(m.customId || '').trim().toLowerCase() === requested);
+    if (!member) return res.status(404).json({ success: false, message: 'Member not found.' });
+    res.json({ success: true, member: {
+        name: member.name || '', group: member.group || '', jumuiya: member.jumuiya || '',
+        customId: member.customId || '', profilePhoto: member.profilePhoto || '', verified: true
+    } });
+});
+
 app.post('/api/youth/register', async (req, res) => {
     const { name, phone, jumuiya, group, pass } = req.body;
     if (!name || !pass) return res.json({ success: false, message: 'Name & password required.' });
