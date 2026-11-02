@@ -94,6 +94,33 @@ const JUMUIYAS_LIST = [
     { id: 'st_charles_lwanga', name: 'St. Charles Lwanga', username: 'charles_admin', pass: 'Char2026!' }
 ];
 
+// The church-wide names list is deliberately separate from login accounts.
+// People can appear here and later create an account without a duplicate-name
+// error; their account will then be linked to the Jumuiya they select.
+const YOUTH_MEMBER_NAMES = [
+    'Diana katile','Dennis sammy','Joanne Nduku','Matilda ann','Patric Mutiso','Joseph mulei','Sam art kid',
+    'Charity ndunge','Dancun mutuku','Samuel Ndola','Robert Wambua','Francis mutoni','Lydia ndunge','Dennis kaseke',
+    'Urbanus sammy','Ruth Kioko','Esther nthenya','Steve kiilu','Brian musau','Alice mutave','Maureen kioko',
+    'Kaloki sammy','Urbanus mutisya','Maryann Koki','Faith munyiva','Mary kiilu','Diana nwende','Caro mutio',
+    'Emily mbatha','Joseph ndiku','Antony kioko','Mitchell Muema','Leonard mwiso','Janet Ngelele','Faith ndunge',
+    'Vivian ndunge','Jayden wambua','Judith ndila','marceline ndinda','Catherine kaluki','Dennis makato',
+    'Mercy muthoki','Kavesu Nzuki','Ann kamene','Maureen Muema','Kennedy kioko','Janet Wanza','Gloria Mwende',
+    'Bridgit Wavinya','Magdalene musau','Cellina mukulu','Jane ndinda','Janet munyiva','Purity nthambi',
+    'Susan Katunge','Maureen kalekye','Dennis muema','Catherine mbatha','Diana musyawa','Agnes ngina',
+    'Alphonse muteti','Mary musyoki','simon muya','sharleen kioko','Claudia kennedy','Diana kennedy',
+    'Dennus kiswii','Jacintah muema','Simon kasivu','Cynthia syokau','Peter mwangangi','Gloria kim',
+    'Jackline muthoki','Joseph mutinda','Betty mutindi','Allan muli','Vincent muthama','Steven muutu',
+    'Bonface william','Fidelis kimani','Annafemmi','Caroline muema','James kilele','John mutinda',
+    'Dennis wambua','Cecilia Mulinge','Innocent muthusi','Dennis kasivu','Rechael ndolo','Cynthia munyao',
+    'Agie kasiva','Erick peter','Ostin kilonzo','Samantha wangai','Agape Nzomo'
+];
+
+const HARAMBEE_PLEDGES = [
+    ['Matilda ann',500,500],['Robert Wambua',1000,0],['Dennis kaseke',1000,0],['Brian musau',500,0],['Alice mutave',200,0],['Sammy Kaloki',200,200],['Faith munyiva',200,0],['Diana nwende',200,0],['Caro mutio',200,0],['Judith ndila',200,0],['marceline ndinda',1000,0],['Mercy muthoki',200,0],['Maureen Muema',500,0],['Kennedy kioko',1000,0],['Agnes ngina',300,0],['Alphonse muteti',1000,0],['Jacintah muema',100,0],['Gloria kim',500,500],['Steven muutu',200,100],['Erick peter',1000,0],['Victor Mulwa',1000,0],['Joseph David',300,0],['Brian Mwendwa',200,0],['Victor Mutinda',100,0],['Benard Mwongela',500,0],['Mercy Mutie',300,0],['Rose Kiilu',300,0],['Phyllis',500,0],['Eunice Nthambi',300,0],['Benjamin Muthiani',200,0],['Moses Kenyatta',1000,0],['Albanus Muinde',200,0],['Esther Nzilani',100,0],['Edna Katunge',100,0],['Mary Kavesu',200,0],['Faith Nzula',100,0],['Fidelis Nzau',200,200],['Angela Mueni',200,0],['Dancun Muthiani',300,0],['Boniface Kyalo',100,100],['Ian Muinde',50,0],['Caleb Mutie',100,0],['Catherine Kamene',150,0],['Felix Makau',100,0],['Maxwell Mwendwa',100,0],['Samuel Ndola',300,0],['Wambua Mutosya',200,0],['Agnes Mbinya',200,200]
+].map((row, index) => ({ id: `harambee_${index + 1}`, name: row[0], pledgedAmount: row[1], redeemedAmount: row[2] }));
+
+const HARAMBEE_CAMPAIGN = { id: 'youth-projects-harambee-2026-11-15', title: 'YOUTH PROJECTS HARAMBEE', date: '15th NOV 2026', paidTotal: 1800, outstandingPledges: 15600, projectTotal: 17400 };
+
 let fallbackData = {
     members: [],
     pending: [],
@@ -106,7 +133,14 @@ let fallbackData = {
     contributionHistory: [],
     pledgeStatus: 'open',
     pledgeHistory: [],
-    pledges: [
+    youthMembers: YOUTH_MEMBER_NAMES.map((name, i) => ({ id: 'youth_member_' + (i + 1), name })),
+    jumuiyaPledgeLinks: [],
+    pledgeCampaign: HARAMBEE_CAMPAIGN,
+    pledgeMigrationVersion: HARAMBEE_CAMPAIGN.id,
+    pledges: HARAMBEE_PLEDGES,
+    /* Legacy seed retained below only so older deployments can migrate its
+       names into youthMembers. It is no longer the active pledge register. */
+    legacyPledges: [
         'Diana katile','Dennis sammy','Joanne Nduku','Matilda ann','Patric Mutiso','Joseph mulei','Sam art kid',
         'Charity ndunge','Dancun mutuku','Samuel Ndola','Robert Wambua','Francis mutoni','Lydia ndunge','Dennis kaseke',
         'Urbanus sammy','Ruth Kioko','Esther nthenya','Steve kiilu','Brian musau','Alice mutave','Maureen kioko',
@@ -159,6 +193,12 @@ function creditPledgePayment(pledges, name, amount) {
     return { pledges: updated, matched };
 }
 
+function getPledgeSummary(pledges) {
+    const pledged = (pledges || []).reduce((sum, p) => sum + Number(p.pledgedAmount || 0), 0);
+    const paid = (pledges || []).reduce((sum, p) => sum + Number(p.redeemedAmount || 0), 0);
+    return { pledged, paid, balance: Math.max(0, pledged - paid) };
+}
+
 async function readData() {
     if (!db) return fallbackData;
     try {
@@ -167,6 +207,13 @@ async function readData() {
             await db.collection('portal_data').insertOne({ _id: 'main_store', ...fallbackData });
             return fallbackData;
         }
+        // One-time-compatible migration for deployments that used the former
+        // pledge list as a names list. Preserve those names as Youth Members,
+        // then replace only the active pledge register with the Harambee list.
+        const isNewHarambeeRegister = doc.pledgeMigrationVersion === HARAMBEE_CAMPAIGN.id;
+        const migratedYouthMembers = doc.youthMembers || (doc.pledges || fallbackData.legacyPledges || [])
+            .map((p, i) => ({ id: p.id || `youth_member_${i + 1}`, name: p.name }))
+            .filter(p => p.name);
         return {
             members: doc.members || fallbackData.members,
             pending: doc.pending || fallbackData.pending,
@@ -179,7 +226,11 @@ async function readData() {
             contributionHistory: doc.contributionHistory || fallbackData.contributionHistory,
             pledgeStatus: doc.pledgeStatus || fallbackData.pledgeStatus,
             pledgeHistory: doc.pledgeHistory || fallbackData.pledgeHistory,
-            pledges: doc.pledges || fallbackData.pledges,
+            youthMembers: migratedYouthMembers.length ? migratedYouthMembers : fallbackData.youthMembers,
+            jumuiyaPledgeLinks: doc.jumuiyaPledgeLinks || fallbackData.jumuiyaPledgeLinks,
+            pledgeCampaign: isNewHarambeeRegister ? (doc.pledgeCampaign || HARAMBEE_CAMPAIGN) : HARAMBEE_CAMPAIGN,
+            pledgeMigrationVersion: HARAMBEE_CAMPAIGN.id,
+            pledges: isNewHarambeeRegister ? (doc.pledges || HARAMBEE_PLEDGES) : HARAMBEE_PLEDGES,
             events: doc.events || fallbackData.events,
             messages: doc.messages || fallbackData.messages,
             readings: doc.readings || fallbackData.readings,
@@ -868,16 +919,33 @@ app.get('/api/jumuiya/data', async (req, res) => {
     const targetNorm = normalize(jumuiyaName);
     const submissions = (data.jumuiyaSubmissions || []).filter(s => normalize(s.jumuiyaName) === targetNorm);
     const members = (data.members || []).filter(m => normalize(m.jumuiya) === targetNorm);
+    const pledgeNames = new Set((data.pledges || []).map(p => normalizedName(p.name)));
+    // Only names are exposed to a Jumuiya. Financial amounts remain in the
+    // central Harambee register; this list is a Jumuiya membership link.
+    const registeredPledgeMembers = members.filter(m => pledgeNames.has(normalizedName(m.name))).map(m => ({ id: m.id, name: m.name }));
+    const linkedPledgeMembers = (data.jumuiyaPledgeLinks || []).filter(link => normalize(link.jumuiya) === targetNorm).map(link => ({ id: link.id, name: link.name }));
+    const seenPledgeNames = new Set();
+    const pledgedMembers = [...registeredPledgeMembers, ...linkedPledgeMembers].filter(member => {
+        const key = normalizedName(member.name); if (seenPledgeNames.has(key)) return false; seenPledgeNames.add(key); return true;
+    });
     
     let jumuiyaTotal = 0;
     submissions.forEach(s => {
         if (s.published) jumuiyaTotal += Number(s.amount || 0);
     });
+    const contributionHistory = (data.contributionHistory || []).map(period => ({
+        id: period.id,
+        closedAtDisplay: period.closedAtDisplay,
+        total: (period.submissions || []).filter(s => normalize(s.jumuiyaName) === targetNorm && s.published).reduce((sum, s) => sum + Number(s.amount || 0), 0),
+        submissions: (period.submissions || []).filter(s => normalize(s.jumuiyaName) === targetNorm && s.published)
+    }));
 
     res.json({ 
         success: true, 
         submissions, 
         members,
+        pledgedMembers,
+        contributionHistory,
         jumuiyaTotal,
         jumuiyaTarget: (data.jumuiyaTargets && jumuiyaName) ? (data.jumuiyaTargets[jumuiyaName] || 0) : 0,
         contributionStatus: data.contributionStatus || 'open',
@@ -1004,14 +1072,21 @@ app.get('/api/youth/contribution-report', async (req, res) => {
 app.get('/api/youth/pledges', async (req, res) => {
     const data = await readData();
     const closed = data.pledgeStatus === 'closed';
+    const summary = getPledgeSummary(data.pledges || []);
     res.json({
         success: true,
         status: closed ? 'closed' : 'open',
         pledges: (data.pledges || []).map(p => closed
             ? { id: p.id, name: p.name }
             : { id: p.id, name: p.name, pledgedAmount: Number(p.pledgedAmount || 0), redeemedAmount: Number(p.redeemedAmount || 0) }),
+        campaign: { ...(data.pledgeCampaign || HARAMBEE_CAMPAIGN), paidTotal: summary.paid, outstandingPledges: summary.balance, projectTotal: summary.pledged },
         history: (data.pledgeHistory || []).map(h => ({ id: h.id, closedAtDisplay: h.closedAtDisplay, count: (h.pledges || []).length }))
     });
+});
+
+app.get('/api/youth/members-list', async (req, res) => {
+    const data = await readData();
+    res.json({ success: true, members: (data.youthMembers || []).map((m, index) => ({ id: m.id, name: m.name, number: index + 1 })) });
 });
 
 app.get('/api/youth/pledges/history/:id', async (req, res) => {
@@ -1059,8 +1134,15 @@ app.post('/api/youth/register', async (req, res) => {
     if ((data.members || []).some(m => m.name.toLowerCase() === cleanName) || (data.pending || []).some(p => p.name.toLowerCase() === cleanName)) {
         return res.json({ success: false, message: 'Account exists.' });
     }
-    const pending = [...(data.pending || []), { id: Date.now().toString(), name: name.trim(), phone: phone || '', jumuiya: jumuiya || 'St. Michael', group: group || 'Youth General', pass, date: new Date().toLocaleDateString() }];
-    await writeData({ pending });
+    const listed = [...(data.youthMembers || []), ...(data.pledges || [])].some(entry => normalizedName(entry.name) === normalizedName(name));
+    const pending = [...(data.pending || []), { id: Date.now().toString(), name: name.trim(), phone: phone || '', jumuiya: jumuiya || 'St. Michael', group: group || 'Youth General', pass, listedInYouthRecords: listed, date: new Date().toLocaleDateString() }];
+    const selectedJumuiya = jumuiya || 'St. Michael';
+    const shouldLinkPledge = (data.pledges || []).some(entry => normalizedName(entry.name) === normalizedName(name));
+    const existingLink = (data.jumuiyaPledgeLinks || []).some(link => normalizedName(link.name) === normalizedName(name) && normalize(link.jumuiya) === normalize(selectedJumuiya));
+    const jumuiyaPledgeLinks = shouldLinkPledge && !existingLink
+        ? [...(data.jumuiyaPledgeLinks || []), { id: `jumuiya_pledge_${Date.now()}`, name: name.trim(), jumuiya: selectedJumuiya, linkedAt: new Date().toISOString() }]
+        : (data.jumuiyaPledgeLinks || []);
+    await writeData({ pending, jumuiyaPledgeLinks });
     res.json({ success: true, message: 'Registered successfully!' });
 });
 
@@ -1264,6 +1346,9 @@ app.get('/api/admin/data', async (req, res) => {
         pledgeStatus: data.pledgeStatus || 'open',
         pledgeHistory: data.pledgeHistory || [],
         pledges: data.pledges || [],
+        youthMembers: data.youthMembers || [],
+        jumuiyaPledgeLinks: data.jumuiyaPledgeLinks || [],
+        pledgeCampaign: { ...(data.pledgeCampaign || HARAMBEE_CAMPAIGN), ...(() => { const s = getPledgeSummary(data.pledges || []); return { paidTotal: s.paid, outstandingPledges: s.balance, projectTotal: s.pledged }; })() },
         targetAmount: data.targetAmount !== undefined ? data.targetAmount : 500000,
         jumuiyaTargets: data.jumuiyaTargets || {},
         contributionStatus: data.contributionStatus || 'open',
@@ -1782,6 +1867,8 @@ app.post('/api/admin/save-pledge', async (req, res) => {
             pledgedAmount: Math.max(0, Number(pledgedAmount || 0)),
             redeemedAmount: Math.max(0, Number(redeemedAmount || 0))
         };
+        const duplicate = (data.pledges || []).find(p => normalizedName(p.name) === normalizedName(cleanName) && p.id !== entry.id);
+        if (duplicate) return res.status(400).json({ success: false, message: 'That name is already in this Harambee register.' });
         const exists = (data.pledges || []).some(p => p.id === entry.id);
         const pledges = exists ? data.pledges.map(p => p.id === entry.id ? entry : p) : [...(data.pledges || []), entry];
         await writeData({ pledges });
@@ -1789,6 +1876,32 @@ app.post('/api/admin/save-pledge', async (req, res) => {
     } catch (e) {
         res.status(500).json({ success: false, message: 'Could not save the pledge.' });
     }
+});
+
+app.post('/api/admin/save-youth-member', async (req, res) => {
+    try {
+        const { id, name } = req.body;
+        const cleanName = String(name || '').trim();
+        if (!cleanName) return res.status(400).json({ success: false, message: 'A member name is required.' });
+        const data = await readData();
+        const duplicate = (data.youthMembers || []).find(m => normalizedName(m.name) === normalizedName(cleanName) && m.id !== id);
+        if (duplicate) return res.status(400).json({ success: false, message: 'That name is already in the Youth Members List.' });
+        const entry = { id: id || `youth_member_${Date.now()}`, name: cleanName };
+        const exists = (data.youthMembers || []).some(m => m.id === entry.id);
+        const youthMembers = exists ? data.youthMembers.map(m => m.id === entry.id ? entry : m) : [...(data.youthMembers || []), entry];
+        await writeData({ youthMembers });
+        res.json({ success: true, youthMembers });
+    } catch (e) {
+        res.status(500).json({ success: false, message: 'Could not save the Youth Member.' });
+    }
+});
+
+app.post('/api/admin/delete-youth-member', async (req, res) => {
+    const data = await readData();
+    const youthMembers = (data.youthMembers || []).filter(m => m.id !== req.body.id);
+    if (youthMembers.length === (data.youthMembers || []).length) return res.status(404).json({ success: false, message: 'Youth Member not found.' });
+    await writeData({ youthMembers });
+    res.json({ success: true });
 });
 
 app.post('/api/admin/delete-pledge', async (req, res) => {
@@ -1801,7 +1914,8 @@ app.post('/api/admin/delete-pledge', async (req, res) => {
 app.post('/api/admin/close-pledges', async (req, res) => {
     const data = await readData();
     if (data.pledgeStatus === 'closed') return res.status(400).json({ success: false, message: 'The pledge round is already closed.' });
-    const record = { id: `pledge_${Date.now()}`, closedAt: new Date().toISOString(), closedAtDisplay: new Date().toLocaleString(), pledges: data.pledges || [] };
+    const summary = getPledgeSummary(data.pledges || []);
+    const record = { id: `pledge_${Date.now()}`, closedAt: new Date().toISOString(), closedAtDisplay: new Date().toLocaleString(), campaign: { ...(data.pledgeCampaign || HARAMBEE_CAMPAIGN), paidTotal: summary.paid, outstandingPledges: summary.balance, projectTotal: summary.pledged }, pledges: data.pledges || [] };
     await writeData({ pledgeStatus: 'closed', pledgeHistory: [...(data.pledgeHistory || []), record] });
     res.json({ success: true, record });
 });
