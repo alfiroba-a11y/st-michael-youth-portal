@@ -1296,26 +1296,33 @@ app.get('/api/messages/private', async (req, res) => {
 
 app.post('/api/youth/update-profile', async (req, res) => {
     try {
-        const { currentUser, name, group, password } = req.body;
-        if (!currentUser || !name) return res.status(400).json({ success: false, message: 'Missing required fields.' });
+        const { currentUser, password, profilePhoto } = req.body;
+        if (!currentUser) return res.status(400).json({ success: false, message: 'Missing member account.' });
+        const photo = typeof profilePhoto === 'string' ? profilePhoto : '';
+        if (photo && (!/^data:image\/(png|jpe?g|webp);base64,/i.test(photo) || photo.length > 700000)) {
+            return res.status(400).json({ success: false, message: 'Use a PNG, JPG, or WebP photo smaller than 500 KB.' });
+        }
         const data = await readData();
         const cleanCurrent = currentUser.trim().toLowerCase();
         let found = false;
+        let updatedMember = null;
         const members = (data.members || []).map(m => {
             if (m.name.toLowerCase() === cleanCurrent) {
                 found = true;
-                return {
+                updatedMember = {
                     ...m,
-                    name: name.trim(),
-                    group: group !== undefined ? group : m.group,
-                    pass: password && password.trim() ? password.trim() : m.pass
+                    // Identity fields are maintained by the Portal Admin.
+                    // Members may change only their password and photo.
+                    pass: password && password.trim() ? password.trim() : m.pass,
+                    profilePhoto: photo || m.profilePhoto || ''
                 };
+                return updatedMember;
             }
             return m;
         });
         if (!found) return res.status(404).json({ success: false, message: 'Member not found.' });
         await writeData({ members });
-        res.json({ success: true });
+        res.json({ success: true, member: { name: updatedMember.name, group: updatedMember.group, jumuiya: updatedMember.jumuiya, customId: updatedMember.customId, profilePhoto: updatedMember.profilePhoto || '' } });
     } catch (e) {
         res.status(500).json({ success: false, message: 'Error updating profile.' });
     }
