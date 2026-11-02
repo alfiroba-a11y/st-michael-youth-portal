@@ -213,7 +213,7 @@
             <div class="col-6 col-lg-3">
                 <div class="stat-card">
                     <div class="stat-card-icon">👥</div>
-                    <div class="stat-card-label">Pledge Participants</div>
+                    <div class="stat-card-label">Harambee Pledge Participants</div>
                     <div class="stat-card-value" id="statMembers" data-count-to="0">0</div>
                 </div>
             </div>
@@ -783,6 +783,9 @@
                 const data = await res.json();
                 if (!data.success) throw new Error();
                 const closed = data.status === 'closed';
+                // This card always reflects the live Harambee register only
+                // (48 participants), never the separate church Youth Members
+                // List.
                 animateCounter('statMembers', (data.pledges || []).length);
                 const campaign = data.campaign || {};
                 document.getElementById('pledgeCampaignTitle').textContent = `🤝 ${campaign.title || 'Youth Projects Harambee'}${campaign.date ? ' — ' + campaign.date : ''}`;
