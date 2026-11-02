@@ -24,6 +24,10 @@
     <!-- Three.js for the Prayer Globe -->
     <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
     <style>
+        /* Keep Google Translate working invisibly in the background. */
+        .goog-te-banner-frame.skiptranslate, .goog-te-balloon-frame, #goog-gt-tt { display: none !important; }
+        body { top: 0 !important; }
+        .goog-te-gadget { font-size: 0 !important; }
         /* Saint of the Day: reveal-shader style portrait */
         .saint-portrait-wrap {
             position: relative;
@@ -329,6 +333,18 @@
                 </div>
             </div>
         </aside>
+
+        <div class="modal fade" id="myGivingModal" tabindex="-1" aria-labelledby="myGivingModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-scrollable modal-lg">
+                <div class="modal-content border-0 shadow">
+                    <div class="modal-header text-white" style="background:linear-gradient(135deg,#073d92,#1674db)">
+                        <div><div class="small text-white-50">MY PERSONAL STATEMENT</div><h5 class="modal-title" id="myGivingModalLabel">My Giving</h5></div>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body" id="myGivingContent">Loading your recorded giving…</div>
+                </div>
+            </div>
+        </div>
 
         <!-- Past/Current Contributions Report -->
         <div class="modal fade" id="contributionReportModal" tabindex="-1" aria-labelledby="contributionReportModalLabel" aria-hidden="true">
@@ -811,10 +827,29 @@
 
         loadProfileDetails();
 
-        document.getElementById('profileViewGivingBtn').addEventListener('click', () => {
+        const givingMoney = value => `KES ${Number(value || 0).toLocaleString()}`;
+        const givingEscape = value => String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        function givingRows(rows, pledge) {
+            if (!rows || !rows.length) return '<div class="text-muted small py-2">No recorded amounts in this section.</div>';
+            return `<div class="table-responsive"><table class="table table-sm align-middle mb-0"><thead><tr><th>Period</th><th>${pledge ? 'Pledged' : 'Amount'}</th>${pledge ? '<th>Paid</th><th>Balance</th>' : '<th>Purpose</th>'}</tr></thead><tbody>${rows.map(row => pledge
+                ? `<tr><td>${givingEscape(row.period)}</td><td>${givingMoney(row.pledged)}</td><td>${givingMoney(row.paid)}</td><td>${givingMoney(row.balance)}</td></tr>`
+                : `<tr><td>${givingEscape(row.period)}</td><td>${givingMoney(row.amount)}</td><td>${givingEscape(row.purpose)}</td></tr>`).join('')}</tbody></table></div>`;
+        }
+        async function showMyGiving() {
             closeProfileDrawer();
-            document.getElementById('pledgeMemberList').scrollIntoView({ behavior: 'smooth', block: 'start' });
-        });
+            const modalElement = document.getElementById('myGivingModal');
+            const content = document.getElementById('myGivingContent');
+            content.textContent = 'Loading your recorded giving…';
+            bootstrap.Modal.getOrCreateInstance(modalElement).show();
+            try {
+                const res = await fetch(`/api/youth/my-giving?member=${encodeURIComponent(currentUser)}`, { cache: 'no-store' });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message || 'Could not load your giving statement.');
+                const t = data.totals || {};
+                content.innerHTML = `<div class="row g-2 mb-3"><div class="col-6 col-md-3"><div class="p-3 border rounded bg-light"><div class="small text-muted">Total given</div><strong>${givingMoney(t.totalGiven)}</strong></div></div><div class="col-6 col-md-3"><div class="p-3 border rounded bg-light"><div class="small text-muted">Contributions</div><strong>${givingMoney(t.contributions)}</strong></div></div><div class="col-6 col-md-3"><div class="p-3 border rounded bg-light"><div class="small text-muted">Pledge paid</div><strong>${givingMoney(t.paid)}</strong></div></div><div class="col-6 col-md-3"><div class="p-3 border rounded bg-light"><div class="small text-muted">Pledge balance</div><strong>${givingMoney(t.balance)}</strong></div></div></div><h6 class="mt-3">Current contributions</h6>${givingRows(data.currentContributions, false)}<h6 class="mt-4">Past contributions</h6>${givingRows(data.pastContributions, false)}<h6 class="mt-4">Current pledges</h6>${givingRows(data.currentPledges, true)}<h6 class="mt-4">Past pledges</h6>${givingRows(data.pastPledges, true)}`;
+            } catch (e) { content.innerHTML = `<p class="text-danger small mb-0">${givingEscape(e.message || 'Could not load your giving statement.')}</p>`; }
+        }
+        document.getElementById('profileViewGivingBtn').addEventListener('click', showMyGiving);
         document.getElementById('profileMessageAdminBtn').addEventListener('click', () => {
             closeProfileDrawer();
             const conversation = document.getElementById('privateConversation');
