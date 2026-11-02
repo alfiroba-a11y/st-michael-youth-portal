@@ -502,10 +502,36 @@ function injectAppShell(html) {
         .site-wide-crucifix { display:inline-block; width:1.45em; height:1.7em; margin:0 .16em; vertical-align:-.42em; object-fit:contain; filter:drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
     </style>`;
     const crucifixTag = '<img class="site-wide-crucifix" src="/st-michael-crucifix-transparent.png" alt="Crucifix">';
+    const instantApprovalScript = `<script>
+      // Applies to the existing sign-up page without changing its form:
+      // when the server confirms an official youth-list member, persist the
+      // same local session used by normal login and open their dashboard.
+      (() => {
+        const originalFetch = window.fetch;
+        if (!originalFetch) return;
+        window.fetch = async function (...args) {
+          const response = await originalFetch.apply(this, args);
+          const target = typeof args[0] === 'string' ? args[0] : (args[0] && args[0].url) || '';
+          if (String(target).includes('/api/youth/register')) {
+            response.clone().json().then(data => {
+              if (!data || !data.success || !data.autoApproved || !data.name) return;
+              localStorage.setItem('youth_user', data.name);
+              const welcome = document.createElement('div');
+              welcome.setAttribute('role', 'status');
+              welcome.style.cssText = 'position:fixed;z-index:99999;left:50%;top:50%;transform:translate(-50%,-50%);max-width:min(88vw,420px);padding:22px 25px;border-radius:16px;background:#0d6efd;color:#fff;text-align:center;font:700 18px system-ui, sans-serif;box-shadow:0 16px 44px rgba(0,0,0,.32)';
+              welcome.innerHTML = '<div style="font-size:28px;margin-bottom:8px">Welcome!</div><div style="font-size:15px;font-weight:500">Welcome to St. Michael Kasaini Youth.</div>';
+              document.body.appendChild(welcome);
+              setTimeout(() => { window.location.assign('/dashboard'); }, 1200);
+            }).catch(() => {});
+          }
+          return response;
+        };
+      })();
+    </script>`;
     let out = html;
     out = /<\/head>/i.test(out)
-        ? out.replace(/<\/head>/i, `    ${linkTag}\n</head>`)
-        : linkTag + out;
+        ? out.replace(/<\/head>/i, `    ${linkTag}\n    ${instantApprovalScript}\n</head>`)
+        : linkTag + instantApprovalScript + out;
     // Do this before serving every page so homepage, login, dashboards and
     // any future HTML page all use the actual branded crucifix consistently.
     out = out.replace(/[✝✠☩](?:️)?/g, crucifixTag);
