@@ -120,6 +120,10 @@ const HARAMBEE_PLEDGES = [
 ].map((row, index) => ({ id: `harambee_${index + 1}`, name: row[0], pledgedAmount: row[1], redeemedAmount: row[2] }));
 
 const HARAMBEE_CAMPAIGN = { id: 'youth-projects-harambee-2026-11-15', title: 'YOUTH PROJECTS HARAMBEE', date: '15th NOV 2026', paidTotal: 1800, outstandingPledges: 15600, projectTotal: 17400 };
+// Kept separate from the pledge campaign version.  This marks the one-time
+// move of the previous (107-name) pledge register into the names-only church
+// directory, without ever mixing it back into the 48-person Harambee round.
+const YOUTH_DIRECTORY_MIGRATION_VERSION = 'church-youth-directory-v1';
 
 let fallbackData = {
     members: [],
@@ -137,6 +141,7 @@ let fallbackData = {
     jumuiyaPledgeLinks: [],
     pledgeCampaign: HARAMBEE_CAMPAIGN,
     pledgeMigrationVersion: HARAMBEE_CAMPAIGN.id,
+    youthDirectoryMigrationVersion: YOUTH_DIRECTORY_MIGRATION_VERSION,
     pledges: HARAMBEE_PLEDGES,
     /* Legacy seed retained below only so older deployments can migrate its
        names into youthMembers. It is no longer the active pledge register. */
@@ -211,10 +216,16 @@ async function readData() {
         // pledge list as a names list. Preserve those names as Youth Members,
         // then replace only the active pledge register with the Harambee list.
         const isNewHarambeeRegister = doc.pledgeMigrationVersion === HARAMBEE_CAMPAIGN.id;
-        const migratedYouthMembers = doc.youthMembers || (doc.pledges || fallbackData.legacyPledges || [])
-            .map((p, i) => ({ id: p.id || `youth_member_${i + 1}`, name: p.name }))
+        // On an existing site, the former pledge register is the official
+        // Youth Members List. Once copied, it is retained independently of
+        // the live 48-person Harambee pledge round.
+        const oldRegister = (doc.youthMembers && doc.youthMembers.length)
+            ? doc.youthMembers
+            : ((!isNewHarambeeRegister ? (doc.pledges || []) : []) || fallbackData.legacyPledges);
+        const migratedYouthMembers = oldRegister
+            .map((p, i) => ({ id: (p && p.id) || `youth_member_${i + 1}`, name: typeof p === 'string' ? p : p.name }))
             .filter(p => p.name);
-        return {
+        const result = {
             members: doc.members || fallbackData.members,
             pending: doc.pending || fallbackData.pending,
             jumuiyaSubmissions: doc.jumuiyaSubmissions || fallbackData.jumuiyaSubmissions,
@@ -230,6 +241,7 @@ async function readData() {
             jumuiyaPledgeLinks: doc.jumuiyaPledgeLinks || fallbackData.jumuiyaPledgeLinks,
             pledgeCampaign: isNewHarambeeRegister ? (doc.pledgeCampaign || HARAMBEE_CAMPAIGN) : HARAMBEE_CAMPAIGN,
             pledgeMigrationVersion: HARAMBEE_CAMPAIGN.id,
+            youthDirectoryMigrationVersion: YOUTH_DIRECTORY_MIGRATION_VERSION,
             pledges: isNewHarambeeRegister ? (doc.pledges || HARAMBEE_PLEDGES) : HARAMBEE_PLEDGES,
             events: doc.events || fallbackData.events,
             messages: doc.messages || fallbackData.messages,
@@ -243,6 +255,22 @@ async function readData() {
             privateMessages: doc.privateMessages || fallbackData.privateMessages,
             loginLogs: doc.loginLogs || fallbackData.loginLogs
         };
+        // Persist the separation the first time the upgraded server reads the
+        // old database. This prevents a later edit from reusing old pledge
+        // rows as the active campaign.
+        if (doc.youthDirectoryMigrationVersion !== YOUTH_DIRECTORY_MIGRATION_VERSION || !isNewHarambeeRegister) {
+            await db.collection('portal_data').updateOne(
+                { _id: 'main_store' },
+                { $set: {
+                    youthMembers: result.youthMembers,
+                    youthDirectoryMigrationVersion: YOUTH_DIRECTORY_MIGRATION_VERSION,
+                    pledgeMigrationVersion: HARAMBEE_CAMPAIGN.id,
+                    pledgeCampaign: result.pledgeCampaign,
+                    pledges: result.pledges
+                } }
+            );
+        }
+        return result;
     } catch (e) {
         return fallbackData;
     }
@@ -949,6 +977,16 @@ app.get('/api/jumuiya/data', async (req, res) => {
         if (!entries.length) return null;
         return { memberId: member.id, name: member.name, amount: entries.reduce((sum, entry) => sum + Number(entry.amount || 0), 0), entries: entries.map(entry => ({ amount: Number(entry.amount || 0), purpose: entry.purpose || 'Other', period: entry.period })) };
     }).filter(Boolean);
+    const registeredPledgeTotals = registeredMemberPledges.reduce((totals, record) => ({
+        participants: totals.participants + 1,
+        pledged: totals.pledged + record.pledged,
+        paid: totals.paid + record.paid,
+        balance: totals.balance + record.balance
+    }), { participants: 0, pledged: 0, paid: 0, balance: 0 });
+    const registeredContributionTotals = registeredMemberContributions.reduce((totals, record) => ({
+        participants: totals.participants + 1,
+        amount: totals.amount + record.amount
+    }), { participants: 0, amount: 0 });
     
     let jumuiyaTotal = 0;
     submissions.forEach(s => {
@@ -968,6 +1006,8 @@ app.get('/api/jumuiya/data', async (req, res) => {
         pledgedMembers,
         registeredMemberPledges,
         registeredMemberContributions,
+        registeredPledgeTotals,
+        registeredContributionTotals,
         contributionHistory,
         jumuiyaTotal,
         jumuiyaTarget: (data.jumuiyaTargets && jumuiyaName) ? (data.jumuiyaTargets[jumuiyaName] || 0) : 0,
