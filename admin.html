@@ -417,18 +417,31 @@
                 </div>
             </div>
 
+            <!-- Church-wide Youth Members List: names only, separate from login accounts. -->
+            <div class="card p-4 mb-4" id="youth-members-list">
+                <h4 class="mb-1"><i class="fas fa-users me-2"></i>Youth Members List</h4>
+                <p class="text-muted small mb-3">Names only. Adding, editing, or deleting these names never creates or removes a portal account.</p>
+                <form id="youthMemberForm" class="row g-2 align-items-end mb-3">
+                    <input type="hidden" id="youthMemberId">
+                    <div class="col-md-8"><label class="form-label small">Youth Member Name</label><input type="text" id="youthMemberName" class="form-control form-control-sm" required></div>
+                    <div class="col-md-4 d-flex gap-2"><button type="submit" class="btn btn-primary btn-sm flex-grow-1" id="saveYouthMemberBtn">Add Name</button><button type="button" class="btn btn-outline-secondary btn-sm" id="youthMemberFormResetBtn">Clear</button></div>
+                </form>
+                <div id="youthMemberFormError" class="alert alert-danger d-none py-2"></div>
+                <div class="table-responsive"><table class="table table-bordered table-hover align-middle"><thead class="table-light"><tr><th>#</th><th>Name</th><th>Action</th></tr></thead><tbody id="youthMembersListAdmin"><tr><td colspan="3" class="text-muted text-center">Loading...</td></tr></tbody></table></div>
+            </div>
+
             <!-- Youth Contributions / Pledges: separate per-person pledge tracker,
                  distinct from the Jumuiya-group contribution system above -->
             <div class="card p-4 mb-4" id="pledges">
                 <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
-                    <h4 class="mb-0"><i class="fas fa-hand-holding-heart me-2"></i> Youth Contributions / Pledges</h4>
+                    <h4 class="mb-0"><i class="fas fa-hand-holding-heart me-2"></i><span id="pledgeCampaignHeading">Youth Projects Harambee</span></h4>
                     <div>
                         <span id="pledgeStatusBadge" class="badge bg-success me-2">Open</span>
                         <button type="button" class="btn btn-sm btn-outline-danger" id="closePledgesBtn">Close Pledges</button>
                         <button type="button" class="btn btn-sm btn-outline-success d-none" id="reopenPledgesBtn">Start New Pledge Round</button>
                     </div>
                 </div>
-                <p class="text-muted small mb-3">Add a new person by entering their name and choosing <strong>Add Name</strong>. Use Edit to change an existing person. This list never affects registration, login, or the official directory.</p>
+                <p class="text-muted small mb-3" id="pledgeCampaignSummary">Manage pledged, paid, and balance amounts. This register is separate from portal accounts.</p>
 
                 <form id="pledgeForm" class="row g-2 align-items-end mb-3">
                     <input type="hidden" id="pledgeId">
@@ -441,7 +454,7 @@
                         <input type="number" id="pledgePledgedAmount" class="form-control form-control-sm" min="0" step="1">
                     </div>
                     <div class="col-md-3">
-                        <label class="form-label small">Amount Redeemed (KES)</label>
+                        <label class="form-label small">Amount Paid (KES)</label>
                         <input type="number" id="pledgeRedeemedAmount" class="form-control form-control-sm" min="0" step="1">
                     </div>
                     <div class="col-md-2 d-flex gap-2">
@@ -458,7 +471,7 @@
                                 <th>#</th>
                                 <th>Name</th>
                                 <th>Pledged (KES)</th>
-                                <th>Redeemed (KES)</th>
+                                <th>Paid (KES)</th>
                                 <th>Balance</th>
                                 <th>Action</th>
                             </tr>
@@ -713,6 +726,8 @@
                 pledgeStatus: 'open',
                 pledgeHistory: [],
                 pledges: [],
+                youthMembers: [],
+                pledgeCampaign: {},
                 jumuiyaSubmissions: [],
                 pending: [],
                 members: [],
@@ -1282,8 +1297,17 @@
             }
             document.getElementById('memberList').innerHTML = mHtml + '</tbody></table>';
 
-            // Pledge register: a separate list, never connected to the member
-            // directory or to new member registration.
+            let youthMemberRows = '';
+            (data.youthMembers || []).forEach((member, index) => {
+                youthMemberRows += `<tr><td>${index + 1}</td><td>${esc(member.name)}</td><td><button class="btn btn-outline-primary btn-sm me-1" data-youth-member-action="edit" data-id="${esc(member.id)}">Edit</button><button class="btn btn-outline-danger btn-sm" data-youth-member-action="delete" data-id="${esc(member.id)}">Delete</button></td></tr>`;
+            });
+            document.getElementById('youthMembersListAdmin').innerHTML = youthMemberRows || '<tr><td colspan="3" class="text-muted text-center">No youth names yet.</td></tr>';
+
+            // Harambee pledge register: separate from accounts, but a matching
+            // registered name can be linked to their selected Jumuiya.
+            const campaign = data.pledgeCampaign || {};
+            document.getElementById('pledgeCampaignHeading').textContent = `${campaign.title || 'Youth Projects Harambee'}${campaign.date ? ' — ' + campaign.date : ''}`;
+            document.getElementById('pledgeCampaignSummary').textContent = `Project total: KES ${Number(campaign.projectTotal || 0).toLocaleString()} · Paid: KES ${Number(campaign.paidTotal || 0).toLocaleString()} · Outstanding pledges: KES ${Number(campaign.outstandingPledges || 0).toLocaleString()}.`;
             const pledgeClosed = data.pledgeStatus === 'closed';
             const pledgeBadge = document.getElementById('pledgeStatusBadge');
             pledgeBadge.textContent = pledgeClosed ? 'Closed' : 'Open';
@@ -1301,6 +1325,33 @@
         /* =========================================================
            TARGET MODAL
         ========================================================= */
+        function clearYouthMemberForm() {
+            document.getElementById('youthMemberId').value = '';
+            document.getElementById('youthMemberName').value = '';
+            document.getElementById('saveYouthMemberBtn').textContent = 'Add Name';
+            document.getElementById('youthMemberFormError').classList.add('d-none');
+        }
+        document.getElementById('youthMemberForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            try {
+                await apiCall('/api/admin/save-youth-member', { method: 'POST', body: JSON.stringify({ id: document.getElementById('youthMemberId').value, name: document.getElementById('youthMemberName').value }) });
+                clearYouthMemberForm(); await loadMasterData(); showGlobalStatus('Youth Member saved.', 'success');
+            } catch (err) { const alert = document.getElementById('youthMemberFormError'); alert.textContent = err.message; alert.classList.remove('d-none'); }
+        });
+        document.getElementById('youthMemberFormResetBtn').addEventListener('click', clearYouthMemberForm);
+        document.getElementById('youthMembersListAdmin').addEventListener('click', async (e) => {
+            const button = e.target.closest('[data-youth-member-action]'); if (!button) return;
+            const member = (cachedMasterData.youthMembers || []).find(m => String(m.id) === button.dataset.id); if (!member) return;
+            if (button.dataset.youthMemberAction === 'edit') {
+                document.getElementById('youthMemberId').value = member.id;
+                document.getElementById('youthMemberName').value = member.name;
+                document.getElementById('saveYouthMemberBtn').textContent = 'Save Changes';
+                document.getElementById('youthMemberName').focus();
+            } else if (confirm(`Delete ${member.name} from the Youth Members List? This will not delete their portal account.`)) {
+                await apiCall('/api/admin/delete-youth-member', { method: 'POST', body: JSON.stringify({ id: member.id }) }); await loadMasterData();
+            }
+        });
+
         function clearPledgeForm() {
             document.getElementById('pledgeId').value = '';
             document.getElementById('pledgeName').value = '';
