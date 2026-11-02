@@ -150,13 +150,30 @@
         .profile-drawer .btn-close { filter: invert(1) grayscale(1) brightness(3); opacity: .9; }
         .profile-drawer .offcanvas-body { padding: 1.25rem 1.4rem 1.5rem; background: #f6f9f8; }
         .profile-identity { display: flex; gap: 12px; align-items: center; padding: 14px; margin-bottom: 18px; border: 1px solid #dbe8e2; border-radius: 14px; background: #fff; }
-        .profile-avatar { display: grid; place-items: center; width: 46px; height: 46px; flex: 0 0 46px; border-radius: 50%; background: #e0f1e9; color: #176b52; font-weight: 800; font-size: 1.15rem; }
+        .profile-avatar, .nav-profile-avatar { display: grid; place-items: center; overflow: hidden; border-radius: 50%; background: #e0f1e9; color: #176b52; font-weight: 800; }
+        .profile-avatar { width: 68px; height: 68px; flex: 0 0 68px; font-size: 1.45rem; box-shadow: 0 0 0 3px #dceee6; }
+        .nav-profile-avatar { width: 34px; height: 34px; flex: 0 0 34px; font-size: .85rem; background: #e7f3ed; box-shadow: 0 0 0 2px rgba(255,255,255,.3); transition: transform .2s ease, box-shadow .2s ease; }
+        .profile-trigger { padding: 3px !important; border: 0 !important; border-radius: 50% !important; background: transparent !important; }
+        .profile-trigger:hover .nav-profile-avatar { transform: translateY(-1px); box-shadow: 0 0 0 2px #fff, 0 4px 12px rgba(0,0,0,.3); }
+        .profile-avatar img, .nav-profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .profile-verified { display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; color: #1671d9; font-size: .74rem; font-weight: 700; }
+        .profile-verified::before { content: '✓'; display: grid; place-items: center; width: 15px; height: 15px; border-radius: 50%; background: #1877e6; color: #fff; font-size: .63rem; }
+        .profile-photo-action { position: relative; display: inline-flex; align-items: center; gap: 7px; margin-top: 11px; color: #176b52; font-size: .78rem; font-weight: 700; cursor: pointer; }
+        .profile-photo-action input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+        .profile-details { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+        .profile-detail { padding: 10px 11px; border: 1px solid #dbe8e2; border-radius: 10px; background: #fff; min-width: 0; }
+        .profile-detail-label { color: #76877f; font-size: .67rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+        .profile-detail-value { overflow: hidden; margin-top: 3px; color: #21342c; font-size: .84rem; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
         .profile-section-label { margin: 21px 0 10px; color: #557168; font-size: .72rem; font-weight: 800; letter-spacing: .09em; text-transform: uppercase; }
         .profile-drawer .form-control, .profile-drawer .form-select { border-color: #d6e2dd; padding: .68rem .78rem; }
         .profile-drawer .form-control:focus, .profile-drawer .form-select:focus { border-color: #268363; box-shadow: 0 0 0 .2rem rgba(38,131,99,.13); }
         .profile-save { width: 100%; padding: .72rem 1rem; margin-top: 4px; border: 0; background: #176b52; font-weight: 700; }
         .profile-pref { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 14px; margin-top: 9px; border: 1px solid #dbe8e2; border-radius: 12px; background: #fff; }
         .profile-pref p { margin: 2px 0 0; color: #70817b; font-size: .79rem; line-height: 1.35; }
+        .profile-status { display:flex; gap:9px; padding:11px; margin: 10px 0 2px; border-radius: 11px; background: #ebf8f1; color:#216549; font-size:.79rem; }
+        .profile-status-icon { display:grid; place-items:center; width:23px; height:23px; border-radius:50%; flex:0 0 23px; background:#cbeedc; font-weight:800; }
+        .profile-action-row { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:10px; }
+        .profile-action-row .btn { padding:.6rem .45rem; font-size:.78rem; }
         .thinking-dots span {
             display: inline-block;
             animation: thinkingBounce 1.2s infinite;
@@ -189,11 +206,8 @@
             </div>
 
             <!-- Profile Button -->
-            <button class="btn btn-outline-light btn-sm me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#profileModal" aria-controls="profileModal" style="display: flex; align-items: center; gap: 6px;">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4zm6.9 3.5c-.42-.3-1.12-.3-1.54 0l-.65.46a7.96 7.96 0 0 1-1.12-.65l-.01-.81a1.11 1.11 0 0 0-1.11-1.11h-.94a1.11 1.11 0 0 0-1.11 1.11l-.01.81c-.41.26-.78.47-1.12.65l-.65-.46c-.42-.3-1.12-.3-1.54 0l-.92.65c-.42.3-.53.88-.26 1.3l.53.79c-.19.39-.34.8-.46 1.22h-.94c-.5 0-.91.41-.91.91v1.11c0 .5.41.91.91.91h.94c.12.42.27.83.46 1.22l-.53.79c-.27.42-.16 1 .26 1.3l.92.65c.42.3 1.12.3 1.54 0l.65-.46c.34.18.71.39 1.12.65l.01.81c0 .5.41.91.11 1.11h.94c.5 0 .91-.41.91-.91l.01-.81c.41-.26.78-.47 1.12-.65l.65.46c.42.3 1.12.3 1.54 0l.92-.65c.42-.3.53-.88.26-1.3l-.53-.79c.19-.39.34-.8.46-1.22h-.94c.5 0 .91-.41.91-.91v-1.11c0-.5-.41-.91-.91-.91h-.94c-.12-.42-.27-.83-.46-1.22l.53-.79c.27-.42.16-1-.26-1.3l-.92-.65zM12 21.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
-                </svg>
-                <span data-i18n="nav_profile_tab">Profile</span>
+            <button class="btn btn-outline-light btn-sm me-2 profile-trigger" type="button" data-bs-toggle="offcanvas" data-bs-target="#profileModal" aria-controls="profileModal" aria-label="Open profile menu" title="My profile">
+                <span class="nav-profile-avatar" id="navProfileAvatar">Y</span>
             </button>
             <button class="btn btn-outline-light btn-sm" onclick="logout()" data-i18n="nav_signout">Sign Out</button>
         </div>
@@ -266,25 +280,30 @@
                     <div class="profile-avatar" id="profileAvatarInitial">Y</div>
                     <div class="min-w-0">
                         <div class="fw-bold text-truncate" id="profileDrawerName">Your youth account</div>
-                        <div class="small text-muted">St. Michael Kasaini Youth Portal</div>
+                        <div class="profile-verified">● Verified member</div>
+                        <label class="profile-photo-action">📷 Change profile photo<input type="file" id="profilePhotoInput" accept="image/png,image/jpeg,image/webp"></label>
                     </div>
                 </div>
                 <div id="profileAlert" class="alert d-none" role="alert"></div>
+                <div class="profile-section-label">Verified account details</div>
+                <div class="profile-details mb-3">
+                    <div class="profile-detail"><div class="profile-detail-label">Full name</div><div class="profile-detail-value" id="profileName">Loading…</div></div>
+                    <div class="profile-detail"><div class="profile-detail-label">Member ID</div><div class="profile-detail-value" id="profileMemberId">—</div></div>
+                    <div class="profile-detail"><div class="profile-detail-label">Jumuiya</div><div class="profile-detail-value" id="profileJumuiya">—</div></div>
+                    <div class="profile-detail"><div class="profile-detail-label">Group</div><div class="profile-detail-value" id="profileGroup">—</div></div>
+                </div>
+                <div class="profile-status"><div class="profile-status-icon">✓</div><div><strong>Verified &amp; active</strong><br>Your details are protected and maintained by Portal Admin.</div></div>
+                <div class="profile-action-row">
+                    <button class="btn btn-outline-success" type="button" id="profileViewGivingBtn">💰 My giving</button>
+                    <button class="btn btn-outline-secondary" type="button" id="profileMessageAdminBtn">💬 Contact admin</button>
+                </div>
                 <form id="profileForm">
-                    <div class="profile-section-label">Account details</div>
-                    <div class="mb-3">
-                        <label for="profileName" class="form-label small fw-semibold" data-i18n="profile_name">Full Name</label>
-                        <input type="text" id="profileName" class="form-control" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="profileGroup" class="form-label small fw-semibold" data-i18n="profile_group">Group</label>
-                        <input type="text" id="profileGroup" class="form-control" required>
-                    </div>
+                    <div class="profile-section-label">Security</div>
                     <div class="mb-3">
                         <label for="profilePassword" class="form-label small fw-semibold" data-i18n="profile_password">New Password</label>
                         <input type="password" id="profilePassword" class="form-control" placeholder="Leave blank to keep your current password">
                     </div>
-                    <button type="submit" class="btn btn-primary profile-save" data-i18n="profile_save">Save changes</button>
+                    <button type="submit" class="btn btn-primary profile-save" data-i18n="profile_save">Save security changes</button>
                 </form>
                 <div class="profile-section-label">Preferences</div>
                 <div class="profile-pref">
@@ -734,13 +753,42 @@
             updateProfileDrawerIdentity(currentUser);
         }
 
-        function updateProfileDrawerIdentity(name) {
+        function updateProfileDrawerIdentity(name, photo) {
             const displayName = String(name || 'Your youth account').trim();
             const nameEl = document.getElementById('profileDrawerName');
             const initialEl = document.getElementById('profileAvatarInitial');
+            const navAvatar = document.getElementById('navProfileAvatar');
             if (nameEl) nameEl.textContent = displayName;
-            if (initialEl) initialEl.textContent = (displayName.charAt(0) || 'Y').toUpperCase();
+            [initialEl, navAvatar].forEach(el => {
+                if (!el) return;
+                el.replaceChildren();
+                if (photo) {
+                    const image = document.createElement('img');
+                    image.src = photo;
+                    image.alt = `${displayName}'s profile photo`;
+                    el.appendChild(image);
+                } else {
+                    el.textContent = (displayName.charAt(0) || 'Y').toUpperCase();
+                }
+            });
         }
+
+        function closeProfileDrawer() {
+            const drawer = document.getElementById('profileModal');
+            const instance = drawer && bootstrap.Offcanvas.getInstance(drawer);
+            if (instance) instance.hide();
+        }
+
+        document.getElementById('profileViewGivingBtn').addEventListener('click', () => {
+            closeProfileDrawer();
+            document.getElementById('pledgeMemberList').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+        document.getElementById('profileMessageAdminBtn').addEventListener('click', () => {
+            closeProfileDrawer();
+            const conversation = document.getElementById('privateConversation');
+            if (conversation) bootstrap.Collapse.getOrCreateInstance(conversation, { toggle: false }).show();
+            setTimeout(() => document.getElementById('privateMessageInput')?.focus(), 340);
+        });
 
         function pledgeEsc(value) {
             return String(value === undefined || value === null ? '' : value).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -857,9 +905,11 @@
                     if (data.members && currentUser) {
                         const loggedInMember = data.members.find(m => m.name === currentUser || m.customId === currentUser);
                         if (loggedInMember) {
-                            if (!document.getElementById('profileName').value) document.getElementById('profileName').value = loggedInMember.name || '';
-                            if (!document.getElementById('profileGroup').value) document.getElementById('profileGroup').value = loggedInMember.group || '';
-                            updateProfileDrawerIdentity(loggedInMember.name || currentUser);
+                            document.getElementById('profileName').textContent = loggedInMember.name || '—';
+                            document.getElementById('profileGroup').textContent = loggedInMember.group || '—';
+                            document.getElementById('profileJumuiya').textContent = loggedInMember.jumuiya || '—';
+                            document.getElementById('profileMemberId').textContent = loggedInMember.customId || '—';
+                            updateProfileDrawerIdentity(loggedInMember.name || currentUser, loggedInMember.profilePhoto || '');
                         }
                     }
 
@@ -1092,11 +1142,38 @@
             });
         }
 
-        // Handle Profile Form Submission
+        // Profile photos are resized in the browser before being saved, which
+        // keeps the member record fast to load on mobile data.
+        let selectedProfilePhoto = '';
+        document.getElementById('profilePhotoInput').addEventListener('change', async (event) => {
+            const file = event.target.files && event.target.files[0];
+            if (!file) return;
+            const alertBox = document.getElementById('profileAlert');
+            if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+                alertBox.textContent = 'Please choose a JPG, PNG, or WebP image.';
+                alertBox.className = 'alert alert-danger small'; alertBox.classList.remove('d-none'); return;
+            }
+            try {
+                const source = await createImageBitmap(file);
+                const scale = Math.min(1, 480 / Math.max(source.width, source.height));
+                const canvas = document.createElement('canvas');
+                canvas.width = Math.max(1, Math.round(source.width * scale));
+                canvas.height = Math.max(1, Math.round(source.height * scale));
+                canvas.getContext('2d').drawImage(source, 0, 0, canvas.width, canvas.height);
+                selectedProfilePhoto = canvas.toDataURL('image/jpeg', .82);
+                updateProfileDrawerIdentity(document.getElementById('profileName').textContent || currentUser, selectedProfilePhoto);
+                alertBox.textContent = 'New profile photo ready. Save security changes to apply it.';
+                alertBox.className = 'alert alert-success small'; alertBox.classList.remove('d-none');
+            } catch (e) {
+                alertBox.textContent = 'That photo could not be processed. Please choose another image.';
+                alertBox.className = 'alert alert-danger small'; alertBox.classList.remove('d-none');
+            }
+        });
+
+        // Only password and profile photo can be changed here. Identity details
+        // remain read-only, as they are verified by the Portal Admin.
         document.getElementById('profileForm').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const name = document.getElementById('profileName').value;
-            const group = document.getElementById('profileGroup').value;
             const password = document.getElementById('profilePassword').value;
             const alertBox = document.getElementById('profileAlert');
 
@@ -1104,7 +1181,7 @@
                 const res = await fetch('/api/youth/update-profile', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ currentUser, name, group, password })
+                    body: JSON.stringify({ currentUser, password, profilePhoto: selectedProfilePhoto })
                 });
                 const data = await res.json();
 
@@ -1112,9 +1189,6 @@
                     alertBox.textContent = 'Profile updated successfully!';
                     alertBox.className = 'alert alert-success small';
                     alertBox.classList.remove('d-none');
-                    if (name !== currentUser) {
-                        localStorage.setItem('youth_user', name);
-                    }
                     setTimeout(() => location.reload(), 1500);
                 } else {
                     alertBox.textContent = data.message || 'Error updating profile';
