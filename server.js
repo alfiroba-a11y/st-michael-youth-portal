@@ -1237,16 +1237,34 @@ app.post('/api/youth/register', async (req, res) => {
     if ((data.members || []).some(m => m.name.toLowerCase() === cleanName) || (data.pending || []).some(p => p.name.toLowerCase() === cleanName)) {
         return res.json({ success: false, message: 'Account exists.' });
     }
-    const listed = [...(data.youthMembers || []), ...(data.pledges || [])].some(entry => normalizedName(entry.name) === normalizedName(name));
-    const pending = [...(data.pending || []), { id: Date.now().toString(), name: name.trim(), phone: phone || '', jumuiya: jumuiya || 'St. Michael', group: group || 'Youth General', pass, listedInYouthRecords: listed, date: new Date().toLocaleDateString() }];
+    // Only the official Youth Members List controls instant approval. Being
+    // on a pledge record alone never grants account access.
+    const officialYouthMember = (data.youthMembers || []).find(entry => normalizedName(entry.name) === normalizedName(name));
+    const listed = Boolean(officialYouthMember);
+    const accountName = officialYouthMember ? officialYouthMember.name : name.trim();
+    const pending = listed ? (data.pending || []) : [...(data.pending || []), {
+        id: Date.now().toString(), name: accountName, phone: phone || '', jumuiya: jumuiya || 'St. Michael', group: group || 'Youth General', pass,
+        listedInYouthRecords: false, date: new Date().toLocaleDateString()
+    }];
     const selectedJumuiya = jumuiya || 'St. Michael';
-    const shouldLinkPledge = (data.pledges || []).some(entry => normalizedName(entry.name) === normalizedName(name));
-    const existingLink = (data.jumuiyaPledgeLinks || []).some(link => normalizedName(link.name) === normalizedName(name) && normalize(link.jumuiya) === normalize(selectedJumuiya));
+    const shouldLinkPledge = (data.pledges || []).some(entry => normalizedName(entry.name) === normalizedName(accountName));
+    const existingLink = (data.jumuiyaPledgeLinks || []).some(link => normalizedName(link.name) === normalizedName(accountName) && normalize(link.jumuiya) === normalize(selectedJumuiya));
     const jumuiyaPledgeLinks = shouldLinkPledge && !existingLink
-        ? [...(data.jumuiyaPledgeLinks || []), { id: `jumuiya_pledge_${Date.now()}`, name: name.trim(), jumuiya: selectedJumuiya, linkedAt: new Date().toISOString() }]
+        ? [...(data.jumuiyaPledgeLinks || []), { id: `jumuiya_pledge_${Date.now()}`, name: accountName, jumuiya: selectedJumuiya, linkedAt: new Date().toISOString() }]
         : (data.jumuiyaPledgeLinks || []);
+    if (listed) {
+        const usedIds = (data.members || []).map(member => Number(String(member.customId || '').replace(/\D/g, '')) || 0);
+        const nextNumber = Math.max(0, ...usedIds) + 1;
+        const members = [...(data.members || []), {
+            id: `member_${Date.now()}`, customId: `K${nextNumber}`, name: accountName, phone: phone || '',
+            jumuiya: selectedJumuiya, group: group || 'Youth General', pass, listedInYouthRecords: true,
+            date: new Date().toLocaleDateString(), autoApproved: true
+        }];
+        await writeData({ members, pending, jumuiyaPledgeLinks });
+        return res.json({ success: true, autoApproved: true, name: accountName, message: 'Account created and approved. You can log in now.' });
+    }
     await writeData({ pending, jumuiyaPledgeLinks });
-    res.json({ success: true, message: 'Registered successfully!' });
+    res.json({ success: true, autoApproved: false, message: 'Registration received and is awaiting Portal Admin approval.' });
 });
 
 app.post('/api/youth/login', async (req, res) => {
