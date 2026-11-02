@@ -30,7 +30,13 @@
         .goog-te-gadget { font-size: 0 !important; }
         .portal-brand { display:flex; align-items:center; gap:10px; font-size:.92rem; font-weight:800; letter-spacing:.035em; text-transform:uppercase; white-space:nowrap; }
         .portal-brand-crucifix { width:37px; height:48px; object-fit:contain; object-position:center; filter:drop-shadow(0 2px 3px rgba(0,0,0,.45)); }
-        @media (max-width: 575.98px) { .portal-brand { max-width: calc(100vw - 165px); overflow:hidden; text-overflow:ellipsis; font-size:.72rem; } .portal-brand-crucifix { width:31px; height:42px; } }
+        .rosary-crucifix { width:32px; height:40px; object-fit:contain; filter:drop-shadow(0 1px 2px rgba(0,0,0,.22)); }
+        @media (max-width: 575.98px) {
+            .navbar { padding:.35rem .65rem !important; flex-wrap:wrap; }
+            .portal-brand { width:100%; max-width:100%; margin:0 0 .35rem; justify-content:center; white-space:normal; text-align:center; font-size:.72rem; line-height:1.15; }
+            .portal-brand-crucifix { width:31px; height:42px; }
+            .navbar .ms-auto { width:100%; margin-left:0 !important; justify-content:flex-end; }
+        }
         /* Saint of the Day: reveal-shader style portrait */
         .saint-portrait-wrap {
             position: relative;
@@ -550,7 +556,7 @@
                     </div>
                 </div>
                 <div class="rosary-mystery-card">
-                    <div class="rosary-mystery-icon">✝️</div>
+                    <div class="rosary-mystery-icon"><img class="rosary-crucifix" src="/st-michael-crucifix-transparent.png" alt="Crucifix"></div>
                     <div>
                         <h6 class="mb-1">4. The Carrying of the Cross <span class="text-muted small fw-normal">— Luke 23:26-32</span></h6>
                         <p class="small mb-1">Weakened and bleeding, Jesus carries His own cross to Calvary, helped along the way by Simon of Cyrene.</p>

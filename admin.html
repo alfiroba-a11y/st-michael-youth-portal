@@ -32,7 +32,10 @@
         #jumuiyaChart { min-width: 420px; }
         .card:has(#jumuiyaChart) > div { overflow-x: auto; height: 280px !important; }
         .navbar-brand { font-size: 1rem; }
+        .portal-brand { display:flex; align-items:center; gap:8px; font-weight:800; letter-spacing:.03em; text-transform:uppercase; }
+        .portal-brand-crucifix { width:30px; height:39px; object-fit:contain; filter:drop-shadow(0 1px 2px rgba(0,0,0,.4)); }
         .row.row-cols-md-3 > .col { flex: 0 0 100%; max-width: 100%; }
+        @media (max-width: 575.98px) { .portal-brand { font-size:.72rem; white-space:normal; line-height:1.15; } .portal-brand-crucifix { width:25px; height:33px; } }
 
         /* Landscape phones: keep header compact so content isn't pushed below the fold */
         @media (max-height: 480px) and (orientation: landscape) {
@@ -47,7 +50,7 @@
     <div id="loginWrapper" class="container d-flex justify-content-center align-items-center my-auto" style="min-height: 100vh;">
         <div class="card p-4 shadow" style="width: 100%; max-width: 400px;">
             <div class="text-center mb-4">
-                <h3 class="fw-bold text-primary">St. Michael Kasaini</h3>
+                <div class="d-flex justify-content-center align-items-center gap-2 mb-2"><img class="portal-brand-crucifix" src="/st-michael-crucifix-transparent.png" alt="Crucifix"><h3 class="fw-bold text-primary mb-0">ST. MICHAEL KASAINI YOUTH</h3></div>
                 <p class="text-muted small" data-i18n="admin_login_heading">Admin Portal Login</p>
             </div>
             <form id="adminLoginForm">
@@ -72,7 +75,7 @@
         <!-- Top Navbar -->
         <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow-sm px-4">
             <div class="container-fluid">
-                <a class="navbar-brand fw-bold" href="#" data-i18n="nav_brand_admin">St. Michael Admin Portal</a>
+                <a class="navbar-brand portal-brand" href="#"><img class="portal-brand-crucifix" src="/st-michael-crucifix-transparent.png" alt="Crucifix"><span>ST. MICHAEL KASAINI YOUTH PORTAL</span></a>
                 <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#adminNavbarContent">
                     <span class="navbar-toggler-icon"></span>
                 </button>
