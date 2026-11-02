@@ -493,30 +493,11 @@ app.get('/api/liturgical/season', (req, res) => {
 
 function injectAppShell(html) {
     const linkTag = '<link rel="stylesheet" href="/app-shell.css">';
-    const i18nScriptTag = '<script defer src="/i18n.js"></script>';
-    const themeScriptTag = '<script src="/theme.js"></script>';
-    const liturgical = getLiturgicalInfo(new Date());
-    const themeStyle = `<style>
-        :root {
-            --liturgical-color: ${liturgical.hex};
-            --liturgical-color-soft: ${liturgical.soft};
-        }
-    </style>`;
-    const bannerHtml = `<div class="liturgical-banner" style="background:${liturgical.hex};">
-        <span class="liturgical-banner-dot"></span>
-        <span>${liturgical.seasonName} &middot; ${liturgical.colorName}</span>
-        <select id="langSwitcher" aria-label="Choose language">
-            <option value="en">EN</option>
-            <option value="sw">SW</option>
-        </select>
-        <button id="themeToggleBtn" type="button" aria-label="Toggle light or dark theme">🌙</button>
-    </div>`;
-
     let out = html;
     out = /<\/head>/i.test(out)
-        ? out.replace(/<\/head>/i, `    ${linkTag}\n    ${themeScriptTag}\n    ${i18nScriptTag}\n    ${themeStyle}\n</head>`)
-        : linkTag + themeScriptTag + i18nScriptTag + themeStyle + out;
-    out = out.replace(/(<body[^>]*>)/i, `$1\n<div class="app-shell">\n${bannerHtml}`);
+        ? out.replace(/<\/head>/i, `    ${linkTag}\n</head>`)
+        : linkTag + out;
+    out = out.replace(/(<body[^>]*>)/i, `$1\n<div class="app-shell">`);
     out = out.replace(/(<\/body>)/i, `</div><!-- /.app-shell -->\n$1`);
     return out;
 }
@@ -1201,6 +1182,39 @@ app.get('/api/youth/profile', async (req, res) => {
         name: member.name || '', group: member.group || '', jumuiya: member.jumuiya || '',
         customId: member.customId || '', profilePhoto: member.profilePhoto || '', verified: true
     } });
+});
+
+// Personal financial statement: a member sees only rows recorded under their
+// own approved account name, across both live and archived periods.
+app.get('/api/youth/my-giving', async (req, res) => {
+    const requested = String(req.query.member || '').trim();
+    if (!requested) return res.status(400).json({ success: false, message: 'Missing member account.' });
+    const data = await readData();
+    const member = (data.members || []).find(m => normalizedName(m.name) === normalizedName(requested) || normalizedName(m.customId) === normalizedName(requested));
+    if (!member) return res.status(404).json({ success: false, message: 'Member not found.' });
+    const mine = entry => normalizedName(entry && entry.name) === normalizedName(member.name);
+    const money = value => Math.max(0, Number(value || 0));
+    const contributionRow = (entry, period, current) => ({
+        type: 'Contribution', period, current, amount: money(entry.amount), purpose: entry.purpose || 'Contribution', date: entry.date || entry.createdAt || ''
+    });
+    const currentContributions = (data.jumuiyaSubmissions || []).filter(entry => entry.published && mine(entry)).map(entry => contributionRow(entry, 'Current contributions', true));
+    const pastContributions = (data.contributionHistory || []).flatMap(history => (history.submissions || []).filter(entry => entry.published && mine(entry)).map(entry => contributionRow(entry, history.closedAtDisplay ? `Past contributions — ${history.closedAtDisplay}` : 'Past contributions', false)));
+    const pledgeRow = (entry, period, current) => ({
+        type: 'Pledge', period, current, pledged: money(entry.pledgedAmount), paid: money(entry.redeemedAmount), balance: Math.max(0, money(entry.pledgedAmount) - money(entry.redeemedAmount))
+    });
+    const currentPledges = data.pledgeStatus === 'closed' ? [] : (data.pledges || []).filter(mine).map(entry => pledgeRow(entry, (data.pledgeCampaign || HARAMBEE_CAMPAIGN).title || 'Current pledges', true));
+    const pastPledges = (data.pledgeHistory || []).flatMap(history => (history.pledges || []).filter(mine).map(entry => pledgeRow(entry, (history.campaign || {}).title || (history.closedAtDisplay ? `Past pledges — ${history.closedAtDisplay}` : 'Past pledges'), false)));
+    const sum = (rows, key) => rows.reduce((total, row) => total + money(row[key]), 0);
+    const allContributions = [...currentContributions, ...pastContributions];
+    const allPledges = [...currentPledges, ...pastPledges];
+    res.json({ success: true, member: { name: member.name, customId: member.customId || '' },
+        currentContributions, pastContributions, currentPledges, pastPledges,
+        totals: {
+            currentContributions: sum(currentContributions, 'amount'), pastContributions: sum(pastContributions, 'amount'),
+            contributions: sum(allContributions, 'amount'), pledged: sum(allPledges, 'pledged'), paid: sum(allPledges, 'paid'),
+            balance: sum(allPledges, 'balance'), totalGiven: sum(allContributions, 'amount') + sum(allPledges, 'paid')
+        }
+    });
 });
 
 app.post('/api/youth/register', async (req, res) => {
