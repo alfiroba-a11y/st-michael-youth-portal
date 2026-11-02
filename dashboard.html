@@ -28,6 +28,9 @@
         .goog-te-banner-frame.skiptranslate, .goog-te-balloon-frame, #goog-gt-tt { display: none !important; }
         body { top: 0 !important; }
         .goog-te-gadget { font-size: 0 !important; }
+        .portal-brand { display:flex; align-items:center; gap:9px; font-size:.92rem; font-weight:800; letter-spacing:.035em; text-transform:uppercase; white-space:nowrap; }
+        .portal-brand-crucifix { width:25px; height:33px; object-fit:contain; object-position:center; border-radius:3px; filter:drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
+        @media (max-width: 575.98px) { .portal-brand { max-width: calc(100vw - 165px); overflow:hidden; text-overflow:ellipsis; font-size:.72rem; } .portal-brand-crucifix { width:21px; height:28px; } }
         /* Saint of the Day: reveal-shader style portrait */
         .saint-portrait-wrap {
             position: relative;
@@ -202,7 +205,10 @@
 <body class="bg-light d-flex flex-column min-vh-100">
     <div id="googleTranslateMount" class="d-none" aria-hidden="true"></div>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
-        <a class="navbar-brand" href="/" data-i18n="nav_brand_dashboard">✝ St. Michael Kasaini Youth Portal</a>
+        <a class="navbar-brand portal-brand" href="/" aria-label="ST. MICHAEL KASAINI YOUTH PORTAL">
+            <img class="portal-brand-crucifix" src="/st-michael-crucifix.png" alt="Crucifix">
+            <span>ST. MICHAEL KASAINI YOUTH PORTAL</span>
+        </a>
         <div class="ms-auto d-flex align-items-center">
             <span id="welcomeUser" class="text-light me-3 small"></span>
 
