@@ -492,11 +492,21 @@ app.get('/api/liturgical/season', (req, res) => {
 });
 
 function injectAppShell(html) {
-    const linkTag = '<link rel="stylesheet" href="/app-shell.css">';
+    const linkTag = `<link rel="stylesheet" href="/app-shell.css">
+    <style>
+        /* Applied to every HTML route, including index, login and all
+           Jumuiya pages: religious cross characters become the same branded
+           transparent crucifix instead of different emoji symbols. */
+        .site-wide-crucifix { display:inline-block; width:1.45em; height:1.7em; margin:0 .16em; vertical-align:-.42em; object-fit:contain; filter:drop-shadow(0 1px 2px rgba(0,0,0,.35)); }
+    </style>`;
+    const crucifixTag = '<img class="site-wide-crucifix" src="/st-michael-crucifix-transparent.png" alt="Crucifix">';
     let out = html;
     out = /<\/head>/i.test(out)
         ? out.replace(/<\/head>/i, `    ${linkTag}\n</head>`)
         : linkTag + out;
+    // Do this before serving every page so homepage, login, dashboards and
+    // any future HTML page all use the actual branded crucifix consistently.
+    out = out.replace(/[✝✠☩](?:️)?/g, crucifixTag);
     out = out.replace(/(<body[^>]*>)/i, `$1\n<div class="app-shell">`);
     out = out.replace(/(<\/body>)/i, `</div><!-- /.app-shell -->\n$1`);
     return out;
