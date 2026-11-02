@@ -166,6 +166,7 @@ let fallbackData = {
     messages: [],
     readings: [{ id: '1', title: "Sunday Holy Mass Readings", firstReading: "1 Kings 3:5...", psalm: "Psalm 119...", secondReading: "Romans 8...", gospel: "Matthew 13..." }],
     passwordRequests: [],
+    accountDeletionRequests: [],
     hymns: [],
     candles: [
         { id: 'family',    label: 'For my family',     lit: true },
@@ -246,6 +247,7 @@ async function readData() {
             messages: doc.messages || fallbackData.messages,
             readings: doc.readings || fallbackData.readings,
             passwordRequests: doc.passwordRequests || fallbackData.passwordRequests,
+            accountDeletionRequests: doc.accountDeletionRequests || fallbackData.accountDeletionRequests,
             hymns: doc.hymns || fallbackData.hymns,
             candles: doc.candles || fallbackData.candles,
             memorialNames: doc.memorialNames || fallbackData.memorialNames,
@@ -1367,6 +1369,25 @@ app.post('/api/youth/update-profile', async (req, res) => {
     }
 });
 
+// Deletion is deliberately a request, rather than immediate removal: Portal
+// Admin can verify the member before deleting financial/account records.
+app.post('/api/youth/request-account-deletion', async (req, res) => {
+    const currentUser = String(req.body.currentUser || '').trim();
+    const reason = String(req.body.reason || '').trim().slice(0, 500);
+    if (!currentUser) return res.status(400).json({ success: false, message: 'Missing member account.' });
+    const data = await readData();
+    const member = (data.members || []).find(m => normalizedName(m.name) === normalizedName(currentUser));
+    if (!member) return res.status(404).json({ success: false, message: 'Member not found.' });
+    const existing = (data.accountDeletionRequests || []).find(r => normalizedName(r.name) === normalizedName(member.name) && r.status === 'pending');
+    if (existing) return res.json({ success: true, message: 'Your account-deletion request is already awaiting review.' });
+    const accountDeletionRequests = [...(data.accountDeletionRequests || []), {
+        id: `delete_${Date.now()}`, name: member.name, customId: member.customId || '', jumuiya: member.jumuiya || '', reason,
+        status: 'pending', requestedAt: new Date().toISOString()
+    }];
+    await writeData({ accountDeletionRequests });
+    res.json({ success: true, message: 'Your deletion request has been sent to Portal Admin for review.' });
+});
+
 // Master Admin APIs
 app.post('/api/admin/login', (req, res) => {
     const { username, password } = req.body;
@@ -1470,6 +1491,7 @@ app.get('/api/admin/data', async (req, res) => {
         mentors: data.mentors || [],
         privateMessages: data.privateMessages || [],
         passwordRequests: data.passwordRequests || [],
+        accountDeletionRequests: data.accountDeletionRequests || [],
         reflection,
         patronSaint,
         validPurposes: VALID_PURPOSES
@@ -1861,6 +1883,21 @@ app.post('/api/admin/approve-password', async (req, res) => {
     } catch (e) {
         res.status(500).json({ success: false, message: 'Error approving password' });
     }
+});
+
+app.post('/api/admin/review-account-deletion', async (req, res) => {
+    const { id, action } = req.body;
+    const data = await readData();
+    const request = (data.accountDeletionRequests || []).find(item => item.id === id && item.status === 'pending');
+    if (!request) return res.status(404).json({ success: false, message: 'Deletion request not found.' });
+    const accountDeletionRequests = (data.accountDeletionRequests || []).map(item => item.id === id ? { ...item, status: action === 'approve' ? 'approved' : 'declined', reviewedAt: new Date().toISOString() } : item);
+    // Approval removes the login account only. Financial history remains for
+    // church accountability and is never silently deleted with an account.
+    const members = action === 'approve'
+        ? (data.members || []).filter(member => normalizedName(member.name) !== normalizedName(request.name))
+        : (data.members || []);
+    await writeData({ accountDeletionRequests, members });
+    res.json({ success: true });
 });
 
 app.get('/api/admin/download-data', async (req, res) => {

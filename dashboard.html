@@ -172,15 +172,14 @@
         .profile-drawer .offcanvas-body { padding: 1.25rem 1.4rem 1.5rem; background: #f6f9f8; }
         .profile-identity { display: flex; gap: 12px; align-items: center; padding: 14px; margin-bottom: 18px; border: 1px solid #dbe8e2; border-radius: 14px; background: #fff; }
         .profile-avatar, .nav-profile-avatar { display: grid; place-items: center; overflow: hidden; border-radius: 50%; background: #e7f0ff; color: #0b5fc2; font-weight: 800; }
-        .profile-avatar { width: 68px; height: 68px; flex: 0 0 68px; font-size: 1.45rem; box-shadow: 0 0 0 3px #d7e6ff; }
+        .profile-avatar { width: 68px; height: 68px; flex: 0 0 68px; font-size: 1.45rem; box-shadow: 0 0 0 3px #d7e6ff; cursor:pointer; transition:transform .2s ease, box-shadow .2s ease; }
+        .profile-avatar:hover { transform:scale(1.04); box-shadow:0 0 0 4px #a9ccff; }
         .nav-profile-avatar { width: 34px; height: 34px; flex: 0 0 34px; font-size: .85rem; background: #e7f3ed; box-shadow: 0 0 0 2px rgba(255,255,255,.3); transition: transform .2s ease, box-shadow .2s ease; }
         .profile-trigger { padding: 3px !important; border: 0 !important; border-radius: 50% !important; background: transparent !important; }
         .profile-trigger:hover .nav-profile-avatar { transform: translateY(-1px); box-shadow: 0 0 0 2px #fff, 0 4px 12px rgba(0,0,0,.3); }
         .profile-avatar img, .nav-profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .profile-verified { display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; color: #1671d9; font-size: .74rem; font-weight: 700; }
-        .profile-verified::before { content: '✓'; display: grid; place-items: center; width: 15px; height: 15px; border-radius: 50%; background: #1877e6; color: #fff; font-size: .63rem; }
-        .profile-photo-action { position: relative; display: inline-flex; align-items: center; gap: 7px; margin-top: 11px; color: #0d63ce; font-size: .78rem; font-weight: 700; cursor: pointer; }
-        .profile-photo-action input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+        /* Meta-style verified mark: blue circular seal with a crisp white tick. */
+        .profile-verified { display:inline-grid; place-items:center; width:19px; height:19px; margin-left:5px; border-radius:50%; background:#1d9bf0; color:#fff; vertical-align:middle; font-size:.74rem; font-weight:900; line-height:1; box-shadow:0 0 0 2px #fff; }
         .profile-details { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
         .profile-detail { padding: 10px 11px; border: 1px solid #dbe8e2; border-radius: 10px; background: #fff; min-width: 0; }
         .profile-detail-label { color: #76877f; font-size: .67rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
@@ -191,10 +190,10 @@
         .profile-save { width: 100%; padding: .72rem 1rem; margin-top: 4px; border: 0; background: #0d6efd; font-weight: 700; }
         .profile-pref { display: flex; justify-content: space-between; gap: 12px; align-items: center; padding: 14px; margin-top: 9px; border: 1px solid #dbe8e2; border-radius: 12px; background: #fff; }
         .profile-pref p { margin: 2px 0 0; color: #70817b; font-size: .79rem; line-height: 1.35; }
-        .profile-status { display:flex; gap:9px; padding:11px; margin: 10px 0 2px; border-radius: 11px; background: #eaf3ff; color:#1856a1; font-size:.79rem; }
-        .profile-status-icon { display:grid; place-items:center; width:23px; height:23px; border-radius:50%; flex:0 0 23px; background:#cfe3ff; font-weight:800; }
         .profile-action-row { display:grid; grid-template-columns:1fr 1fr; gap:9px; margin-top:10px; }
         .profile-action-row .btn { padding:.6rem .45rem; font-size:.78rem; }
+        .profile-danger { margin-top:10px; padding:13px; border:1px solid #f2c9c9; border-radius:12px; background:#fff8f8; }
+        .profile-danger p { margin:3px 0 10px; color:#7c5b5b; font-size:.78rem; line-height:1.35; }
         .thinking-dots span {
             display: inline-block;
             animation: thinkingBounce 1.2s infinite;
@@ -302,13 +301,12 @@
             </div>
             <div class="offcanvas-body">
                 <div class="profile-identity">
-                    <div class="profile-avatar" id="profileAvatarInitial">Y</div>
+                    <div class="profile-avatar" id="profileAvatarInitial" role="button" tabindex="0" title="Tap to change profile photo" aria-label="Change profile photo">Y</div>
                     <div class="min-w-0">
-                        <div class="fw-bold text-truncate" id="profileDrawerName">Your youth account</div>
-                        <div class="profile-verified">● Verified member</div>
-                        <label class="profile-photo-action">📷 Change profile photo<input type="file" id="profilePhotoInput" accept="image/png,image/jpeg,image/webp"></label>
+                        <div class="fw-bold text-truncate" id="profileDrawerName">Your youth account <span class="profile-verified" title="Verified member">✓</span></div>
                     </div>
                 </div>
+                <input class="d-none" type="file" id="profilePhotoInput" accept="image/png,image/jpeg,image/webp">
                 <div id="profileAlert" class="alert d-none" role="alert"></div>
                 <div class="profile-section-label">Verified account details</div>
                 <div class="profile-details mb-3">
@@ -317,10 +315,9 @@
                     <div class="profile-detail"><div class="profile-detail-label">Jumuiya</div><div class="profile-detail-value" id="profileJumuiya">—</div></div>
                     <div class="profile-detail"><div class="profile-detail-label">Group</div><div class="profile-detail-value" id="profileGroup">—</div></div>
                 </div>
-                <div class="profile-status"><div class="profile-status-icon">✓</div><div><strong>Verified &amp; active</strong><br>Your details are protected and maintained by Portal Admin.</div></div>
                 <div class="profile-action-row">
                     <button class="btn btn-outline-success" type="button" id="profileViewGivingBtn">💰 My giving</button>
-                    <button class="btn btn-outline-secondary" type="button" id="profileMessageAdminBtn">💬 Contact admin</button>
+                    <button class="btn btn-outline-secondary" type="button" id="profileMessageAdminBtn">💬 Contact support</button>
                 </div>
                 <form id="profileForm">
                     <div class="profile-section-label">Security</div>
@@ -328,8 +325,14 @@
                         <label for="profilePassword" class="form-label small fw-semibold" data-i18n="profile_password">New Password</label>
                         <input type="password" id="profilePassword" class="form-control" placeholder="Leave blank to keep your current password">
                     </div>
-                    <button type="submit" class="btn btn-primary profile-save" data-i18n="profile_save">Save security changes</button>
+                    <button type="submit" class="btn btn-primary profile-save">Change password</button>
                 </form>
+                <div class="profile-section-label">Account deletion</div>
+                <div class="profile-danger">
+                    <div class="fw-bold small text-danger">Request account deletion</div>
+                    <p>This sends a deletion request for review. Your account and financial records are not removed immediately.</p>
+                    <button type="button" class="btn btn-sm btn-outline-danger" id="profileDeleteRequestBtn">Request deletion</button>
+                </div>
                 <div class="profile-section-label">Preferences</div>
                 <div class="profile-pref">
                     <div><div class="fw-bold small">Theme</div><p>Choose light or dark mode.</p></div>
@@ -1221,9 +1224,32 @@
             });
         }
 
-        // Profile photos are resized in the browser before being saved, which
-        // keeps the member record fast to load on mobile data.
-        let selectedProfilePhoto = '';
+        // Profile photo and password save independently. A photo is saved as
+        // soon as it is selected; the password has its own button.
+        async function saveProfileChange(payload, successMessage) {
+            const alertBox = document.getElementById('profileAlert');
+            try {
+                const res = await fetch('/api/youth/update-profile', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ currentUser, ...payload })
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.message || 'Could not update your profile.');
+                if (data.member) applyProfileDetails(data.member);
+                alertBox.textContent = successMessage;
+                alertBox.className = 'alert alert-success small'; alertBox.classList.remove('d-none');
+                return true;
+            } catch (err) {
+                alertBox.textContent = err.message || 'Could not update your profile.';
+                alertBox.className = 'alert alert-danger small'; alertBox.classList.remove('d-none');
+                return false;
+            }
+        }
+
+        document.getElementById('profileAvatarInitial').addEventListener('click', () => document.getElementById('profilePhotoInput').click());
+        document.getElementById('profileAvatarInitial').addEventListener('keydown', event => {
+            if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); document.getElementById('profilePhotoInput').click(); }
+        });
         document.getElementById('profilePhotoInput').addEventListener('change', async (event) => {
             const file = event.target.files && event.target.files[0];
             if (!file) return;
@@ -1239,43 +1265,39 @@
                 canvas.width = Math.max(1, Math.round(source.width * scale));
                 canvas.height = Math.max(1, Math.round(source.height * scale));
                 canvas.getContext('2d').drawImage(source, 0, 0, canvas.width, canvas.height);
-                selectedProfilePhoto = canvas.toDataURL('image/jpeg', .82);
-                updateProfileDrawerIdentity(document.getElementById('profileName').textContent || currentUser, selectedProfilePhoto);
-                alertBox.textContent = 'New profile photo ready. Save security changes to apply it.';
-                alertBox.className = 'alert alert-success small'; alertBox.classList.remove('d-none');
+                const profilePhoto = canvas.toDataURL('image/jpeg', .82);
+                updateProfileDrawerIdentity(document.getElementById('profileName').textContent || currentUser, profilePhoto);
+                await saveProfileChange({ profilePhoto }, 'Profile photo updated.');
             } catch (e) {
                 alertBox.textContent = 'That photo could not be processed. Please choose another image.';
                 alertBox.className = 'alert alert-danger small'; alertBox.classList.remove('d-none');
             }
         });
 
-        // Only password and profile photo can be changed here. Identity details
-        // remain read-only, as they are verified by the Portal Admin.
+        // Identity details remain read-only. Password change is separate from
+        // image upload and preferences.
         document.getElementById('profileForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const password = document.getElementById('profilePassword').value;
-            const alertBox = document.getElementById('profileAlert');
+            if (!password.trim()) { document.getElementById('profilePassword').focus(); return; }
+            const saved = await saveProfileChange({ password }, 'Password changed successfully.');
+            if (saved) document.getElementById('profilePassword').value = '';
+        });
 
+        document.getElementById('profileDeleteRequestBtn').addEventListener('click', async () => {
+            if (!confirm('Send a request to permanently delete your account? This will be reviewed before any account is removed.')) return;
+            const alertBox = document.getElementById('profileAlert');
             try {
-                const res = await fetch('/api/youth/update-profile', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ currentUser, password, profilePhoto: selectedProfilePhoto })
+                const res = await fetch('/api/youth/request-account-deletion', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ currentUser })
                 });
                 const data = await res.json();
-
-                if (data.success) {
-                    alertBox.textContent = 'Profile updated successfully!';
-                    alertBox.className = 'alert alert-success small';
-                    alertBox.classList.remove('d-none');
-                    setTimeout(() => location.reload(), 1500);
-                } else {
-                    alertBox.textContent = data.message || 'Error updating profile';
-                    alertBox.className = 'alert alert-danger small';
-                    alertBox.classList.remove('d-none');
-                }
+                if (!data.success) throw new Error(data.message || 'Could not send deletion request.');
+                alertBox.textContent = data.message;
+                alertBox.className = 'alert alert-success small'; alertBox.classList.remove('d-none');
             } catch (err) {
-                console.error("Error updating profile:", err);
+                alertBox.textContent = err.message || 'Could not send deletion request.';
+                alertBox.className = 'alert alert-danger small'; alertBox.classList.remove('d-none');
             }
         });
 

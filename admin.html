@@ -288,6 +288,12 @@
                 </div>
             </div>
 
+            <div class="card p-4 mb-4" id="account-deletions">
+                <h4 class="mb-1"><i class="fas fa-user-slash me-2 text-danger"></i>Account Deletion Requests</h4>
+                <p class="text-muted small">Approving removes the member's portal login only; recorded financial history stays intact.</p>
+                <div id="accountDeletionRequestList" class="table-responsive"><p class="text-muted">Loading deletion requests...</p></div>
+            </div>
+
             <!-- Events & Mass Readings Management Section -->
             <div class="card p-4 mb-4" id="content">
                 <h4 class="mb-3"><i class="fas fa-calendar-alt me-2"></i> Manage Events &amp; Readings</h4>
@@ -1231,6 +1237,17 @@
             }
             document.getElementById('passwordResetList').innerHTML = prHtml + '</tbody></table>';
 
+            let deletionHtml = '<table class="table table-bordered align-middle"><thead><tr><th>Member</th><th>Jumuiya</th><th>Requested</th><th>Action</th></tr></thead><tbody>';
+            const pendingDeletions = (data.accountDeletionRequests || []).filter(request => request.status === 'pending');
+            if (!pendingDeletions.length) {
+                deletionHtml += '<tr><td colspan="4" class="text-muted">No pending account deletion requests.</td></tr>';
+            } else {
+                pendingDeletions.forEach(request => {
+                    deletionHtml += `<tr><td>${esc(request.name)}<br><small class="text-muted">${esc(request.customId || '')}</small></td><td>${esc(request.jumuiya || '—')}</td><td>${esc(request.requestedAt ? new Date(request.requestedAt).toLocaleString() : '—')}</td><td><button class="btn btn-sm btn-outline-danger me-1" data-action="approve-account-deletion" data-id="${recordId(request)}">Approve deletion</button><button class="btn btn-sm btn-outline-secondary" data-action="decline-account-deletion" data-id="${recordId(request)}">Decline</button></td></tr>`;
+                });
+            }
+            document.getElementById('accountDeletionRequestList').innerHTML = deletionHtml + '</tbody></table>';
+
             // Jumuiya Submissions Table
             let sHtml = '';
             if (!data.jumuiyaSubmissions || data.jumuiyaSubmissions.length === 0) {
@@ -1941,6 +1958,17 @@
                     case 'approve-password': {
                         if (!confirm('Approve this new password request?')) return;
                         await apiCall('/api/admin/approve-password', { method: 'POST', body: JSON.stringify({ id }) });
+                        await loadMasterData();
+                        break;
+                    }
+                    case 'approve-account-deletion': {
+                        if (!confirm('Approve this account deletion? The login account will be removed, while financial records remain.')) return;
+                        await apiCall('/api/admin/review-account-deletion', { method: 'POST', body: JSON.stringify({ id, action: 'approve' }) });
+                        await loadMasterData();
+                        break;
+                    }
+                    case 'decline-account-deletion': {
+                        await apiCall('/api/admin/review-account-deletion', { method: 'POST', body: JSON.stringify({ id, action: 'decline' }) });
                         await loadMasterData();
                         break;
                     }
